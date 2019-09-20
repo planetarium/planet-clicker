@@ -294,11 +294,12 @@ namespace _Script
             }
         }
 
-        public void MakeTransaction(ActionBase gameAction)
+        public void MakeTransaction(IEnumerable<ActionBase> gameActions)
         {
-            var actions = new PolymorphicAction<ActionBase>[] {gameAction};
+            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>) gameAction).ToList();
             Task.Run(() => MakeTransaction(actions, true));
         }
+
 
         public object GetState(Address address)
         {
