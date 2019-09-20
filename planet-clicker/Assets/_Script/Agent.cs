@@ -45,7 +45,7 @@ namespace _Script
             }
         }
 
-        private const float TxProcessInterval = 3.0f;
+        public const float TxProcessInterval = 3.0f;
         private const int SwarmDialTimeout = 5000;
         private const int SwarmLinger = 1 * 1000;
         private const string QueuedActionsFileName = "queued_actions.dat";
