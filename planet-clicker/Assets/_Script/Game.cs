@@ -2,6 +2,7 @@ using System.Collections;
 using System.Globalization;
 using System.Linq;
 using _Script.Data;
+using _Script.State;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,7 +13,10 @@ namespace _Script
         public Text timerText;
         public Text countText;
         public Text addressText;
+        public Text rankingText;
         public Click click;
+        public ScrollRect rankingBoard;
+        public RankingRow rankingRow;
         private float _time;
         private long _totalCount = 0;
         private Table<Level> _levelTable;
@@ -28,6 +32,7 @@ namespace _Script
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
             StartCoroutine(GetTotalCount());
+            StartCoroutine(GetRankingState());
         }
 
         private void SetTimer(float time)
@@ -80,6 +85,43 @@ namespace _Script
                 }
                 yield return new WaitForSeconds(1f);
             }
+        }
+
+        private IEnumerator GetRankingState()
+        {
+            while (true)
+            {
+                var rankingState = (RankingState) AgentController.Agent.GetState(RankingState.Address) ?? new RankingState();
+                yield return UpdateRankingBoard(rankingState);
+                yield return new WaitForSeconds(10f);
+            }
+        }
+
+        private IEnumerator UpdateRankingBoard(RankingState rankingState)
+        {
+            foreach (Transform child in rankingBoard.content.transform)
+            {
+                Destroy(child.gameObject);
+            }
+            yield return new WaitForEndOfFrame();
+
+            rankingRow.gameObject.SetActive(true);
+            var ranking = rankingState.GetRanking().ToList();
+            for (var i = 0; i < ranking.Count; i++)
+            {
+                var rankingInfo = ranking[i];
+                var go = Instantiate(rankingRow, rankingBoard.content.transform);
+                var row = go.GetComponent<RankingRow>();
+                var rank = i + 1;
+                row.Set(rank, rankingInfo);
+                if (rankingInfo.Address == AgentController.Agent.Address)
+                {
+                    rankingText.text = $"My Ranking: {rank}";
+                }
+            }
+
+            rankingRow.gameObject.SetActive(false);
+            yield return null;
         }
     }
 }
