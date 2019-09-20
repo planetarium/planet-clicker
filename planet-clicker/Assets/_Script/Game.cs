@@ -26,6 +26,7 @@ namespace _Script
 
         private void Awake()
         {
+            Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
             AgentController.Initialize();
             var hex = AgentController.Agent.Address.ToHex().Substring(0, 4);
