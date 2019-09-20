@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using _Script.State;
 using Libplanet.Action;
 using UnityEngine;
 
@@ -33,8 +34,10 @@ namespace _Script
         public override IAccountStateDelta Execute(IActionContext ctx)
         {
             var states = ctx.PreviousStates;
+            var rankingAddress = RankingState.Address;
             if (ctx.Rehearsal)
             {
+                states = states.SetState(rankingAddress, MarkChanged);
                 return states.SetState(ctx.Signer, MarkChanged);
             }
 
@@ -43,6 +46,9 @@ namespace _Script
 
             Debug.Log($"CurrentCount: {currentCount}, NextCount: {nextCount}");
 
+            var rankingState = (RankingState) states.GetState(rankingAddress) ?? new RankingState();
+            rankingState.Update(ctx.Signer, nextCount);
+            states = states.SetState(rankingAddress, rankingState);
             return states.SetState(ctx.Signer, nextCount);
         }
     }
