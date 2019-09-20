@@ -1,8 +1,10 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using _Script.Data;
 using _Script.State;
+using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +22,7 @@ namespace _Script
         private float _time;
         private long _totalCount = 0;
         private Table<Level> _levelTable;
+        private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
 
         private void Awake()
         {
@@ -56,11 +59,19 @@ namespace _Script
             else
             {
                 _time = Agent.TxProcessInterval;
+                var actions = new List<ActionBase>();
                 if (click._count > 0)
                 {
                     var action = new AddCount(click._count);
-                    AgentController.Agent.MakeTransaction(action);
+                    actions.Add(action);
                 }
+
+                actions.AddRange(_attacks.Select(pair => new SubCount(pair.Key, pair.Value)));
+                if (actions.Any())
+                {
+                    AgentController.Agent.MakeTransaction(actions);
+                }
+                _attacks = new Dictionary<Address, int>();
 
                 ResetTimer();
             }
@@ -79,10 +90,7 @@ namespace _Script
             while (true)
             {
                 var count = (long?) AgentController.Agent.GetState(AgentController.Agent.Address) ?? 0;
-                if (count > _totalCount)
-                {
-                    UpdateTotalCount(count);
-                }
+                UpdateTotalCount(count);
                 yield return new WaitForSeconds(1f);
             }
         }
@@ -122,6 +130,19 @@ namespace _Script
 
             rankingRow.gameObject.SetActive(false);
             yield return null;
+        }
+
+        public void Attack(RankingRow row)
+        {
+            var address = row.address;
+            if (_attacks.TryGetValue(address, out _))
+            {
+                _attacks[address] += 1;
+            }
+            else
+            {
+                _attacks[address] = 0;
+            }
         }
     }
 }
