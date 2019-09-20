@@ -13,5 +13,11 @@ namespace _Script
             _count++;
             text.text = _count.ToString();
         }
+
+        public void ResetCount()
+        {
+            _count = 0;
+            text.text = _count.ToString();
+        }
     }
 }
