@@ -7,7 +7,7 @@ namespace _Script
     [Serializable]
     public abstract class ActionBase : IAction
     {
-        public const string MarkChanged = "";
+        protected const string MarkChanged = "";
 
         public abstract IImmutableDictionary<string, object> PlainValue { get; }
         public abstract void LoadPlainValue(IImmutableDictionary<string, object> plainValue);
