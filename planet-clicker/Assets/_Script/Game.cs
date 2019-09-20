@@ -14,6 +14,7 @@ namespace _Script
 
         private void Awake()
         {
+            AgentController.Initialize();
             _time = Agent.TxProcessInterval;
             SetTimer(_time);
         }
