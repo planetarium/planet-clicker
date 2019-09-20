@@ -1,32 +1,38 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using Libplanet;
 using Libplanet.Action;
 using UnityEngine;
 
 namespace _Script
 {
-    [ActionType("store_count")]
-    public class AddCount : ActionBase
+    [ActionType("decrease_count")]
+    public class SubCount : ActionBase
     {
+        private Address _address;
         private long _count;
 
-        public AddCount()
+        public SubCount()
         {
         }
 
-        public AddCount(long count)
+        public SubCount(Address address, long count)
         {
+            _address = address;
             _count = count;
         }
 
         public override IImmutableDictionary<string, object> PlainValue =>
             new Dictionary<string, object>
             {
+                ["address"] = _address.ToHex(),
                 ["count"] = _count.ToString(),
             }.ToImmutableDictionary();
 
         public override void LoadPlainValue(IImmutableDictionary<string, object> plainValue)
         {
+            _address = new Address((string)plainValue["address"]);
             _count = long.Parse(plainValue["count"].ToString());
         }
 
@@ -35,15 +41,15 @@ namespace _Script
             var states = ctx.PreviousStates;
             if (ctx.Rehearsal)
             {
-                return states.SetState(ctx.Signer, MarkChanged);
+                return states.SetState(_address, MarkChanged);
             }
 
-            var currentCount = (long?)states.GetState(ctx.Signer)?? 0;
-            var nextCount = currentCount + _count;
+            var currentCount = (long?)states.GetState(_address) ?? 0;
+            var nextCount = Math.Max(currentCount - _count, 0);
 
-            Debug.Log($"store_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
+            Debug.Log($"decrease_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            return states.SetState(ctx.Signer, nextCount);
+            return states.SetState(_address, nextCount);
         }
     }
 }
