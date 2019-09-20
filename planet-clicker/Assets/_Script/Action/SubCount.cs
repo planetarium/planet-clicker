@@ -53,8 +53,8 @@ namespace _Script
 
             Debug.Log($"decrease_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = (RankingState) states.GetState(rankingAddress) ?? new RankingState();
-            rankingState.Update(ctx.Signer, nextCount);
+            var rankingState = (RankingState) states.GetState(rankingAddress);
+            rankingState.Update(_address, nextCount);
             states = states.SetState(rankingAddress, rankingState);
             return states.SetState(_address, nextCount);
         }
