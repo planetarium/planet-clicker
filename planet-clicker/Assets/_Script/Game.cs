@@ -17,7 +17,7 @@ namespace _Script
         private void Awake()
         {
             AgentController.Initialize();
-            var hex = string.Join("", AgentController.Agent.Address.ToHex().Take(4));
+            var hex = AgentController.Agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"Address: {hex}";
             _time = Agent.TxProcessInterval;
             SetTimer(_time);
