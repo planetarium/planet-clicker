@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Libplanet.Action;
+using UnityEngine;
 
 namespace _Script
 {
@@ -9,20 +10,24 @@ namespace _Script
     {
         private long _count;
 
-        public AddCount(int reward)
+        public AddCount()
         {
-            _count = _count;
+        }
+
+        public AddCount(long count)
+        {
+            _count = count;
         }
 
         public override IImmutableDictionary<string, object> PlainValue =>
             new Dictionary<string, object>
             {
-                ["count"] = _count,
+                ["count"] = _count.ToString(),
             }.ToImmutableDictionary();
 
         public override void LoadPlainValue(IImmutableDictionary<string, object> plainValue)
         {
-            _count = (long)plainValue["count"];
+            _count = int.Parse(plainValue["count"].ToString());
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
@@ -35,6 +40,8 @@ namespace _Script
 
             var currentCount = (long?)states.GetState(ctx.Signer)?? 0;
             var nextCount = currentCount + _count;
+
+            Debug.Log($"CurrentCount: {currentCount}, NextCount: {nextCount}");
 
             return states.SetState(ctx.Signer, nextCount);
         }

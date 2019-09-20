@@ -5,7 +5,7 @@ namespace _Script
 {
     public class Click : MonoBehaviour
     {
-        private int _count;
+        public int _count;
         public Text text;
 
         public void Plus()

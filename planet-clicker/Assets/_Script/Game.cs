@@ -45,8 +45,14 @@ namespace _Script
             }
             else
             {
-                ResetTimer();
                 _time = Agent.TxProcessInterval;
+                if (click._count > 0)
+                {
+                    var action = new AddCount(click._count);
+                    AgentController.Agent.MakeTransaction(action);
+                }
+
+                ResetTimer();
             }
         }
 

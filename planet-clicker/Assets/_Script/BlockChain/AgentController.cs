@@ -76,6 +76,7 @@ namespace _Script
             _miner = options.NoMiner ? null : Agent.CoMiner();
             
             StartSystemCoroutines(Agent);
+            StartNullableCoroutine(_miner);
         }
 
         private static IEnumerator CoCheckBlockTip()
@@ -201,10 +202,8 @@ namespace _Script
 
         private void StartSystemCoroutines(Agent agent)
         {
-            _txProcessor = agent.CoTxProcessor();
             _swarmRunner = agent.CoSwarmRunner();
 
-            StartNullableCoroutine(_txProcessor);
             StartNullableCoroutine(_swarmRunner);
             StartNullableCoroutine(_logger);
         }

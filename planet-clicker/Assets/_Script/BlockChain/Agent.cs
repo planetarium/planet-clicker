@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -48,12 +47,10 @@ namespace _Script
         public const float TxProcessInterval = 3.0f;
         private const int SwarmDialTimeout = 5000;
         private const int SwarmLinger = 1 * 1000;
-        private const string QueuedActionsFileName = "queued_actions.dat";
 
         private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
         private static readonly TimeSpan SleepInterval = TimeSpan.FromSeconds(3);
 
-        private readonly ConcurrentQueue<PolymorphicAction<ActionBase>> _queuedActions = new ConcurrentQueue<PolymorphicAction<ActionBase>>();
         protected readonly BlockChain<PolymorphicAction<ActionBase>> _blocks;
         private readonly Swarm<PolymorphicAction<ActionBase>> _swarm;
         protected LiteDBStore _store;
@@ -236,37 +233,12 @@ namespace _Script
             yield return new WaitUntil(() => swarmStartTask.IsCompleted);
         }
 
-        public IEnumerator CoTxProcessor()
-        {
-            while (true)
-            {
-                yield return new WaitForSeconds(TxProcessInterval);
-                var actions = new List<PolymorphicAction<ActionBase>>();
-
-                Debug.LogFormat("Try Dequeue Actions. Total Count: {0}", _queuedActions.Count);
-                while (_queuedActions.TryDequeue(out PolymorphicAction<ActionBase> action))
-                {
-                    actions.Add(action);
-                    Debug.LogFormat("Remain Queued Actions Count: {0}", _queuedActions.Count);
-                }
-                Debug.LogFormat("Finish Dequeue Actions.");
-
-                if (actions.Any())
-                {
-                    var task = Task.Run(() => MakeTransaction(actions, true));
-                    yield return new WaitUntil(() => task.IsCompleted);
-                }
-            }
-        }
-
         public IEnumerator CoMiner()
         {
             while (true)
             {
                 var txs = new HashSet<Transaction<PolymorphicAction<ActionBase>>>();
 
-                var timeStamp = DateTimeOffset.UtcNow;
-                var prevTimeStamp = _blocks?.Tip?.Timestamp;
                 var task = Task.Run(() =>
                 {
                     var block = _blocks.MineBlock(Address);
@@ -322,9 +294,10 @@ namespace _Script
             }
         }
 
-        public void EnqueueAction(ActionBase gameAction)
+        public void MakeTransaction(ActionBase gameAction)
         {
-            _queuedActions.Enqueue(gameAction);
+            var actions = new PolymorphicAction<ActionBase>[] {gameAction};
+            Task.Run(() => MakeTransaction(actions, true));
         }
 
         public object GetState(Address address)
