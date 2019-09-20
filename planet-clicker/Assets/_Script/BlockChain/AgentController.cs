@@ -100,8 +100,10 @@ namespace _Script
                     File.ReadAllText(jsonPath)
                 );
             }
-
-            return new Options();
+            else
+            {
+                return CommnadLineParser.GetCommandLineOptions() ?? new Options();
+            }
         }
 
         private static PrivateKey GetPrivateKey(Options options)
