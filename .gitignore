@@ -34,3 +34,15 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+.DS_Store
+.vscode
+.vscode/
+.sln.DotSettins
+
+# Rider
+/planet-clicker/.idea
+/planet-clicker/Assets/Plugins/Editor/JetBrains*
+
+# UnityTestRunner
+/planet-clicker/Assets/InitTestscene*.unity*
