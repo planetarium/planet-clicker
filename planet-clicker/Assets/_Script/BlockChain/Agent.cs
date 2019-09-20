@@ -313,7 +313,7 @@ namespace _Script
             return new DebugPolicy();
 # else
             return new BlockPolicy<PolymorphicAction<ActionBase>>(
-                new RewardGold { gold = 1 },
+                null,
                 BlockInterval,
                 100000,
                 2048
