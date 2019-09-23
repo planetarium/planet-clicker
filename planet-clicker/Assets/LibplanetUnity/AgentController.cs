@@ -10,27 +10,20 @@ using Libplanet.Crypto;
 using Libplanet.Net;
 using NetMQ;
 using UnityEngine;
-using _Script.Helper;
+using LibplanetUnity.Helper;
 
-namespace _Script
+namespace LibplanetUnity
 {
-    /// <summary>
-    /// Agent를 구동시킨다.
-    /// </summary>
     public class AgentController : MonoSingleton<AgentController>
     {
         public const string PlayerPrefsKeyOfAgentPrivateKey = "private_key_agent";
 #if UNITY_EDITOR
-        private const string AgentStoreDirName = "planetarium_clicker_dev";
+        private const string AgentStoreDirName = "planetarium_dev";
 #else
-        private const string AgentStoreDirName = "planetarium_clicker";
+        private const string AgentStoreDirName = "planetarium";
 #endif
 
-#if NEKOALPHA_NOMINER
-        private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo_nekoalpha_nominer.json");
-#else
         private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
-#endif
         private const string PeersFileName = "peers.dat";
         private const string IceServersFileName = "ice_servers.dat";
 
@@ -40,9 +33,7 @@ namespace _Script
         public static Agent Agent { get; private set; }
 
         private static IEnumerator _miner;
-        private static IEnumerator _txProcessor;
         private static IEnumerator _swarmRunner;
-        private static IEnumerator _autoPlayer;
         private static IEnumerator _logger;
 
         public static void Initialize()
@@ -77,19 +68,6 @@ namespace _Script
             
             StartSystemCoroutines(Agent);
             StartNullableCoroutine(_miner);
-        }
-
-        private static IEnumerator CoCheckBlockTip()
-        {
-            while (true)
-            {
-                var current = Agent.BlockIndex;
-                yield return new WaitForSeconds(180f);
-                if (Agent.BlockIndex == current)
-                {
-                    break;
-                }
-            }
         }
 
         public static Options GetOptions(string jsonPath)

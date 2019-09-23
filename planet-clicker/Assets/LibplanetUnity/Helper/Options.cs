@@ -5,12 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace _Script.Helper
+namespace LibplanetUnity.Helper
 {
     [Serializable]
         public class Options
         {
-            // JSON 직렬화를 위해 필드와 속성을 둘 다 기술합니다.
             public string privateKey;
 
             public string host;

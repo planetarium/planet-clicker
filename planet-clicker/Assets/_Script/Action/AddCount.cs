@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using _Script.State;
 using Libplanet.Action;
+using LibplanetUnity.Action;
 using UnityEngine;
 
-namespace _Script
+namespace _Script.Action
 {
     [ActionType("store_count")]
     public class AddCount : ActionBase

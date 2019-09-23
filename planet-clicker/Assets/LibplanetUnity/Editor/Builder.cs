@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace Editor
+namespace LibplanetUnity.Editor
 {
     public class Builder {
 
