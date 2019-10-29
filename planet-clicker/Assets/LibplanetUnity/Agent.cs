@@ -15,13 +15,11 @@ using Libplanet.Crypto;
 using Libplanet.Net;
 using Libplanet.Store;
 using Libplanet.Tx;
+using LibplanetUnity.Action;
 using UnityEngine;
 
-namespace _Script
+namespace LibplanetUnity
 {
-    /// <summary>
-    /// 메인넷에 직접 붙어서 블록을 마이닝 한다.
-    /// </summary>
     public class Agent : IDisposable
     {
         private class DebugPolicy : IBlockPolicy<PolymorphicAction<ActionBase>>
@@ -48,8 +46,9 @@ namespace _Script
         private const int SwarmDialTimeout = 5000;
         private const int SwarmLinger = 1 * 1000;
 
-        private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
         private static readonly TimeSpan SleepInterval = TimeSpan.FromSeconds(3);
+
+        private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
 
         protected readonly BlockChain<PolymorphicAction<ActionBase>> _blocks;
         private readonly Swarm<PolymorphicAction<ActionBase>> _swarm;
@@ -59,11 +58,7 @@ namespace _Script
 
         private readonly CancellationTokenSource _cancellationTokenSource;
 
-        public IDictionary<TxId, Transaction<PolymorphicAction<ActionBase>>> Transactions => _blocks.Transactions;
-        public IBlockPolicy<PolymorphicAction<ActionBase>> Policy => _blocks.Policy;
         public long BlockIndex => _blocks?.Tip?.Index ?? 0;
-
-        public LiteDBStore Store => _store;
 
         public PrivateKey PrivateKey { get; }
         public Address Address { get; }
@@ -95,10 +90,6 @@ namespace _Script
             Address = privateKey.PublicKey.ToAddress();
             _store = new LiteDBStore($"{path}.ldb", flush: false);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(policy, _store);
-#if BLOCK_LOG_USE
-            FileHelper.WriteAllText("Block.log", "");
-#endif
-
             _swarm = new Swarm<PolymorphicAction<ActionBase>>(
                 _blocks,
                 privateKey,
@@ -129,7 +120,6 @@ namespace _Script
         public void Dispose()
         {
             _cancellationTokenSource.Cancel();
-            // `_swarm`의 내부 큐가 비워진 다음 완전히 종료할 때까지 더 기다립니다.
             Task.Run(async () => await _swarm?.StopAsync()).ContinueWith(_ =>
             {
                 _store?.Dispose();
@@ -164,8 +154,6 @@ namespace _Script
             long existingBlocks = _blocks?.Tip?.Index ?? 0;
             Debug.Log("Preloading starts");
 
-            // _swarm.PreloadAsync() 에서 대기가 발생하기 때문에
-            // 이를 다른 스레드에서 실행하여 우회하기 위해 Task로 감쌉니다.
             var swarmPreloadTask = Task.Run(async () =>
             {
                 await _swarm.PreloadAsync(
@@ -251,9 +239,6 @@ namespace _Script
                 {
                     var block = task.Result;
                     Debug.Log($"created block index: {block.Index}, difficulty: {block.Difficulty}");
-#if BLOCK_LOG_USE
-                    FileHelper.AppendAllText("Block.log", task.Result.ToVerboseString());
-#endif
                 }
                 else
                 {
@@ -320,11 +305,6 @@ namespace _Script
                 2048
             );
 #endif
-        }
-
-        public void AppendBlock(Block<PolymorphicAction<ActionBase>> block)
-        {
-            _blocks.Append(block);
         }
 
         private Transaction<PolymorphicAction<ActionBase>> MakeTransaction(

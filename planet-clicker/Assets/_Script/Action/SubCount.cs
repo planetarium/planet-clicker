@@ -4,9 +4,10 @@ using System.Collections.Immutable;
 using _Script.State;
 using Libplanet;
 using Libplanet.Action;
+using LibplanetUnity.Action;
 using UnityEngine;
 
-namespace _Script
+namespace _Script.Action
 {
     [ActionType("decrease_count")]
     public class SubCount : ActionBase

@@ -4,9 +4,12 @@ using System.Globalization;
 using System.Linq;
 using _Script.Data;
 using _Script.State;
+using LibplanetUnity;
+using LibplanetUnity.Action;
 using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;
+using _Script.Action;
 
 namespace _Script
 {

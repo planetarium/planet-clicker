@@ -2,7 +2,7 @@ using System;
 using System.Collections.Immutable;
 using Libplanet.Action;
 
-namespace _Script
+namespace LibplanetUnity.Action
 {
     [Serializable]
     public abstract class ActionBase : IAction
