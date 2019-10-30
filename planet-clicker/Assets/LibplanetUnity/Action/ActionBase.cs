@@ -12,14 +12,7 @@ namespace LibplanetUnity.Action
         public abstract IImmutableDictionary<string, object> PlainValue { get; }
         public abstract void LoadPlainValue(IImmutableDictionary<string, object> plainValue);
         public abstract IAccountStateDelta Execute(IActionContext ctx);
-
-        public void Render(IActionContext context, IAccountStateDelta nextStates)
-        {
-        }
-
-        public void Unrender(IActionContext context, IAccountStateDelta nextStates)
-        {
-        }
-
+        public abstract void Render(IActionContext context, IAccountStateDelta nextStates);
+        public abstract void Unrender(IActionContext context, IAccountStateDelta nextStates);
     }
 }
