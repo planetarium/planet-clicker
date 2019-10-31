@@ -10,6 +10,8 @@ using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;
 using _Script.Action;
+using UnityEngine.Events;
+using System.Collections.Concurrent;
 
 namespace _Script
 {
@@ -26,20 +28,69 @@ namespace _Script
         private long _totalCount = 0;
         private Table<Level> _levelTable;
         private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
+        private ConcurrentQueue<System.Action> _backlog = new ConcurrentQueue<System.Action>();
+
+        public class CountUpdated : UnityEvent<long>
+        {
+        }
+
+        public class RankUpdated: UnityEvent<RankingState>
+        {
+        }
+
+        public static CountUpdated OnCountUpdated = new CountUpdated();
+
+        public static RankUpdated OnRankUpdated = new RankUpdated();
+
+        private void RunOnMainThread(System.Action action)
+        {
+            _backlog.Enqueue(action);
+        }
 
         private void Awake()
         {
             Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
             AgentController.Initialize();
-            var hex = AgentController.Agent.Address.ToHex().Substring(0, 4);
+            var agent = AgentController.Agent;
+            var hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"Address: {hex}";
             _time = Agent.TxProcessInterval;
             SetTimer(_time);
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
-            StartCoroutine(GetTotalCount());
-            StartCoroutine(GetRankingState());
+
+            StartCoroutine(ProcessBacklog());
+
+            OnCountUpdated.AddListener(count =>
+            {
+                RunOnMainThread(() =>
+                {
+                    UpdateTotalCount(count);
+                });
+            });
+            OnRankUpdated.AddListener(rs =>
+            {
+                RunOnMainThread(() =>
+                {
+                    StartCoroutine(UpdateRankingBoard(rs));
+                });
+            });
+
+            OnCountUpdated.Invoke((long?) agent.GetState(AgentController.Agent.Address) ?? 0);
+            OnRankUpdated.Invoke((RankingState) agent.GetState(RankingState.Address) ?? new RankingState());
+        }
+
+        private IEnumerator ProcessBacklog()
+        {
+            while(true)
+            {
+                if (_backlog.TryDequeue(out System.Action action))
+                {
+                    action();
+                }
+                yield return new WaitForSeconds(0.1f);
+            }    
         }
 
         private void SetTimer(float time)
@@ -87,26 +138,6 @@ namespace _Script
             var selected = _levelTable.Values.FirstOrDefault(i => i.exp > _totalCount) ?? _levelTable.Values.Last();
             click.Set(selected.id);
             countText.text = _totalCount.ToString();
-        }
-
-        private IEnumerator GetTotalCount()
-        {
-            while (true)
-            {
-                var count = (long?) AgentController.Agent.GetState(AgentController.Agent.Address) ?? 0;
-                UpdateTotalCount(count);
-                yield return new WaitForSeconds(1f);
-            }
-        }
-
-        private IEnumerator GetRankingState()
-        {
-            while (true)
-            {
-                var rankingState = (RankingState) AgentController.Agent.GetState(RankingState.Address) ?? new RankingState();
-                yield return UpdateRankingBoard(rankingState);
-                yield return new WaitForSeconds(10f);
-            }
         }
 
         private IEnumerator UpdateRankingBoard(RankingState rankingState)

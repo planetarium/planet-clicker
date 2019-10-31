@@ -59,5 +59,15 @@ namespace _Script.Action
             states = states.SetState(rankingAddress, rankingState);
             return states.SetState(_address, nextCount);
         }
+        
+        public override void Render(IActionContext context, IAccountStateDelta nextStates)
+        {
+            Game.OnCountUpdated.Invoke((long?)nextStates.GetState(context.Signer) ?? 0);
+            Game.OnRankUpdated.Invoke((RankingState)nextStates.GetState(RankingState.Address) ?? new RankingState());
+        }
+
+        public override void Unrender(IActionContext context, IAccountStateDelta nextStates)
+        {
+        }
     }
 }
