@@ -36,12 +36,6 @@ namespace _Script.Action
         {
             var states = ctx.PreviousStates;
             var rankingAddress = RankingState.Address;
-            if (ctx.Rehearsal)
-            {
-                states = states.SetState(rankingAddress, MarkChanged);
-                return states.SetState(ctx.Signer, MarkChanged);
-            }
-
             var currentCount = (long?)states.GetState(ctx.Signer)?? 0;
             var nextCount = currentCount + _count;
 
