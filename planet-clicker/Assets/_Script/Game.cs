@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -30,7 +29,6 @@ namespace _Script
         private long _totalCount = 0;
         private Table<Level> _levelTable;
         private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
-        private ConcurrentQueue<System.Action> _backlog = new ConcurrentQueue<System.Action>();
 
         public class CountUpdated : UnityEvent<long>
         {
@@ -43,11 +41,6 @@ namespace _Script
         public static CountUpdated OnCountUpdated = new CountUpdated();
 
         public static RankUpdated OnRankUpdated = new RankUpdated();
-
-        private void RunOnMainThread(System.Action action)
-        {
-            _backlog.Enqueue(action);
-        }
 
         private void Awake()
         {
@@ -62,18 +55,16 @@ namespace _Script
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
 
-            StartCoroutine(ProcessBacklog());
-
             OnCountUpdated.AddListener(count =>
             {
-                RunOnMainThread(() =>
+                agent.RunOnMainThread(() =>
                 {
                     UpdateTotalCount(count);
                 });
             });
             OnRankUpdated.AddListener(rs =>
             {
-                RunOnMainThread(() =>
+                agent.RunOnMainThread(() =>
                 {
                     StartCoroutine(UpdateRankingBoard(rs));
                 });
@@ -81,18 +72,6 @@ namespace _Script
 
             OnCountUpdated.Invoke((long?) agent.GetState(Agent.instance.Address) ?? 0);
             OnRankUpdated.Invoke((RankingState) agent.GetState(RankingState.Address) ?? new RankingState());
-        }
-
-        private IEnumerator ProcessBacklog()
-        {
-            while(true)
-            {
-                if (_backlog.TryDequeue(out System.Action action))
-                {
-                    action();
-                }
-                yield return new WaitForSeconds(0.1f);
-            }    
         }
 
         private void SetTimer(float time)

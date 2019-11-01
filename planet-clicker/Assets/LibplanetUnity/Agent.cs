@@ -12,6 +12,7 @@ using NetMQ;
 using UnityEngine;
 using LibplanetUnity.Helper;
 using LibplanetUnity.Action;
+using System.Collections.Concurrent;
 
 namespace LibplanetUnity
 {
@@ -34,6 +35,8 @@ namespace LibplanetUnity
         private static IEnumerator _miner;
         private static IEnumerator _swarmRunner;
         private static IEnumerator _logger;
+
+        private ConcurrentQueue<System.Action> _actions = new ConcurrentQueue<System.Action>();
 
         public Address Address => _agent.Address;
 
@@ -95,6 +98,11 @@ namespace LibplanetUnity
         public void MakeTransaction(IEnumerable<ActionBase> actions)
         {
             _agent.MakeTransaction(actions);
+        }
+
+        public void RunOnMainThread(System.Action action)
+        {
+            _actions.Enqueue(action);
         }
 
         private static PrivateKey GetPrivateKey(Options options)
@@ -199,11 +207,24 @@ namespace LibplanetUnity
 
             StartNullableCoroutine(_swarmRunner);
             StartNullableCoroutine(_logger);
+            StartCoroutine(CoProcessActions());
         }
 
         private Coroutine StartNullableCoroutine(IEnumerator routine)
         {
             return ReferenceEquals(routine, null) ? null : StartCoroutine(routine);
+        }
+
+        private IEnumerator CoProcessActions()
+        {
+            while(true)
+            {
+                if (_actions.TryDequeue(out System.Action action))
+                {
+                    action();
+                }
+                yield return new WaitForSeconds(0.1f);
+            }
         }
 
         public static bool WantsToQuit()
