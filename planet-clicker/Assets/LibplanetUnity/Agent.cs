@@ -1,319 +1,220 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using AsyncIO;
+using System.Net;
+using System.Text.RegularExpressions;
 using Libplanet;
-using Libplanet.Action;
-using Libplanet.Blockchain;
-using Libplanet.Blockchain.Policies;
-using Libplanet.Blocks;
 using Libplanet.Crypto;
 using Libplanet.Net;
-using Libplanet.Store;
-using Libplanet.Tx;
-using LibplanetUnity.Action;
+using NetMQ;
 using UnityEngine;
+using LibplanetUnity.Helper;
+using LibplanetUnity.Action;
 
 namespace LibplanetUnity
 {
-    public class Agent : IDisposable
+    public class Agent : MonoSingleton<Agent>
     {
-        private class DebugPolicy : IBlockPolicy<PolymorphicAction<ActionBase>>
+        public const string PlayerPrefsKeyOfAgentPrivateKey = "private_key_agent";
+#if UNITY_EDITOR
+        private const string AgentStoreDirName = "planetarium_dev";
+#else
+        private const string AgentStoreDirName = "planetarium";
+#endif
+
+        private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
+        private const string PeersFileName = "peers.dat";
+        private const string IceServersFileName = "ice_servers.dat";
+
+        private static readonly string DefaultStoragePath =
+            Path.Combine(Application.persistentDataPath, AgentStoreDirName);
+
+        private static IEnumerator _miner;
+        private static IEnumerator _swarmRunner;
+        private static IEnumerator _logger;
+
+        public Address Address => _agent.Address;
+
+        private static _Agent _agent;
+
+        public static void Initialize()
         {
-            public DebugPolicy()
+            if (!ReferenceEquals(_agent, null))
             {
+                return;
             }
 
-            public IAction BlockAction { get; }
-
-            public InvalidBlockException ValidateNextBlock(IReadOnlyList<Block<PolymorphicAction<ActionBase>>> blocks, Block<PolymorphicAction<ActionBase>> nextBlock)
-            {
-                return null;
-            }
-
-            public long GetNextBlockDifficulty(IReadOnlyList<Block<PolymorphicAction<ActionBase>>> blocks)
-            {
-                Thread.Sleep(SleepInterval);
-                return blocks.Any() ? 1 : 0;
-            }
+            instance.InitAgent();
         }
 
-        public const float TxProcessInterval = 3.0f;
-        private const int SwarmDialTimeout = 5000;
-        private const int SwarmLinger = 1 * 1000;
-
-        private static readonly TimeSpan SleepInterval = TimeSpan.FromSeconds(3);
-
-        private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
-
-        protected readonly BlockChain<PolymorphicAction<ActionBase>> _blocks;
-        private readonly Swarm<PolymorphicAction<ActionBase>> _swarm;
-        protected LiteDBStore _store;
-        private readonly ImmutableList<Peer> _seedPeers;
-        private readonly IImmutableSet<Address> _trustedPeers;
-
-        private readonly CancellationTokenSource _cancellationTokenSource;
-
-        public long BlockIndex => _blocks?.Tip?.Index ?? 0;
-
-        public PrivateKey PrivateKey { get; }
-        public Address Address { get; }
-
-        public event EventHandler BootstrapStarted;
-        public event EventHandler PreloadStarted;
-        public event EventHandler<PreloadState> PreloadProcessed;
-        public event EventHandler PreloadEnded;
-
-        public bool SyncSucceed { get; private set; }
-
-
-        static Agent()
+        private void InitAgent()
         {
-            ForceDotNet.Force();
-        }
+            var options = GetOptions(CommandLineOptionsJsonPath);
+            var privateKey = GetPrivateKey(options);
+            var peers = GetPeers(options);
+            var iceServers = GetIceServers();
+            var host = GetHost(options);
+            int? port = options.Port;
+            var storagePath = options.StoragePath ?? DefaultStoragePath;
 
-        public Agent(
-            PrivateKey privateKey,
-            string path,
-            IEnumerable<Peer> peers,
-            IEnumerable<IceServer> iceServers,
-            string host,
-            int? port)
-        {
-            Debug.Log(path);
-            var policy = GetPolicy();
-            PrivateKey = privateKey;
-            Address = privateKey.PublicKey.ToAddress();
-            _store = new LiteDBStore($"{path}.ldb", flush: false);
-            _blocks = new BlockChain<PolymorphicAction<ActionBase>>(policy, _store);
-            _swarm = new Swarm<PolymorphicAction<ActionBase>>(
-                _blocks,
-                privateKey,
-                appProtocolVersion: 1,
-                millisecondsDialTimeout: SwarmDialTimeout,
-                millisecondsLinger: SwarmLinger,
-                host: host,
-                listenPort: port,
+            _agent = new _Agent(
+                privateKey: privateKey,
+                path: storagePath,
+                peers: peers,
                 iceServers: iceServers,
-                differentVersionPeerEncountered: DifferentAppProtocolVersionPeerEncountered);
-
-            _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
-            // Init SyncSucceed
-            SyncSucceed = true;
-
-            // FIXME: Trusted peers should be configurable
-            _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
-            _cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        private void DifferentAppProtocolVersionPeerEncountered(object sender, DifferentProtocolVersionEventArgs e)
-        {
-            Debug.LogWarningFormat("Different Version Encountered Expected: {0} Actual : {1}",
-                e.ExpectedVersion, e.ActualVersion);
-            SyncSucceed = false;
-        }
-
-        public void Dispose()
-        {
-            _cancellationTokenSource.Cancel();
-            Task.Run(async () => await _swarm?.StopAsync()).ContinueWith(_ =>
-            {
-                _store?.Dispose();
-            }).Wait(SwarmLinger + 1 * 1000);
-        }
-
-        public IEnumerator CoSwarmRunner()
-        {
-            BootstrapStarted?.Invoke(this, null);
-            var bootstrapTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await _swarm.BootstrapAsync(
-                        _seedPeers,
-                        5000,
-                        5000,
-                        _cancellationTokenSource.Token);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogFormat("Exception occurred during bootstrap {0}", e);
-                }
-            });
-
-            yield return new WaitUntil(() => bootstrapTask.IsCompleted);
-
-            PreloadStarted?.Invoke(this, null);
-            Debug.Log("PreloadingStarted event was invoked");
-
-            DateTimeOffset started = DateTimeOffset.UtcNow;
-            long existingBlocks = _blocks?.Tip?.Index ?? 0;
-            Debug.Log("Preloading starts");
-
-            var swarmPreloadTask = Task.Run(async () =>
-            {
-                await _swarm.PreloadAsync(
-                    new Progress<PreloadState>(state =>
-                        PreloadProcessed?.Invoke(this, state)
-                    ),
-                    trustedStateValidators: _trustedPeers,
-                    cancellationToken: _cancellationTokenSource.Token
-                );
-            });
-
-            yield return new WaitUntil(() => swarmPreloadTask.IsCompleted);
-            DateTimeOffset ended = DateTimeOffset.UtcNow;
-
-            if (swarmPreloadTask.Exception is Exception exc)
-            {
-                Debug.LogErrorFormat(
-                    "Preloading terminated with an exception: {0}",
-                    exc
-                );
-                throw exc;
-            }
-
-            var index = _blocks?.Tip?.Index ?? 0;
-            Debug.LogFormat(
-                "Preloading finished; elapsed time: {0}; blocks: {1}",
-                ended - started,
-                index - existingBlocks
+                host: host,
+                port: port
             );
-
-
-            PreloadEnded?.Invoke(this, null);
-
-            var swarmStartTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await _swarm.StartAsync();
-                }
-                catch (TaskCanceledException)
-                {
-                }
-                catch (Exception e)
-                {
-                    Debug.LogErrorFormat(
-                        "Swarm terminated with an exception: {0}",
-                        e
-                    );
-                    throw;
-                }
-            });
-
-            Task.Run(async () =>
-            {
-                await _swarm.WaitForRunningAsync();
-
-                Debug.LogFormat(
-                    "The address of this node: {0},{1},{2}",
-                    ByteUtil.Hex(PrivateKey.PublicKey.Format(true)),
-                    _swarm.EndPoint.Host,
-                    _swarm.EndPoint.Port
-                );
-            });
-
-            yield return new WaitUntil(() => swarmStartTask.IsCompleted);
+            _miner = options.NoMiner ? null : _agent.CoMiner();
+            
+            StartSystemCoroutines(_agent);
+            StartNullableCoroutine(_miner);
         }
 
-        public IEnumerator CoMiner()
+        public static Options GetOptions(string jsonPath)
         {
-            while (true)
+            if (File.Exists(jsonPath))
             {
-                var txs = new HashSet<Transaction<PolymorphicAction<ActionBase>>>();
-
-                var task = Task.Run(() =>
-                {
-                    var block = _blocks.MineBlock(Address);
-                    _swarm.BroadcastBlocks(new[] {block});
-                    return block;
-                });
-                yield return new WaitUntil(() => task.IsCompleted);
-
-                if (!task.IsCanceled && !task.IsFaulted)
-                {
-                    var block = task.Result;
-                    Debug.Log($"created block index: {block.Index}, difficulty: {block.Difficulty}");
-                }
-                else
-                {
-                    var invalidTxs = txs;
-                    var retryActions = new HashSet<IImmutableList<PolymorphicAction<ActionBase>>>();
-
-                    if (task.IsFaulted)
-                    {
-                        foreach (var ex in task.Exception.InnerExceptions)
-                        {
-                            if (ex is InvalidTxNonceException invalidTxNonceException)
-                            {
-                                var invalidNonceTx = _blocks.Transactions[invalidTxNonceException.TxId];
-
-                                if (invalidNonceTx.Signer == Address)
-                                {
-                                    Debug.Log($"Tx[{invalidTxNonceException.TxId}] nonce is invalid. Retry it.");
-                                    retryActions.Add(invalidNonceTx.Actions);
-                                }
-                            }
-
-                            if (ex is InvalidTxException invalidTxException)
-                            {
-                                Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_blocks.Transactions[invalidTxException.TxId]);
-                            }
-
-                            Debug.LogException(ex);
-                        }
-                    }
-                    _blocks.UnstageTransactions(invalidTxs);
-
-                    foreach (var retryAction in retryActions)
-                    {
-                        MakeTransaction(retryAction, true);
-                    }
-                }
+                return JsonUtility.FromJson<Options>(
+                    File.ReadAllText(jsonPath)
+                );
+            }
+            else
+            {
+                return CommnadLineParser.GetCommandLineOptions() ?? new Options();
             }
         }
-
-        public void MakeTransaction(IEnumerable<ActionBase> gameActions)
-        {
-            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>) gameAction).ToList();
-            Task.Run(() => MakeTransaction(actions, true));
-        }
-
 
         public object GetState(Address address)
         {
-            AddressStateMap states = _blocks.GetStates(new[] {address});
-            states.TryGetValue(address, out object value);
-            return value;
+            return _agent.GetState(address);
         }
 
-        private IBlockPolicy<PolymorphicAction<ActionBase>> GetPolicy()
+        public void MakeTransaction(IEnumerable<ActionBase> actions)
         {
-# if UNITY_EDITOR
-            return new DebugPolicy();
-# else
-            return new BlockPolicy<PolymorphicAction<ActionBase>>(
-                null,
-                BlockInterval,
-                100000,
-                2048
+            _agent.MakeTransaction(actions);
+        }
+
+        private static PrivateKey GetPrivateKey(Options options)
+        {
+            PrivateKey privateKey;
+            var privateKeyHex = options.PrivateKey ?? PlayerPrefs.GetString(PlayerPrefsKeyOfAgentPrivateKey, "");
+
+            if (string.IsNullOrEmpty(privateKeyHex))
+            {
+                privateKey = new PrivateKey();
+                PlayerPrefs.SetString(PlayerPrefsKeyOfAgentPrivateKey, ByteUtil.Hex(privateKey.ByteArray));
+            }
+            else
+            {
+                privateKey = new PrivateKey(ByteUtil.ParseHex(privateKeyHex));
+            }
+
+            return privateKey;
+        }
+
+        private static IEnumerable<Peer> GetPeers(Options options)
+        {
+            return options.Peers?.Any() ?? false
+                ? options.Peers.Select(LoadPeer)
+                : LoadConfigLines(PeersFileName).Select(LoadPeer);
+        }
+
+        private static IEnumerable<IceServer> GetIceServers()
+        {
+            return LoadIceServers();
+        }
+
+        private static string GetHost(Options options)
+        {
+            return options.Host;
+        }
+
+        private static BoundPeer LoadPeer(string peerInfo)
+        {
+            string[] tokens = peerInfo.Split(',');
+            var pubKey = new PublicKey(ByteUtil.ParseHex(tokens[0]));
+            string host = tokens[1];
+            int port = int.Parse(tokens[2]);
+
+            return new BoundPeer(pubKey, new DnsEndPoint(host, port), 0);
+        }
+
+        private static IEnumerable<string> LoadConfigLines(string fileName)
+        {
+            string userPath = Path.Combine(
+                Application.persistentDataPath,
+                fileName
             );
-#endif
+            string content;
+            
+            if (File.Exists(userPath))
+            {
+                content = File.ReadAllText(userPath);
+            }
+            else 
+            {
+                string assetName = Path.GetFileNameWithoutExtension(fileName);
+                content = Resources.Load<TextAsset>($"Config/{assetName}").text;
+            }
+
+            foreach (var line in Regex.Split(content, "\n|\r|\r\n"))
+            {
+                if (!string.IsNullOrEmpty(line.Trim()))
+                {
+                    yield return line;
+                }
+            }
         }
 
-        private Transaction<PolymorphicAction<ActionBase>> MakeTransaction(
-            IEnumerable<PolymorphicAction<ActionBase>> actions, bool broadcast)
+        private static IEnumerable<IceServer> LoadIceServers()
         {
-            var polymorphicActions = actions.ToArray();
-            Debug.LogFormat("Make Transaction with Actions: `{0}`",
-                string.Join(",", polymorphicActions.Select(i => i.InnerAction)));
-            return _blocks.MakeTransaction(PrivateKey, polymorphicActions, broadcast: broadcast);
+            foreach (string line in LoadConfigLines(IceServersFileName)) 
+            {
+                var uri = new Uri(line);
+                string[] userInfo = uri.UserInfo.Split(':');
+
+                yield return new IceServer(new[] {uri}, userInfo[0], userInfo[1]);
+            }
+        }
+
+        #region Mono
+
+        protected override void OnDestroy()
+        {
+            _agent?.Dispose();
+            
+            NetMQConfig.Cleanup(false);
+
+            base.OnDestroy();
+        }
+
+        #endregion
+
+        private void StartSystemCoroutines(_Agent agent)
+        {
+            _swarmRunner = agent.CoSwarmRunner();
+
+            StartNullableCoroutine(_swarmRunner);
+            StartNullableCoroutine(_logger);
+        }
+
+        private Coroutine StartNullableCoroutine(IEnumerator routine)
+        {
+            return ReferenceEquals(routine, null) ? null : StartCoroutine(routine);
+        }
+
+        public static bool WantsToQuit()
+        {
+            return true;
+        }
+
+        [RuntimeInitializeOnLoadMethod]
+        private static void RunOnStart()
+        {
+            Application.wantsToQuit += WantsToQuit;
         }
     }
 }
