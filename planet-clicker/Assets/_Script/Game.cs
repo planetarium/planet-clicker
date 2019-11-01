@@ -46,28 +46,22 @@ namespace _Script
         {
             Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+
             Agent.Initialize();
             var agent = Agent.instance;
             var hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"Address: {hex}";
+
             _time = TxProcessInterval;
             SetTimer(_time);
+
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
 
-            OnCountUpdated.AddListener(count =>
-            {
-                agent.RunOnMainThread(() =>
-                {
-                    UpdateTotalCount(count);
-                });
-            });
+            OnCountUpdated.AddListener(UpdateTotalCount);
             OnRankUpdated.AddListener(rs =>
             {
-                agent.RunOnMainThread(() =>
-                {
-                    StartCoroutine(UpdateRankingBoard(rs));
-                });
+                StartCoroutine(UpdateRankingBoard(rs));
             });
 
             OnCountUpdated.Invoke((long?) agent.GetState(Agent.instance.Address) ?? 0);
