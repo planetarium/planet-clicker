@@ -65,7 +65,7 @@ For the design rationale of Libplanet, refer to [this article][Libplanet Design]
 Action and State
 ----------------
 
-As mentioned above, games using Libplanet can manage their state from all clients, not from a central server. The **State** of games is transitioned through an **Action**.
+As mentioned above, games using Libplanet can manage their state from each client, not from a central server. The **State** of games is transitioned through an **Action**.
 
 ```
 +------------+                  +------------+                  +------------+
@@ -84,7 +84,7 @@ As mentioned above, games using Libplanet can manage their state from all client
   - See [this document][IAction] for more details on how to write Action using `IAction`.
 - The State is expressed in key-value pairs, and you can set appropriate values for each game.
 - The State is readable at any point, but transitioning it is only possible through an Action.
-- Libplanet does not directly share the transitioned State, but only shares the Action that will transition the State. Also, because State transitioned by an Action occurs on all nodes in the network, the Action must be written decisively to return the same result from all nodes.
+- Libplanet does not directly share the transitioned State, but only shares the Action that will transition the State. Also, because State transitioned by an Action occurs on all nodes in the network, the Action must be written deterministically to return the same result from all nodes.
 
 
 [IAction]: https://docs.libplanet.io/0.6.0/api/Libplanet.Action.IAction.html
@@ -127,19 +127,19 @@ In order to share an Action, Libplanet uses 2 concepts internally: **Block** and
 
 **Transaction** is a bundle of Actions and has the following characteristics:
 
-- Transaction is signed using a private key of the creator(signiner) of Transaction and Action.
+- Transaction is signed using a private key of the creator(signer) of Transaction and Action.
 - Transaction may not include an Action.
 - Action in Transaction can be specified in the order of execution and ensures same order execution on all nodes.
-- Transaction does not include the game code and cannot be expanded. All game logic is included in Action.
-- It's the game developer's freedom to decide how to group Action units. See [this document][transactions and actions] for more information.
+- Transaction does not include the game code and cannot be extended. All game logic is implemented through Action.
+- It is the game developer's freedom to decide how to group Action units. See [this document][transactions and actions] for more information.
 
 **Block** is a bundle of Transaction and has the following characteristics:
 
-- Block is the smallest unit of mutual Action in the network. Actions in a Block are either all evaluated, or all not evaluated.
+- Block is the smallest unit of mutual Actions in the network. Actions in a Block are either all evaluated, or all not evaluated.
 - A Block may include many Transactions or may not include any Transaction.
 - A Block may contain multiple users' Transactions.
 - A Block does not include game code and cannot be extended by the game developer.
-- Block's Transactions are evaluated in the order of execution calculated by the critical random number to transition the state.
+- Block's Transactions are evaluated in the order of execution calculated by deterministic random number to transition the state.
 
 
 [transactions and actions]: https://docs.libplanet.io/0.6.0/articles/design.html#transactions-and-actions
@@ -158,7 +158,7 @@ To manage these Blocks, Libplanet offers a class called `BlockChain<T>`. This cl
 Rendering
 ---------
 
-In general, game developers use `BlockChain<T>.GetState()` to reflect the State of the game.
+One way for game developers to reflect the State of the game is by using `BlockChain<T>.GetState()`.
 
 
 ```csharp
@@ -179,7 +179,7 @@ public class Game : MonoBehaviour
 }
 ```
 
-The problem is that because State transitioned by Action occurs after the Block has been added and confirmed to the chain, you must be polling the `BlockChain<T>` object to see if a specific Action has been reflected.
+State transition occurs after a Block containing an Action is added and confirmed to the chain. The code above is suboptimal because you are polling the `BlockChain<T>` object to see if a specific Action has been reflected.
 
 ```csharp
 public class Game : MonoBehaviour
@@ -214,7 +214,7 @@ Libplanet provides a rendering mechanism called `IAction.Render()` to solve this
 public class Win : IAction
 {
     // ...
-   
+
     public override void Render(IActioncontext ctx, IAccountstatedelta nextStates)
     {
         Game.UpdateScore((long?) nextStates.GetState())

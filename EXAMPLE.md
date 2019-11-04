@@ -1,21 +1,21 @@
 Example
 =======
 
-In this docuemnt, we'll learn how to use the Libplanet through simple clicker game.
+In this document, we'll learn how to use Libplanet through a simple clicker game.
 
 
 Prerequisites & Requirements
 ----------------------------
 
-- Libplanet is compatible with Unity 2019.1.0f2 or more.
-- Unity Player must be set to Scripting Runtime version 4.x equivalent, Mono as Scripting backend, and API compatibility level must be set to the .NET 4.x.
+- Libplanet is compatible with Unity 2019.1.0f2 or above.
+- Unity Player must be set to Scripting Runtime version 4.x equivalent, Mono as Scripting backend, and API compatibility level must be set to .NET 4.x.
 - Support for Windows/macOS/Linux (including Headless).
 
 
 Game Design
 -----------
 
-The clicker game in this article the game is very simple. There are buttons on the screen, pressing to get the score. In Libplanet's way, a player's score is **State** and the pressing button is **Action**. This can be described very briefly as follows:
+The clicker game this article refers to is very simple. There are buttons on the screen, press it to increase the score. In Libplanet's terms, a player's score is **State** and the button press is **Action**. This can be described briefly as follows:
 
 ```
 +----------+            +----------+            +----------+
@@ -25,7 +25,7 @@ The clicker game in this article the game is very simple. There are buttons on t
 +----------|            +----------+            +----------+
 ```
 
-Considering the multiplayer is quite a bit more complicated. Because even pay attention to the status of other players.
+When multiplayer is considered, the situation becomes a bit more complicated. The game must pay attention to the status of other players.
 
 ```
 +------------+          +-------------+          +-------------+
@@ -49,9 +49,9 @@ Considering the multiplayer is quite a bit more complicated. Because even pay at
 
 - We need to save player's score separately for each player in State. Since we're using key-value interface, it isn't difficult if the key is selected properly.
   - In this case, we use the address derived from the user's private key as the State's key.
-- The `AddCount` only changes the state of one user at a time.
+- `AddCount` only changes the state of one user at a time.
 
-We want players to see and compete with other users' scores. To do this, we need a list of other users. If put score information together, we can also reduce the number of status checks. The `RankingState` containing this information is shown below.
+We want players to see and compete with others' scores. To do this, we need a list of other users. If we put score information together, we can also reduce the number of status checks. The `RankingState` containing this information is shown below.
 
 ```csharp
 namespace _Script.State
@@ -189,7 +189,7 @@ namespace _Script.Action
 }
 ```
 
-- We use the `ActionBase` abstract class provided by Libplanet for Unity
+- We use the `ActionBase` abstract class provided by Libplanet for Unity.
 - Every action has an `ActionType` attribute to indicate the type to be serialized.
   - The value of the property must be unique for each action.
 - Set `_count` as a member variable so that we can determine how much the value is incremented.
@@ -213,12 +213,12 @@ The next thing to look at is `Execute()`, where the actual game code is implemen
         }
 ```
 
-- `ctx` is the execution context that contains the block and transaction information that contains this action.
-- Since we decided to use the address of the user who signed the transaction as the key state, we set the next score with plus the number obtained from the previous state by signer address(`ctx.signer`) and `_count`.
+- `ctx` is the execution context that contains the block and transaction information which contains this action.
+- Since we decided to use the address of the user who signed the transaction as the key in state, we set the next score as 1 plus the number obtained from the previous state by signer address(`ctx.signer`) and `_count`.
 - Since the ranking(`RankingState`) is information shared by all users, the state is obtained and updated using a predetermined constant (`RankingState.Address`).
 - Because this method runs on multiple nodes, it must not have any side effects and depend on any global variables or data other than `ctx` or member variable` _count` passed as an argument.
 
-The last thing to look at is `Render()`. `AddCount` to the need to update the 'My Score' and 'Ranking' when executed, it will ask the `Game` object through `Game.OnCountUpdated`, `Game.OnRunkUpdated` event for them.
+The last thing to look at is `Render()`. `AddCount` needs to update 'My Score' and 'Ranking' when executed, so it will invoke `Game.OnCountUpdated`, `Game.OnRunkUpdated` event for them.
 
 ```csharp
         public override void Render(IActionContext context, IAccountStateDelta nextStates)
@@ -238,15 +238,15 @@ The last thing to look at is `Render()`. `AddCount` to the need to update the 'M
         }
 ```
 
-Caution) The thread that `Render()` is invoked is prohibited to handle Unity UI object because it may not be the main thread Unity. To avoid this problem, we use the `Agent.RunOnMainthread()`.
+Caution) The thread that `Render()` is invoked is prohibited from handling Unity UI object because it may not be the main Unity thread. To avoid this problem, we use the `Agent.RunOnMainthread()`.
 
 
 `Agent`
 -------
 
-How can we use the `AddCount` defined above? We can also use `BlockChain <T>` provided by Libplanet, but since it's a library for .netstandard, it requires a lot of boiler plate code to use it directly in Unity.
+How can we use the `AddCount` defined above? One way is to use `BlockChain <T>` provided by Libplanet, but since it is a generic .netstandard library, it requires a lot of boiler plate code to use it inside Unity.
 
-Instead, we can use `Agent`, a helper class provided by Libplanet for Unity, for convenience. Let's take a look at `Game` class (defined in `Assets/_Script/Game.cs`) to learn how to use it.
+Instead, we can use `Agent`, a helper class provided by Libplanet for Unity for convenience. Let's take a look at `Game` class (defined in `Assets/_Script/Game.cs`) to learn how to use it.
 
 
 ```csharp
@@ -256,7 +256,7 @@ Instead, we can use `Agent`, a helper class provided by Libplanet for Unity, for
 
         // Internal storage to storing clicking count
         public Click click;
-        
+
         // Custom events for AddConut.Render()
         public class CountUpdated : UnityEvent<long>
         {
@@ -273,11 +273,11 @@ Instead, we can use `Agent`, a helper class provided by Libplanet for Unity, for
         private void Awake()
         {
             // ...
-            
+
             // Initialize Agent object globally.
             Agent.Initialize();
-            
-            
+
+
             // Install event listener for `AddCount.Render()`
             OnCountUpdated.AddListener(UpdateTotalCount);
             OnRankUpdated.AddListener(rs =>
@@ -289,17 +289,17 @@ Instead, we can use `Agent`, a helper class provided by Libplanet for Unity, for
             OnCountUpdated.Invoke((long?) agent.GetState(Agent.instance.Address) ?? 0);
             OnRankUpdated.Invoke((RankingState) agent.GetState(RankingState.Address) ?? new RankingState());
         }
-        
+
         // ...
     }
 ```
 
 `Agent` has the following characteristics.
 
-- `Agent` is [Unity MonoBehavior], so it follows the Unity Object Lifecycle Unity and can also run coroutines.
-- Since it was implemented the singleton pattern, there is only one object (`Agent.instance`) throughout the game process.
+- `Agent` is [Unity MonoBehavior], so it follows the Unity Object Lifecycle and can also run coroutines.
+- Since it was implemented with the singleton pattern, there is only one object (`Agent.instance`) throughout the game process.
 
-So how do we add `AddCount` through this` Agent`?
+So how do we add `AddCount` using this` Agent`?
 
 ```csharp
         // MonoBehaviour.FixedUpdate()
@@ -332,7 +332,7 @@ So how do we add `AddCount` through this` Agent`?
         }
 ```
 
-We create `AddCount` in `Game.FixedUpdate()` which is called periodically by Unity and register it via `Agent.MakeTransaction()`.
+We create `AddCount` in `Game.FixedUpdate()` which is called periodically by Unity, and register it via `Agent.MakeTransaction()`.
 
 
 [Unity Monobehavior]: https://docs.unity3d.com/ScriptReference/MonoBehaviour.html
@@ -348,7 +348,7 @@ The answer is 'We don't have to do anything.'. `Agent` executes a coroutine that
 Configure `Agent`
 -----------------
 
-`Agent` receives various parameters such as a private key, a listen port and a relay server URL for the setting of `BlockChain` and `Swarm <T>`. `Agent` provides a way to specify these parameters through the command-line arguments, or specific JSON file(`clo.json`) in `StreamingAssets` that can be replaced in runtime.
+`Agent` receives various parameters such as a private key, a listening port and a relay server URL for the setting of `BlockChain` and `Swarm <T>`. `Agent` provides a way to specify these parameters through the command-line arguments, or specific JSON file(`clo.json`) in `StreamingAssets` that can be replaced at runtime.
 
 Command-line arguments or `clo.json` options are as follows:
 

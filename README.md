@@ -1,2 +1,2 @@
-# clicker
-clicker game using libplanet
+# Planet Clicker
+Very awesome clicker game (uses libplanet)
