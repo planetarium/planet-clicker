@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using _Script.State;
 using Libplanet.Action;
+using LibplanetUnity;
 using LibplanetUnity.Action;
 using UnityEngine;
 
@@ -36,12 +37,6 @@ namespace _Script.Action
         {
             var states = ctx.PreviousStates;
             var rankingAddress = RankingState.Address;
-            if (ctx.Rehearsal)
-            {
-                states = states.SetState(rankingAddress, MarkChanged);
-                return states.SetState(ctx.Signer, MarkChanged);
-            }
-
             var currentCount = (long?)states.GetState(ctx.Signer)?? 0;
             var nextCount = currentCount + _count;
 
@@ -55,8 +50,18 @@ namespace _Script.Action
 
         public override void Render(IActionContext context, IAccountStateDelta nextStates)
         {
-            Game.OnCountUpdated.Invoke((long?)nextStates.GetState(context.Signer) ?? 0);
-            Game.OnRankUpdated.Invoke((RankingState)nextStates.GetState(RankingState.Address) ?? new RankingState());
+            var agent = Agent.instance;
+            var count = (long?)nextStates.GetState(context.Signer) ?? 0;
+            var rankingState = (RankingState)nextStates.GetState(RankingState.Address) ?? new RankingState();
+
+            agent.RunOnMainThread(() =>
+            {
+                Game.OnCountUpdated.Invoke(count);
+            });
+            agent.RunOnMainThread(() =>
+            {
+                Game.OnRankUpdated.Invoke(rankingState);
+            });
         }
 
         public override void Unrender(IActionContext context, IAccountStateDelta nextStates)

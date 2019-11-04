@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using _Script.Action;
 using _Script.Data;
 using _Script.State;
 using LibplanetUnity;
@@ -9,14 +10,14 @@ using LibplanetUnity.Action;
 using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;
-using _Script.Action;
 using UnityEngine.Events;
-using System.Collections.Concurrent;
 
 namespace _Script
 {
     public class Game : MonoBehaviour
     {
+        public const float TxProcessInterval = 3.0f;
+
         public Text timerText;
         public Text countText;
         public Text addressText;
@@ -28,7 +29,6 @@ namespace _Script
         private long _totalCount = 0;
         private Table<Level> _levelTable;
         private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
-        private ConcurrentQueue<System.Action> _backlog = new ConcurrentQueue<System.Action>();
 
         public class CountUpdated : UnityEvent<long>
         {
@@ -42,55 +42,30 @@ namespace _Script
 
         public static RankUpdated OnRankUpdated = new RankUpdated();
 
-        private void RunOnMainThread(System.Action action)
-        {
-            _backlog.Enqueue(action);
-        }
-
         private void Awake()
         {
             Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-            AgentController.Initialize();
-            var agent = AgentController.Agent;
+
+            Agent.Initialize();
+            var agent = Agent.instance;
             var hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"Address: {hex}";
-            _time = Agent.TxProcessInterval;
+
+            _time = TxProcessInterval;
             SetTimer(_time);
+
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
 
-            StartCoroutine(ProcessBacklog());
-
-            OnCountUpdated.AddListener(count =>
-            {
-                RunOnMainThread(() =>
-                {
-                    UpdateTotalCount(count);
-                });
-            });
+            OnCountUpdated.AddListener(UpdateTotalCount);
             OnRankUpdated.AddListener(rs =>
             {
-                RunOnMainThread(() =>
-                {
-                    StartCoroutine(UpdateRankingBoard(rs));
-                });
+                StartCoroutine(UpdateRankingBoard(rs));
             });
 
-            OnCountUpdated.Invoke((long?) agent.GetState(AgentController.Agent.Address) ?? 0);
+            OnCountUpdated.Invoke((long?) agent.GetState(Agent.instance.Address) ?? 0);
             OnRankUpdated.Invoke((RankingState) agent.GetState(RankingState.Address) ?? new RankingState());
-        }
-
-        private IEnumerator ProcessBacklog()
-        {
-            while(true)
-            {
-                if (_backlog.TryDequeue(out System.Action action))
-                {
-                    action();
-                }
-                yield return new WaitForSeconds(0.1f);
-            }    
         }
 
         private void SetTimer(float time)
@@ -113,7 +88,7 @@ namespace _Script
             }
             else
             {
-                _time = Agent.TxProcessInterval;
+                _time = TxProcessInterval;
                 var actions = new List<ActionBase>();
                 if (click._count > 0)
                 {
@@ -124,7 +99,7 @@ namespace _Script
                 actions.AddRange(_attacks.Select(pair => new SubCount(pair.Key, pair.Value)));
                 if (actions.Any())
                 {
-                    AgentController.Agent.MakeTransaction(actions);
+                    Agent.instance.MakeTransaction(actions);
                 }
                 _attacks = new Dictionary<Address, int>();
 
@@ -157,7 +132,7 @@ namespace _Script
                 var row = go.GetComponent<RankingRow>();
                 var rank = i + 1;
                 row.Set(rank, rankingInfo);
-                if (rankingInfo.Address == AgentController.Agent.Address)
+                if (rankingInfo.Address == Agent.instance.Address)
                 {
                     rankingText.text = $"My Ranking: {rank}";
                 }
