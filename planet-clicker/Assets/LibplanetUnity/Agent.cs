@@ -13,6 +13,7 @@ using UnityEngine;
 using LibplanetUnity.Helper;
 using LibplanetUnity.Action;
 using System.Collections.Concurrent;
+using Bencodex.Types;
 
 namespace LibplanetUnity
 {
@@ -90,7 +91,7 @@ namespace LibplanetUnity
             }
         }
 
-        public object GetState(Address address)
+        public IValue GetState(Address address)
         {
             return _agent.GetState(address);
         }

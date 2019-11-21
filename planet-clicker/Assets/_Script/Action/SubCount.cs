@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using _Script.State;
+using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
+using LibplanetUnity;
 using LibplanetUnity.Action;
 using UnityEngine;
 
@@ -25,17 +27,16 @@ namespace _Script.Action
             _count = count;
         }
 
-        public override IImmutableDictionary<string, object> PlainValue =>
-            new Dictionary<string, object>
-            {
-                ["address"] = _address.ToHex(),
-                ["count"] = _count.ToString(),
-            }.ToImmutableDictionary();
+        public override IValue PlainValue =>
+            Bencodex.Types.Dictionary.Empty
+            .SetItem("count", _count)
+            .SetItem("address", _address.ToByteArray());
 
-        public override void LoadPlainValue(IImmutableDictionary<string, object> plainValue)
+        public override void LoadPlainValue(IValue plainValue)
         {
-            _address = new Address((string)plainValue["address"]);
-            _count = long.Parse(plainValue["count"].ToString());
+            var serialized = (Bencodex.Types.Dictionary)plainValue;
+            _count = (long) ((Integer) serialized["count"]).Value;
+            _address = new Address(((Bencodex.Types.Binary)serialized["address"]).Value);
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
@@ -49,21 +50,41 @@ namespace _Script.Action
                 return states.SetState(_address, MarkChanged);
             }
 
-            var currentCount = (long?)states.GetState(_address) ?? 0;
+            states.TryGetState(_address, out Bencodex.Types.Integer currentCount);
             var nextCount = Math.Max(currentCount - _count, 0);
 
             Debug.Log($"decrease_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = (RankingState) states.GetState(rankingAddress);
+            RankingState rankingState;
+            if (states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict))
+            {
+                rankingState = new RankingState(bdict);
+            }
+            else 
+            {
+                rankingState = new RankingState();
+            }
             rankingState.Update(_address, nextCount);
-            states = states.SetState(rankingAddress, rankingState);
-            return states.SetState(_address, nextCount);
+            states = states.SetState(rankingAddress, rankingState.Serialize());
+            return states.SetState(_address, (Bencodex.Types.Integer)nextCount);
         }
         
-        public override void Render(IActionContext context, IAccountStateDelta nextStates)
+        public override void Render(IActionContext ctx, IAccountStateDelta nextStates)
         {
-            Game.OnCountUpdated.Invoke((long?)nextStates.GetState(context.Signer) ?? 0);
-            Game.OnRankUpdated.Invoke((RankingState)nextStates.GetState(RankingState.Address) ?? new RankingState());
+            var agent = Agent.instance;
+            var count = (long)((Integer)nextStates.GetState(ctx.Signer));
+            var rankingState = new RankingState(
+                (Bencodex.Types.Dictionary)nextStates.GetState(RankingState.Address)
+            );
+
+            agent.RunOnMainThread(() =>
+            {
+                Game.OnCountUpdated.Invoke(count);
+            });
+            agent.RunOnMainThread(() =>
+            {
+                Game.OnRankUpdated.Invoke(rankingState);
+            });
         }
 
         public override void Unrender(IActionContext context, IAccountStateDelta nextStates)

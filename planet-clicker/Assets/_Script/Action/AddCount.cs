@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using _Script.State;
+using Bencodex.Types;
 using Libplanet.Action;
 using LibplanetUnity;
 using LibplanetUnity.Action;
@@ -22,37 +23,45 @@ namespace _Script.Action
             _count = count;
         }
 
-        public override IImmutableDictionary<string, object> PlainValue =>
-            new Dictionary<string, object>
-            {
-                ["count"] = _count.ToString(),
-            }.ToImmutableDictionary();
+        public override IValue PlainValue =>
+            Bencodex.Types.Dictionary.Empty.SetItem("count", _count);
 
-        public override void LoadPlainValue(IImmutableDictionary<string, object> plainValue)
+        public override void LoadPlainValue(IValue plainValue)
         {
-            _count = long.Parse(plainValue["count"].ToString());
+            var serialized = (Bencodex.Types.Dictionary)plainValue;
+            _count = (long) ((Integer) serialized["count"]).Value;
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
         {
             var states = ctx.PreviousStates;
             var rankingAddress = RankingState.Address;
-            var currentCount = (long?)states.GetState(ctx.Signer)?? 0;
+            states.TryGetState(ctx.Signer, out Bencodex.Types.Integer currentCount);
             var nextCount = currentCount + _count;
-
+            
             Debug.Log($"store_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = (RankingState) states.GetState(rankingAddress) ?? new RankingState();
+            RankingState rankingState;
+            if (states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict))
+            {
+                rankingState = new RankingState(bdict);
+            }
+            else 
+            {
+                rankingState = new RankingState();
+            }
             rankingState.Update(ctx.Signer, nextCount);
-            states = states.SetState(rankingAddress, rankingState);
-            return states.SetState(ctx.Signer, nextCount);
+            states = states.SetState(rankingAddress, rankingState.Serialize());
+            return states.SetState(ctx.Signer, (Bencodex.Types.Integer)nextCount);
         }
 
-        public override void Render(IActionContext context, IAccountStateDelta nextStates)
+        public override void Render(IActionContext ctx, IAccountStateDelta nextStates)
         {
             var agent = Agent.instance;
-            var count = (long?)nextStates.GetState(context.Signer) ?? 0;
-            var rankingState = (RankingState)nextStates.GetState(RankingState.Address) ?? new RankingState();
+            var count = (long)((Integer)nextStates.GetState(ctx.Signer));
+            var rankingState = new RankingState(
+                (Bencodex.Types.Dictionary)nextStates.GetState(RankingState.Address)
+            );
 
             agent.RunOnMainThread(() =>
             {

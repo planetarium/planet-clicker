@@ -64,8 +64,17 @@ namespace _Script
                 StartCoroutine(UpdateRankingBoard(rs));
             });
 
-            OnCountUpdated.Invoke((long?) agent.GetState(Agent.instance.Address) ?? 0);
-            OnRankUpdated.Invoke((RankingState) agent.GetState(RankingState.Address) ?? new RankingState());
+            var initialCount = agent.GetState(Agent.instance.Address);
+            var initailRanking = agent.GetState(RankingState.Address);
+            if (initialCount is Bencodex.Types.Integer count) 
+            {
+                OnCountUpdated.Invoke(count);
+            }
+
+            if (initailRanking is Bencodex.Types.Dictionary bdict)
+            {
+                OnRankUpdated.Invoke(new RankingState(bdict));
+            }
         }
 
         private void SetTimer(float time)
