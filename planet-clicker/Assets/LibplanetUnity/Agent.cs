@@ -260,16 +260,12 @@ namespace LibplanetUnity
 
         private IBlockPolicy<PolymorphicAction<ActionBase>> GetPolicy()
         {
-# if UNITY_EDITOR
-            return new DebugPolicy();
-# else
             return new BlockPolicy<PolymorphicAction<ActionBase>>(
                 null,
                 BlockInterval,
                 100000,
                 2048
             );
-#endif
         }
 
         public IEnumerator CoSwarmRunner()
