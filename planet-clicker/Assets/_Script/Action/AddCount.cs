@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using _Script.State;
 using Bencodex.Types;
 using Libplanet.Action;
@@ -9,7 +7,7 @@ using UnityEngine;
 
 namespace _Script.Action
 {
-    [ActionType("store_count")]
+    [ActionType("add_count")]
     public class AddCount : ActionBase
     {
         private long _count;
@@ -29,7 +27,7 @@ namespace _Script.Action
         public override void LoadPlainValue(IValue plainValue)
         {
             var serialized = (Bencodex.Types.Dictionary)plainValue;
-            _count = (long) ((Integer) serialized["count"]).Value;
+            _count = (long)((Integer)serialized["count"]).Value;
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
@@ -38,18 +36,13 @@ namespace _Script.Action
             var rankingAddress = RankingState.Address;
             states.TryGetState(ctx.Signer, out Bencodex.Types.Integer currentCount);
             var nextCount = currentCount + _count;
-            
-            Debug.Log($"store_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState;
-            if (states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict))
-            {
-                rankingState = new RankingState(bdict);
-            }
-            else 
-            {
-                rankingState = new RankingState();
-            }
+            Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
+
+            var rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict)
+                ? new RankingState(bdict)
+                : new RankingState();
+
             rankingState.Update(ctx.Signer, nextCount);
             states = states.SetState(rankingAddress, rankingState.Serialize());
             return states.SetState(ctx.Signer, (Bencodex.Types.Integer)nextCount);
@@ -58,7 +51,7 @@ namespace _Script.Action
         public override void Render(IActionContext ctx, IAccountStateDelta nextStates)
         {
             var agent = Agent.instance;
-            var count = (long)((Integer)nextStates.GetState(ctx.Signer));
+            var count = (Integer)nextStates.GetState(ctx.Signer);
             var rankingState = new RankingState(
                 (Bencodex.Types.Dictionary)nextStates.GetState(RankingState.Address)
             );

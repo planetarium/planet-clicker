@@ -38,7 +38,7 @@ namespace _Script.State
         {
             _map = bdict.ToDictionary(
                 pair => new Address(pair.Key.EncodeAsByteArray()),
-                pair => (long)((Bencodex.Types.Integer)pair.Value)
+                pair => (long)(Bencodex.Types.Integer)pair.Value
             );
         }
 
@@ -54,7 +54,7 @@ namespace _Script.State
                 .OrderByDescending(info => info.Count);
         }
 
-        public IValue Serialize() 
+        public IValue Serialize()
         {
             return new Bencodex.Types.Dictionary(
                 _map.Select(pair => new KeyValuePair<IKey, IValue>(

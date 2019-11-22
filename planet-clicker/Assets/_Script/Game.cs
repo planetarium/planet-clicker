@@ -16,7 +16,7 @@ namespace _Script
 {
     public class Game : MonoBehaviour
     {
-        public const float TxProcessInterval = 3.0f;
+        private const float TxProcessInterval = 3.0f;
 
         public Text timerText;
         public Text countText;
@@ -65,13 +65,13 @@ namespace _Script
             });
 
             var initialCount = agent.GetState(Agent.instance.Address);
-            var initailRanking = agent.GetState(RankingState.Address);
-            if (initialCount is Bencodex.Types.Integer count) 
+            var initialRanking = agent.GetState(RankingState.Address);
+            if (initialCount is Bencodex.Types.Integer count)
             {
                 OnCountUpdated.Invoke(count);
             }
 
-            if (initailRanking is Bencodex.Types.Dictionary bdict)
+            if (initialRanking is Bencodex.Types.Dictionary bdict)
             {
                 OnRankUpdated.Invoke(new RankingState(bdict));
             }
@@ -159,6 +159,7 @@ namespace _Script
         public void Attack(RankingRow row)
         {
             var address = row.address;
+
             if (_attacks.TryGetValue(address, out _))
             {
                 _attacks[address] += 1;
