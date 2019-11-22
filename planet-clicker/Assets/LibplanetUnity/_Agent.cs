@@ -23,33 +23,8 @@ namespace LibplanetUnity
 {
     public class _Agent : IDisposable
     {
-        private class DebugPolicy : IBlockPolicy<PolymorphicAction<ActionBase>>
-        {
-            public DebugPolicy()
-            {
-            }
-
-            public IAction BlockAction { get; }
-
-            public InvalidBlockException ValidateNextBlock(
-                BlockChain<PolymorphicAction<ActionBase>> blocks, 
-                Block<PolymorphicAction<ActionBase>> nextBlock
-            )
-            {
-                return null;
-            }
-
-            public long GetNextBlockDifficulty(BlockChain<PolymorphicAction<ActionBase>> blocks)
-            {
-                Thread.Sleep(SleepInterval);
-                return blocks.Tip is null ? 0 : 1;
-            }
-        }
-
         private const int SwarmDialTimeout = 5000;
         private const int SwarmLinger = 1 * 1000;
-
-        private static readonly TimeSpan SleepInterval = TimeSpan.FromSeconds(3);
 
         private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
 
