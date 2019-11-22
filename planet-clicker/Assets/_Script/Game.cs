@@ -50,7 +50,7 @@ namespace _Script
             Agent.Initialize();
             var agent = Agent.instance;
             var hex = agent.Address.ToHex().Substring(0, 4);
-            addressText.text = $"Address: {hex}";
+            addressText.text = $"My Address: {hex}";
 
             _time = TxProcessInterval;
             SetTimer(_time);
@@ -79,7 +79,7 @@ namespace _Script
 
         private void SetTimer(float time)
         {
-            timerText.text = Mathf.Ceil(time).ToString(CultureInfo.CurrentCulture);
+            timerText.text = $"Remain Time: {Mathf.Ceil(time).ToString(CultureInfo.CurrentCulture)} sec";
         }
 
         private void ResetTimer()
@@ -99,9 +99,9 @@ namespace _Script
             {
                 _time = TxProcessInterval;
                 var actions = new List<ActionBase>();
-                if (click._count > 0)
+                if (click.count > 0)
                 {
-                    var action = new AddCount(click._count);
+                    var action = new AddCount(click.count);
                     actions.Add(action);
                 }
 
@@ -121,7 +121,7 @@ namespace _Script
             _totalCount = count;
             var selected = _levelTable.Values.FirstOrDefault(i => i.exp > _totalCount) ?? _levelTable.Values.Last();
             click.Set(selected.id);
-            countText.text = _totalCount.ToString();
+            countText.text = $"Total Count: {_totalCount.ToString()}";
         }
 
         private IEnumerator UpdateRankingBoard(RankingState rankingState)

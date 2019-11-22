@@ -5,8 +5,7 @@ namespace _Script
 {
     public class Click : MonoBehaviour
     {
-        public int _count;
-        public Text text;
+        public int count;
         public Image image;
 
         private void Awake()
@@ -17,14 +16,12 @@ namespace _Script
 
         public void Plus()
         {
-            _count++;
-            text.text = _count.ToString();
+            count++;
         }
 
         public void ResetCount()
         {
-            _count = 0;
-            text.text = _count.ToString();
+            count = 0;
         }
 
         public void Set(int id)
