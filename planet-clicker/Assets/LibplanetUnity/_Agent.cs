@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncIO;
+using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
 using Libplanet.Blockchain;
@@ -30,15 +31,18 @@ namespace LibplanetUnity
 
             public IAction BlockAction { get; }
 
-            public InvalidBlockException ValidateNextBlock(IReadOnlyList<Block<PolymorphicAction<ActionBase>>> blocks, Block<PolymorphicAction<ActionBase>> nextBlock)
+            public InvalidBlockException ValidateNextBlock(
+                BlockChain<PolymorphicAction<ActionBase>> blocks, 
+                Block<PolymorphicAction<ActionBase>> nextBlock
+            )
             {
                 return null;
             }
 
-            public long GetNextBlockDifficulty(IReadOnlyList<Block<PolymorphicAction<ActionBase>>> blocks)
+            public long GetNextBlockDifficulty(BlockChain<PolymorphicAction<ActionBase>> blocks)
             {
                 Thread.Sleep(SleepInterval);
-                return blocks.Any() ? 1 : 0;
+                return blocks.Tip is null ? 0 : 1;
             }
         }
 
@@ -51,7 +55,7 @@ namespace LibplanetUnity
 
         protected readonly BlockChain<PolymorphicAction<ActionBase>> _blocks;
         private readonly Swarm<PolymorphicAction<ActionBase>> _swarm;
-        protected LiteDBStore _store;
+        protected DefaultStore _store;
         private readonly ImmutableList<Peer> _seedPeers;
         private readonly IImmutableSet<Address> _trustedPeers;
 
@@ -87,14 +91,12 @@ namespace LibplanetUnity
             var policy = GetPolicy();
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
-            _store = new LiteDBStore($"{path}.ldb", flush: false);
+            _store = new DefaultStore(path, flush: false);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(policy, _store);
             _swarm = new Swarm<PolymorphicAction<ActionBase>>(
                 _blocks,
                 privateKey,
                 appProtocolVersion: 1,
-                millisecondsDialTimeout: SwarmDialTimeout,
-                millisecondsLinger: SwarmLinger,
                 host: host,
                 listenPort: port,
                 iceServers: iceServers,
@@ -156,6 +158,7 @@ namespace LibplanetUnity
             var swarmPreloadTask = Task.Run(async () =>
             {
                 await _swarm.PreloadAsync(
+                    TimeSpan.FromMilliseconds(SwarmDialTimeout),
                     new Progress<PreloadState>(state =>
                         PreloadProcessed?.Invoke(this, state)
                     ),
@@ -226,10 +229,15 @@ namespace LibplanetUnity
             {
                 var txs = new HashSet<Transaction<PolymorphicAction<ActionBase>>>();
 
-                var task = Task.Run(() =>
+                var task = Task.Run(async () =>
                 {
-                    var block = _blocks.MineBlock(Address);
-                    _swarm.BroadcastBlocks(new[] {block});
+                    var block = await _blocks.MineBlock(Address);
+                    
+                    if (_swarm?.Running ?? false)
+                    {
+                        _swarm.BroadcastBlocks(new[] {block});
+                    }
+                    
                     return block;
                 });
                 yield return new WaitUntil(() => task.IsCompleted);
@@ -250,7 +258,7 @@ namespace LibplanetUnity
                         {
                             if (ex is InvalidTxNonceException invalidTxNonceException)
                             {
-                                var invalidNonceTx = _blocks.Transactions[invalidTxNonceException.TxId];
+                                var invalidNonceTx = _store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxNonceException.TxId);
 
                                 if (invalidNonceTx.Signer == Address)
                                 {
@@ -262,7 +270,7 @@ namespace LibplanetUnity
                             if (ex is InvalidTxException invalidTxException)
                             {
                                 Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_blocks.Transactions[invalidTxException.TxId]);
+                                invalidTxs.Add(_store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxException.TxId));
                             }
 
                             Debug.LogException(ex);
@@ -285,10 +293,10 @@ namespace LibplanetUnity
         }
 
 
-        public object GetState(Address address)
+        public IValue GetState(Address address)
         {
-            AddressStateMap states = _blocks.GetStates(new[] {address});
-            states.TryGetValue(address, out object value);
+            AddressStateMap states = _blocks.GetState(address);
+            states.TryGetValue(address, out var value);
             return value;
         }
 
@@ -312,7 +320,7 @@ namespace LibplanetUnity
             var polymorphicActions = actions.ToArray();
             Debug.LogFormat("Make Transaction with Actions: `{0}`",
                 string.Join(",", polymorphicActions.Select(i => i.InnerAction)));
-            return _blocks.MakeTransaction(PrivateKey, polymorphicActions, broadcast: broadcast);
+            return _blocks.MakeTransaction(PrivateKey, polymorphicActions);
         }
     }
 }

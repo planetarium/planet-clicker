@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Bencodex.Types;
 using Libplanet;
 
 namespace _Script.State
@@ -33,6 +34,14 @@ namespace _Script.State
             _map = new Dictionary<Address, long>();
         }
 
+        public RankingState(Bencodex.Types.Dictionary bdict) : base(Address)
+        {
+            _map = bdict.ToDictionary(
+                pair => new Address(pair.Key.EncodeAsByteArray()),
+                pair => (long)((Bencodex.Types.Integer)pair.Value)
+            );
+        }
+
         public void Update(Address address, long count)
         {
             _map[address] = count;
@@ -43,6 +52,16 @@ namespace _Script.State
             return _map
                 .Select(pair => new RankingInfo(pair.Key, pair.Value))
                 .OrderByDescending(info => info.Count);
+        }
+
+        public IValue Serialize() 
+        {
+            return new Bencodex.Types.Dictionary(
+                _map.Select(pair => new KeyValuePair<IKey, IValue>(
+                    new Bencodex.Types.Binary(pair.Key.ToByteArray()),
+                    new Bencodex.Types.Integer(pair.Value)
+                ))
+            );
         }
     }
 }
