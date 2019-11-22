@@ -1,7 +1,6 @@
 using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
-using UnityEngine;
 
 namespace LibplanetUnity.Action
 {

@@ -31,42 +31,32 @@ namespace LibplanetUnity
 
         private const int SwarmDialTimeout = 5000;
 
-        private const int SwarmLinger = 1 * 1000;
+        private const string PlayerPrefsKeyOfAgentPrivateKey = "private_key_agent";
 
-        public const string PlayerPrefsKeyOfAgentPrivateKey = "private_key_agent";
-#if UNITY_EDITOR
-        private const string AgentStoreDirName = "planetarium_dev";
-#else
         private const string AgentStoreDirName = "planetarium";
-#endif
 
         private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
+
         private const string PeersFileName = "peers.dat";
+
         private const string IceServersFileName = "ice_servers.dat";
 
         private static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
 
         private static IEnumerator _miner;
+
         private static IEnumerator _swarmRunner;
 
-        private ConcurrentQueue<System.Action> _actions = new ConcurrentQueue<System.Action>();
-        public long BlockIndex => _blocks?.Tip?.Index ?? 0;
+        private readonly ConcurrentQueue<System.Action> _actions = new ConcurrentQueue<System.Action>();
+
         private PrivateKey PrivateKey { get; set; }
-        public Address Address { get; set; }
-
-        public event EventHandler BootstrapStarted;
-        public event EventHandler PreloadStarted;
-        public event EventHandler<PreloadState> PreloadProcessed;
-        public event EventHandler PreloadEnded;
-
-        public bool SyncSucceed { get; private set; }
 
         private BlockChain<PolymorphicAction<ActionBase>> _blocks;
 
         private Swarm<PolymorphicAction<ActionBase>> _swarm;
 
-        protected DefaultStore _store;
+        private DefaultStore _store;
 
         private ImmutableList<Peer> _seedPeers;
 
@@ -74,9 +64,24 @@ namespace LibplanetUnity
 
         private CancellationTokenSource _cancellationTokenSource;
 
+        public Address Address { get; private set; }
+
         public static void Initialize()
         {
             instance.InitAgent();
+        }
+
+        public IValue GetState(Address address)
+        {
+            AddressStateMap states = _blocks.GetState(address);
+            states.TryGetValue(address, out var value);
+            return value;
+        }
+
+        public void MakeTransaction(IEnumerable<ActionBase> gameActions)
+        {
+            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>) gameAction).ToList();
+            Task.Run(() => MakeTransaction(actions, true));
         }
 
         private void InitAgent()
@@ -97,11 +102,15 @@ namespace LibplanetUnity
             StartNullableCoroutine(_miner);
         }
 
-        public void Init(PrivateKey privateKey, string path, IEnumerable<Peer> peers,
+        private void Init(PrivateKey privateKey, string path, IEnumerable<Peer> peers,
             IEnumerable<IceServer> iceServers, string host, int? port)
         {
             Debug.Log(path);
-            var policy = GetPolicy();
+            var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
+                null,
+                BlockInterval,
+                100000,
+                2048);
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
             _store = new DefaultStore(path, flush: false);
@@ -116,16 +125,12 @@ namespace LibplanetUnity
                 differentVersionPeerEncountered: DifferentAppProtocolVersionPeerEncountered);
 
             _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
-            // Init SyncSucceed
-            SyncSucceed = true;
-
-            // FIXME: Trusted peers should be configurable
             _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
             _cancellationTokenSource = new CancellationTokenSource();
 
         }
 
-        public static Options GetOptions(string jsonPath)
+        private static Options GetOptions(string jsonPath)
         {
             if (File.Exists(jsonPath))
             {
@@ -137,13 +142,6 @@ namespace LibplanetUnity
             {
                 return CommnadLineParser.GetCommandLineOptions() ?? new Options();
             }
-        }
-
-        public IValue GetState(Address address)
-        {
-            AddressStateMap states = _blocks.GetState(address);
-            states.TryGetValue(address, out var value);
-            return value;
         }
 
         public void RunOnMainThread(System.Action action)
@@ -191,24 +189,21 @@ namespace LibplanetUnity
             string[] tokens = peerInfo.Split(',');
             var pubKey = new PublicKey(ByteUtil.ParseHex(tokens[0]));
             string host = tokens[1];
-            int port = int.Parse(tokens[2]);
+            var port = int.Parse(tokens[2]);
 
             return new BoundPeer(pubKey, new DnsEndPoint(host, port), 0);
         }
 
         private static IEnumerable<string> LoadConfigLines(string fileName)
         {
-            string userPath = Path.Combine(
-                Application.persistentDataPath,
-                fileName
-            );
+            string userPath = Path.Combine(Application.persistentDataPath, fileName);
             string content;
-            
+
             if (File.Exists(userPath))
             {
                 content = File.ReadAllText(userPath);
             }
-            else 
+            else
             {
                 string assetName = Path.GetFileNameWithoutExtension(fileName);
                 content = Resources.Load<TextAsset>($"Config/{assetName}").text;
@@ -225,7 +220,7 @@ namespace LibplanetUnity
 
         private static IEnumerable<IceServer> LoadIceServers()
         {
-            foreach (string line in LoadConfigLines(IceServersFileName)) 
+            foreach (string line in LoadConfigLines(IceServersFileName))
             {
                 var uri = new Uri(line);
                 string[] userInfo = uri.UserInfo.Split(':');
@@ -258,19 +253,8 @@ namespace LibplanetUnity
             return ReferenceEquals(routine, null) ? null : StartCoroutine(routine);
         }
 
-        private IBlockPolicy<PolymorphicAction<ActionBase>> GetPolicy()
+        private IEnumerator CoSwarmRunner()
         {
-            return new BlockPolicy<PolymorphicAction<ActionBase>>(
-                null,
-                BlockInterval,
-                100000,
-                2048
-            );
-        }
-
-        public IEnumerator CoSwarmRunner()
-        {
-            BootstrapStarted?.Invoke(this, null);
             var bootstrapTask = Task.Run(async () =>
             {
                 try
@@ -289,7 +273,6 @@ namespace LibplanetUnity
 
             yield return new WaitUntil(() => bootstrapTask.IsCompleted);
 
-            PreloadStarted?.Invoke(this, null);
             Debug.Log("PreloadingStarted event was invoked");
 
             DateTimeOffset started = DateTimeOffset.UtcNow;
@@ -300,9 +283,7 @@ namespace LibplanetUnity
             {
                 await _swarm.PreloadAsync(
                     TimeSpan.FromMilliseconds(SwarmDialTimeout),
-                    new Progress<PreloadState>(state =>
-                        PreloadProcessed?.Invoke(this, state)
-                    ),
+                    null,
                     trustedStateValidators: _trustedPeers,
                     cancellationToken: _cancellationTokenSource.Token
                 );
@@ -326,9 +307,6 @@ namespace LibplanetUnity
                 ended - started,
                 index - existingBlocks
             );
-
-
-            PreloadEnded?.Invoke(this, null);
 
             var swarmStartTask = Task.Run(async () =>
             {
@@ -368,7 +346,6 @@ namespace LibplanetUnity
         {
             Debug.LogWarningFormat("Different Version Encountered Expected: {0} Actual : {1}",
                 e.ExpectedVersion, e.ActualVersion);
-            SyncSucceed = false;
         }
 
         private IEnumerator CoProcessActions()
@@ -383,7 +360,7 @@ namespace LibplanetUnity
             }
         }
 
-        public static bool WantsToQuit()
+        private static bool WantsToQuit()
         {
             return true;
         }
@@ -392,12 +369,6 @@ namespace LibplanetUnity
         private static void RunOnStart()
         {
             Application.wantsToQuit += WantsToQuit;
-        }
-
-        public void MakeTransaction(IEnumerable<ActionBase> gameActions)
-        {
-            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>) gameAction).ToList();
-            Task.Run(() => MakeTransaction(actions, true));
         }
 
         private Transaction<PolymorphicAction<ActionBase>> MakeTransaction(
@@ -409,7 +380,7 @@ namespace LibplanetUnity
             return _blocks.MakeTransaction(PrivateKey, polymorphicActions);
         }
 
-        public IEnumerator CoMiner()
+        private IEnumerator CoMiner()
         {
             while (true)
             {

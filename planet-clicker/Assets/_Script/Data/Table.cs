@@ -7,46 +7,15 @@ using UnityEngine;
 
 namespace _Script.Data
 {
-    [Serializable]
-    public class Row
+    public class Table<TRow> : Dictionary<string, TRow>, ITable
+        where TRow : new()
     {
-    }
-
-
-    public interface ITable
-    {
-        void Load(string filename);
-    }
-
-
-    public class Table<TRow> : Dictionary<string, TRow>, ITable where TRow : new()
-    {
-        public Dictionary<string, Dictionary<object, List<string>>> Index { get; set; }
-
-        public TRow this[int key]
-        {
-            get
-            {
-                return this[key.ToString()];
-            }
-        }
-
-        public bool ContainsKey(int key)
-        {
-            return ContainsKey(key.ToString());
-        }
-
-        public bool TryGetValue(int key, out TRow value)
-        {
-            return TryGetValue(key.ToString(), out value);
-        }
-
         public void Load(string text)
         {
             var header = new List<string>();
 
             var lines = text.Split('\n').ToImmutableArray();
-            foreach (string line in lines)
+            foreach (var line in lines)
             {
                 if (lines.IndexOf(line) == 0)
                 {
@@ -94,10 +63,9 @@ namespace _Script.Data
                     }
                     if (fieldType == typeof(int) || fieldType.IsEnum)
                     {
-                        if (string.IsNullOrEmpty(value))
-                            fieldInfo.SetValue(row, 0);
-                        else
-                            fieldInfo.SetValue(row, int.Parse(value));
+                        fieldInfo.SetValue(row, string.IsNullOrEmpty(value)
+                            ? 0
+                            : int.Parse(value));
                     }
                     else if (fieldType == typeof(long))
                     {
@@ -108,10 +76,9 @@ namespace _Script.Data
                     }
                     else if (fieldType == typeof(float))
                     {
-                        if (string.IsNullOrEmpty(value))
-                            fieldInfo.SetValue(row, 0.0f);
-                        else
-                            fieldInfo.SetValue(row, float.Parse(value));
+                        fieldInfo.SetValue(row, string.IsNullOrEmpty(value)
+                            ? 0.0f
+                            : float.Parse(value));
                     }
                     else if (fieldType == typeof(string))
                     {
@@ -125,11 +92,6 @@ namespace _Script.Data
                     {
                         fieldInfo.SetValue(row, string.IsNullOrEmpty(value) ? 0m : decimal.Parse(value));
                     }
-                    else
-                    {
-                        continue;
-                    }
-                    index++;
                 }
 
                 try
