@@ -138,6 +138,11 @@ namespace _Script
             {
                 var rankingInfo = ranking[i];
                 var go = Instantiate(rankingRow, rankingBoard.content.transform);
+                var bg = go.GetComponent<Image>();
+                if (i % 2 == 1)
+                {
+                    bg.enabled = false;
+                }
                 var row = go.GetComponent<RankingRow>();
                 var rank = i + 1;
                 row.Set(rank, rankingInfo);
