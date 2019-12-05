@@ -1,6 +1,6 @@
 # Planet Clicker
 
-Very awesome clicker game (uses libplanet)
+Decentralized clicker game on Libplanet
 
 ### Dependecies
 
