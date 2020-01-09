@@ -22,6 +22,7 @@ using Libplanet.Blockchain;
 using Libplanet.Blockchain.Policies;
 using Libplanet.Store;
 using Libplanet.Tx;
+using Libplanet.Blocks;
 
 namespace LibplanetUnity
 {
@@ -36,6 +37,8 @@ namespace LibplanetUnity
         private const string AgentStoreDirName = "planetarium";
 
         private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
+
+        private static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
 
         private const string PeersFileName = "peers.dat";
 
@@ -73,9 +76,7 @@ namespace LibplanetUnity
 
         public IValue GetState(Address address)
         {
-            AddressStateMap states = _blocks.GetState(address);
-            states.TryGetValue(address, out var value);
-            return value;
+            return _blocks.GetState(address);
         }
 
         public void MakeTransaction(IEnumerable<ActionBase> gameActions)
@@ -105,7 +106,6 @@ namespace LibplanetUnity
         private void Init(PrivateKey privateKey, string path, IEnumerable<Peer> peers,
             IEnumerable<IceServer> iceServers, string host, int? port)
         {
-            Debug.Log(path);
             var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
                 null,
                 BlockInterval,
@@ -114,7 +114,15 @@ namespace LibplanetUnity
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
             _store = new DefaultStore(path, flush: false);
-            _blocks = new BlockChain<PolymorphicAction<ActionBase>>(policy, _store);
+            Block<PolymorphicAction<ActionBase>> genesis = 
+                Block<PolymorphicAction<ActionBase>>.FromBencodex(
+                    File.ReadAllBytes(GenesisBlockPath)
+                );
+            _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
+                policy, 
+                _store,
+                genesis
+            );
             _swarm = new Swarm<PolymorphicAction<ActionBase>>(
                 _blocks,
                 privateKey,
@@ -236,6 +244,7 @@ namespace LibplanetUnity
             NetMQConfig.Cleanup(false);
 
             base.OnDestroy();
+            _store.Dispose();
         }
 
         #endregion
@@ -263,7 +272,8 @@ namespace LibplanetUnity
                         _seedPeers,
                         5000,
                         5000,
-                        _cancellationTokenSource.Token);
+                        cancellationToken: _cancellationTokenSource.Token
+                    );
                 }
                 catch (Exception e)
                 {
