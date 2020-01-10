@@ -350,7 +350,7 @@ Genesis Block
 
 In order for `Agent` to initialize `BlockChain<T>`, a special block called 'genesis' is required. The genesis block is the first block shared by all nodes in the network at the code level. Shared genesis block allows nodes using Libplanet to determine if they belong to the correct network and can also set up an initial state.
 
-To do this, `Agent` reads a file named` genesis` in [Unity Streaming Assets], parses it into [Bencodex] format, and uses it as the genesis block automatically.
+To do this, `Agent` reads a file named `genesis` in [Unity Streaming Assets], parses it into [Bencodex] format, and uses it as the genesis block automatically.
 
 
 [Unity Streaming Assets]: https://docs.unity3d.com/Manual/StreamingAssets.html
