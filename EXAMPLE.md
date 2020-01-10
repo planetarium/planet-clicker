@@ -345,10 +345,22 @@ In order for `AddCount` to be calculated and reflected in the state and game, it
 The answer is 'We don't have to do anything.'. `Agent` executes a coroutine that creates a block, including the transaction added automatically when it is initialized.
 
 
+Genesis Block
+-------------
+
+In order for `Agent` to initialize `BlockChain<T>`, a special block called 'genesis' is required. The genesis block is the first block shared by all nodes in the network at the code level. Shared genesis block allows nodes using Libplanet to determine if they belong to the correct network and can also set up an initial state.
+
+To do this, `Agent` reads a file named `genesis` in [Unity Streaming Assets], parses it into [Bencodex] format, and uses it as the genesis block automatically.
+
+
+[Unity Streaming Assets]: https://docs.unity3d.com/Manual/StreamingAssets.html
+[Bencodex]: https://github.com/planetarium/bencodex
+
+
 Configure `Agent`
 -----------------
 
-`Agent` receives various parameters such as a private key, a listening port and a relay server URL for the setting of `BlockChain` and `Swarm <T>`. `Agent` provides a way to specify these parameters through the command-line arguments, or specific JSON file(`clo.json`) in `StreamingAssets` that can be replaced at runtime.
+`Agent` receives various parameters such as a private key, a listening port and a relay server URL for the setting of `BlockChain<T>` and `Swarm<T>`. `Agent` provides a way to specify these parameters through the command-line arguments, or specific JSON file(`clo.json`) in `StreamingAssets` that can be replaced at runtime.
 
 Command-line arguments or `clo.json` options are as follows:
 
