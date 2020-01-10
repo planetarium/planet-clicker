@@ -40,10 +40,6 @@ namespace LibplanetUnity
 
         private static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
 
-        private const string PeersFileName = "peers.dat";
-
-        private const string IceServersFileName = "ice_servers.dat";
-
         private static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
 
@@ -89,9 +85,9 @@ namespace LibplanetUnity
         {
             var options = GetOptions(CommandLineOptionsJsonPath);
             var privateKey = GetPrivateKey(options);
-            var peers = GetPeers(options);
-            var iceServers = GetIceServers();
-            var host = GetHost(options);
+            var peers = options.Peers.Select(LoadPeer).ToImmutableList();
+            var iceServers = options.IceServers.Select(LoadIceServer).ToImmutableList();
+            var host = options.Host;
             int? port = options.Port;
             var storagePath = options.StoragePath ?? DefaultStoragePath;
 
@@ -123,19 +119,23 @@ namespace LibplanetUnity
                 _store,
                 genesis
             );
-            _swarm = new Swarm<PolymorphicAction<ActionBase>>(
-                _blocks,
-                privateKey,
-                appProtocolVersion: 1,
-                host: host,
-                listenPort: port,
-                iceServers: iceServers,
-                differentVersionPeerEncountered: DifferentAppProtocolVersionPeerEncountered);
 
-            _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
-            _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
+            if (!(host is null) || iceServers.Any()) 
+            {
+                _swarm = new Swarm<PolymorphicAction<ActionBase>>(
+                    _blocks,
+                    privateKey,
+                    appProtocolVersion: 1,
+                    host: host,
+                    listenPort: port,
+                    iceServers: iceServers,
+                    differentVersionPeerEncountered: DifferentAppProtocolVersionPeerEncountered
+                );
+                
+                _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
+                _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
+            }
             _cancellationTokenSource = new CancellationTokenSource();
-
         }
 
         private static Options GetOptions(string jsonPath)
@@ -175,23 +175,6 @@ namespace LibplanetUnity
             return privateKey;
         }
 
-        private static IEnumerable<Peer> GetPeers(Options options)
-        {
-            return options.Peers?.Any() ?? false
-                ? options.Peers.Select(LoadPeer)
-                : LoadConfigLines(PeersFileName).Select(LoadPeer);
-        }
-
-        private static IEnumerable<IceServer> GetIceServers()
-        {
-            return LoadIceServers();
-        }
-
-        private static string GetHost(Options options)
-        {
-            return options.Host;
-        }
-
         private static BoundPeer LoadPeer(string peerInfo)
         {
             string[] tokens = peerInfo.Split(',');
@@ -202,39 +185,12 @@ namespace LibplanetUnity
             return new BoundPeer(pubKey, new DnsEndPoint(host, port), 0);
         }
 
-        private static IEnumerable<string> LoadConfigLines(string fileName)
+        private static IceServer LoadIceServer(string iceServerInfo)
         {
-            string userPath = Path.Combine(Application.persistentDataPath, fileName);
-            string content;
+            var uri = new Uri(iceServerInfo);
+            string[] userInfo = uri.UserInfo.Split(':');
 
-            if (File.Exists(userPath))
-            {
-                content = File.ReadAllText(userPath);
-            }
-            else
-            {
-                string assetName = Path.GetFileNameWithoutExtension(fileName);
-                content = Resources.Load<TextAsset>($"Config/{assetName}").text;
-            }
-
-            foreach (var line in Regex.Split(content, "\n|\r|\r\n"))
-            {
-                if (!string.IsNullOrEmpty(line.Trim()))
-                {
-                    yield return line;
-                }
-            }
-        }
-
-        private static IEnumerable<IceServer> LoadIceServers()
-        {
-            foreach (string line in LoadConfigLines(IceServersFileName))
-            {
-                var uri = new Uri(line);
-                string[] userInfo = uri.UserInfo.Split(':');
-
-                yield return new IceServer(new[] {uri}, userInfo[0], userInfo[1]);
-            }
+            return new IceServer(new[] {uri}, userInfo[0], userInfo[1]);
         }
 
         #region Mono
@@ -264,6 +220,11 @@ namespace LibplanetUnity
 
         private IEnumerator CoSwarmRunner()
         {
+            if (_swarm is null)
+            {
+                yield break;
+            }
+            
             var bootstrapTask = Task.Run(async () =>
             {
                 try
