@@ -19,6 +19,8 @@ namespace LibplanetUnity.Helper
             public bool noMiner;
 
             public string[] peers = new string[]{ };
+            
+            public string[] iceServers = new string[]{ };
 
             public string storagePath;
 
@@ -36,6 +38,16 @@ namespace LibplanetUnity.Helper
 
             [Option("peer", Required = false, HelpText = "Peers to add. (Usage: --peer peerA peerB ...)")]
             public IEnumerable<string> Peers { get => peers; set => peers = value.ToArray(); }
+
+            [Option("ice-servers", Required = false, HelpText = "STUN/TURN servers to use. (Usage: --ice-servers serverA serverB ...)")]
+            public IEnumerable<string> IceServers
+            {
+                get => iceServers;
+                set
+                {
+                    iceServers = value.ToArray();
+                }
+            }
 
             [Option("storage-path", Required = false, HelpText = "The path to store game data.")]
             public string StoragePath { get => storagePath; set => storagePath = value; }

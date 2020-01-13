@@ -364,12 +364,13 @@ Configure `Agent`
 
 Command-line arguments or `clo.json` options are as follows:
 
-- `--private-key` (clo.json:` privateKey`): Specifies the private key to use.
-- `--host` (clo.json:` host`): Specifies the Host name to be used.
-- `--port` (clo.json:` port`): Specifies the Port to use.
-- `--no-miner` (clo.json:` noMiner`): Do not use mining.
-- `--peer` (clo.json:` peers`): Adds a Peer. If you want to add Peer has several can be added as --peer peerA peerB ....
-- `--storage-path` (clo.json:` storagePath`): Specifies the path to store the data.
+- `--private-key` (clo.json: `privateKey`): Specifies the private key to use.
+- `--host` (clo.json: `host`): Specifies the Host name to be used.
+- `--port` (clo.json: `port`): Specifies the Port to use.
+- `--no-miner` (clo.json: `noMiner`): Do not use mining.
+- `--peer` (clo.json: `peers`): Adds peers as seed. If you want to add Peer has several can be added as --peer peerA peerB ....
+- `--ice-servers` (clo.json: `iceServers`): Adds STUN/TURN relay server. If you want to add it has serveral can be added as --ice-servers serverA serverB ....
+- `--storage-path` (clo.json: `storagePath`): Specifies the path to store the data.
 
 
 How to connect other peers
