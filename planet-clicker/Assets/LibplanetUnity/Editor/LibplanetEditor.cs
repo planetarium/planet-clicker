@@ -1,4 +1,8 @@
 ﻿using System.IO;
+using Libplanet.Action;
+using Libplanet.Blockchain;
+using Libplanet.Blocks;
+using LibplanetUnity.Action;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,6 +22,26 @@ namespace LibplanetUnity.Editor
         {
             var path = Path.Combine(Application.persistentDataPath, "planetarium.ldb");
             DeleteAll(path);
+        }
+
+        [MenuItem("Tools/Libplanet/Create genesis")]
+        public static void CreateGenesisBlock()
+        {
+            if (
+                File.Exists(Agent.GenesisBlockPath) &&
+                !EditorUtility.DisplayDialog(
+                    "Create genesis",
+                    "Previous genesis block has been found. Do you want to overwrite it?",
+                    "Ok",
+                    "Cancel"
+                )
+            )
+            {
+                return;
+            }
+
+            Agent.CreateGenesisBlock();
+            EditorUtility.DisplayDialog("Create genesis", "New genesis block was created.", "Close");
         }
 
         private static void DeleteAll(string path)
