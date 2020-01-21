@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using Libplanet;
 using Libplanet.Crypto;
 using Libplanet.Net;
@@ -40,7 +39,7 @@ namespace LibplanetUnity
 
         public static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
 
-        private static readonly string DefaultStoragePath =
+        public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
 
         private static IEnumerator _miner;
