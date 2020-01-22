@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using Libplanet;
 using Libplanet.Crypto;
 using Libplanet.Net;
@@ -38,9 +37,9 @@ namespace LibplanetUnity
 
         private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
 
-        private static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
+        public static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
 
-        private static readonly string DefaultStoragePath =
+        public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
 
         private static IEnumerator _miner;
@@ -68,6 +67,13 @@ namespace LibplanetUnity
         public static void Initialize()
         {
             instance.InitAgent();
+        }
+
+        public static void CreateGenesisBlock(IEnumerable<PolymorphicAction<ActionBase>> actions = null)
+        {
+            Block<PolymorphicAction<ActionBase>> genesis =
+                BlockChain<PolymorphicAction<ActionBase>>.MakeGenesisBlock(actions);
+            File.WriteAllBytes(Agent.GenesisBlockPath, genesis.ToBencodex(true, true));
         }
 
         public IValue GetState(Address address)

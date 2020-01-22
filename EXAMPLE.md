@@ -352,6 +352,7 @@ In order for `Agent` to initialize `BlockChain<T>`, a special block called 'gene
 
 To do this, `Agent` reads a file named `genesis` in [Unity Streaming Assets], parses it into [Bencodex] format, and uses it as the genesis block automatically.
 
+If you want to create a genesis block from scratch, just call `Agent.CreateGenesisBlock()` in any place you wanted. It will create an empty genesis block and save it to Streaming Assets. In addition, you can also add your own customized actions you want to run in the very first state of the chain.
 
 [Unity Streaming Assets]: https://docs.unity3d.com/Manual/StreamingAssets.html
 [Bencodex]: https://github.com/planetarium/bencodex

@@ -1,33 +1,43 @@
 ﻿using System.IO;
 using UnityEditor;
-using UnityEngine;
 
 namespace LibplanetUnity.Editor
 {
     public static class LibplanetEditor
     {
-        [MenuItem("Tools/Libplanet/Delete All(Editor)")]
-        public static void DeleteAllEditor()
+        [MenuItem("Tools/Libplanet/Delete chain")]
+        public static void DeleteChain()
         {
-            var path = Path.Combine(Application.persistentDataPath, "planetarium_dev.ldb");
-            DeleteAll(path);
+            DeleteAll(Agent.DefaultStoragePath);
         }
-        
-        [MenuItem("Tools/Libplanet/Delete All(Player)")]
-        public static void DeleteAllPlayer()
+
+        [MenuItem("Tools/Libplanet/Create genesis")]
+        public static void CreateGenesisBlock()
         {
-            var path = Path.Combine(Application.persistentDataPath, "planetarium.ldb");
-            DeleteAll(path);
+            if (
+                File.Exists(Agent.GenesisBlockPath) &&
+                !EditorUtility.DisplayDialog(
+                    "Create genesis",
+                    "Previous genesis block has been found. Do you want to overwrite it?",
+                    "Ok",
+                    "Cancel"
+                )
+            )
+            {
+                return;
+            }
+
+            Agent.CreateGenesisBlock();
+            EditorUtility.DisplayDialog("Create genesis", "New genesis block was created.", "Close");
         }
 
         private static void DeleteAll(string path)
         {
-            var info = new FileInfo(path);
-            if (!info.Exists)
+            var dir = new DirectoryInfo(path);
+            if (dir.Exists)
             {
-                return;
+                dir.Delete(recursive: true);
             }
-            info.Delete();
         }
-    }   
+    }
 }
