@@ -73,7 +73,7 @@ namespace LibplanetUnity
         {
             Block<PolymorphicAction<ActionBase>> genesis =
                 BlockChain<PolymorphicAction<ActionBase>>.MakeGenesisBlock(actions);
-            File.WriteAllBytes(Agent.GenesisBlockPath, genesis.ToBencodex(true, true));
+            File.WriteAllBytes(Agent.GenesisBlockPath, genesis.Serialize());
         }
 
         public IValue GetState(Address address)
@@ -83,7 +83,7 @@ namespace LibplanetUnity
 
         public void MakeTransaction(IEnumerable<ActionBase> gameActions)
         {
-            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>) gameAction).ToList();
+            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>)gameAction).ToList();
             Task.Run(() => MakeTransaction(actions, true));
         }
 
@@ -116,17 +116,17 @@ namespace LibplanetUnity
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
             _store = new DefaultStore(path, flush: false);
-            Block<PolymorphicAction<ActionBase>> genesis = 
-                Block<PolymorphicAction<ActionBase>>.FromBencodex(
+            Block<PolymorphicAction<ActionBase>> genesis =
+                Block<PolymorphicAction<ActionBase>>.Deserialize(
                     File.ReadAllBytes(GenesisBlockPath)
                 );
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
-                policy, 
+                policy,
                 _store,
                 genesis
             );
 
-            if (!(host is null) || iceServers.Any()) 
+            if (!(host is null) || iceServers.Any())
             {
                 _swarm = new Swarm<PolymorphicAction<ActionBase>>(
                     _blocks,
@@ -137,7 +137,7 @@ namespace LibplanetUnity
                     iceServers: iceServers,
                     differentVersionPeerEncountered: DifferentAppProtocolVersionPeerEncountered
                 );
-                
+
                 _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
                 _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
             }
@@ -196,7 +196,7 @@ namespace LibplanetUnity
             var uri = new Uri(iceServerInfo);
             string[] userInfo = uri.UserInfo.Split(':');
 
-            return new IceServer(new[] {uri}, userInfo[0], userInfo[1]);
+            return new IceServer(new[] { uri }, userInfo[0], userInfo[1]);
         }
 
         #region Mono
@@ -230,7 +230,7 @@ namespace LibplanetUnity
             {
                 yield break;
             }
-            
+
             var bootstrapTask = Task.Run(async () =>
             {
                 try
@@ -327,7 +327,7 @@ namespace LibplanetUnity
 
         private IEnumerator CoProcessActions()
         {
-            while(true)
+            while (true)
             {
                 if (_actions.TryDequeue(out System.Action action))
                 {
@@ -369,7 +369,7 @@ namespace LibplanetUnity
 
                     if (_swarm?.Running ?? false)
                     {
-                        _swarm.BroadcastBlocks(new[] {block});
+                        _swarm.BroadcastBlock(block);
                     }
 
                     return block;
