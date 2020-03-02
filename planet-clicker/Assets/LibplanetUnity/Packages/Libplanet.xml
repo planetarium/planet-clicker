@@ -924,13 +924,13 @@
         <member name="M:Libplanet.Action.PolymorphicAction`1.ToString">
             <inheritdoc/>
         </member>
-        <member name="T:Libplanet.Action.RandomExtension">
+        <member name="T:Libplanet.Action.RandomExtensions">
             <summary>
             This extension class provides some convenient methods
             to deal with <see cref="T:Libplanet.Action.IRandom"/>.
             </summary>
         </member>
-        <member name="M:Libplanet.Action.RandomExtension.GenerateRandomGuid(Libplanet.Action.IRandom)">
+        <member name="M:Libplanet.Action.RandomExtensions.GenerateRandomGuid(Libplanet.Action.IRandom)">
             <summary>
             Generates a UUID version 4, i.e., a random <see cref="T:System.Guid"/>.
             Please refer to <a href="https://tools.ietf.org/html/rfc4122#section-4.4">RFC 4122</a>.
@@ -1062,13 +1062,13 @@
             Derives the corresponding <see cref="T:Libplanet.Address"/> from a <see
             cref="T:Libplanet.Crypto.PublicKey"/>.
             <para>Note that there is an equivalent extension method
-            <see cref="M:Libplanet.AddressExtension.ToAddress(Libplanet.Crypto.PublicKey)"/>, which enables
+            <see cref="M:Libplanet.AddressExtensions.ToAddress(Libplanet.Crypto.PublicKey)"/>, which enables
             a code like <c>publicKey.ToAddress()</c> instead of
             <c>new Address(publicKey)</c>, for convenience.</para>
             </summary>
             <param name="publicKey">A <see cref="T:Libplanet.Crypto.PublicKey"/> to derive
             the corresponding <see cref="T:Libplanet.Address"/> from.</param>
-            <seealso cref="M:Libplanet.AddressExtension.ToAddress(Libplanet.Crypto.PublicKey)"/>
+            <seealso cref="M:Libplanet.AddressExtensions.ToAddress(Libplanet.Crypto.PublicKey)"/>
         </member>
         <member name="M:Libplanet.Address.#ctor(System.String)">
             <summary>
@@ -1149,14 +1149,14 @@
         <member name="M:Libplanet.Address.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
             <inheritdoc />
         </member>
-        <member name="T:Libplanet.AddressExtension">
+        <member name="T:Libplanet.AddressExtensions">
             <summary>
             This extension class enables some convenient methods (sugar for
             the most part) to deal with <see cref="T:Libplanet.Address"/>.
             </summary>
             <seealso cref="T:Libplanet.Address"/>
         </member>
-        <member name="M:Libplanet.AddressExtension.ToAddress(Libplanet.Crypto.PublicKey)">
+        <member name="M:Libplanet.AddressExtensions.ToAddress(Libplanet.Crypto.PublicKey)">
             <summary>
             Derives the corresponding <see cref="T:Libplanet.Address"/> from a <see
             cref="T:Libplanet.Crypto.PublicKey"/>.
@@ -1641,6 +1641,14 @@
             </param>
             <seealso cref="M:Libplanet.Blocks.Block`1.Mine(System.Int64,System.Int64,Libplanet.Address,System.Nullable{Libplanet.HashDigest{System.Security.Cryptography.SHA256}},System.DateTimeOffset,System.Collections.Generic.IEnumerable{Libplanet.Tx.Transaction{`0}},System.Threading.CancellationToken)"/>
         </member>
+        <member name="M:Libplanet.Blocks.Block`1.#ctor(Bencodex.Types.Dictionary)">
+            <summary>
+            Creates a <see cref="T:Libplanet.Blocks.Block`1"/> instance from its serialization.
+            </summary>
+            <param name="dict">The <see cref="T:Bencodex.Types.Dictionary"/>
+            representation of <see cref="T:Libplanet.Blocks.Block`1"/> instance.
+            </param>
+        </member>
         <member name="M:Libplanet.Blocks.Block`1.Mine(System.Int64,System.Int64,Libplanet.Address,System.Nullable{Libplanet.HashDigest{System.Security.Cryptography.SHA256}},System.DateTimeOffset,System.Collections.Generic.IEnumerable{Libplanet.Tx.Transaction{`0}},System.Threading.CancellationToken)">
             <summary>
             Generate a block with given <paramref name="transactions"/>.
@@ -1659,6 +1667,16 @@
             A cancellation token used to propagate notification that this
             operation should be canceled.</param>
             <returns>A <see cref="T:Libplanet.Blocks.Block`1"/> that mined.</returns>
+        </member>
+        <member name="M:Libplanet.Blocks.Block`1.Deserialize(System.Byte[])">
+            <summary>
+            Decodes a <see cref="T:Libplanet.Blocks.Block`1"/>'s
+            <a href="https://bencodex.org/">Bencodex</a> representation.
+            </summary>
+            <param name="bytes">A <a href="https://bencodex.org/">Bencodex</a>
+            representation of a <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
+            <returns>A decoded <see cref="T:Libplanet.Blocks.Block`1"/> object.</returns>
+            <seealso cref="M:Libplanet.Blocks.Block`1.Serialize"/>
         </member>
         <member name="M:Libplanet.Blocks.Block`1.EvaluateActionsPerTx(Libplanet.Action.AccountStateGetter)">
             <summary>
@@ -1727,6 +1745,110 @@
             to update the states of <see cref="T:Libplanet.Address"/>es not included
             in <see cref="P:Libplanet.Tx.Transaction`1.UpdatedAddresses"/>.</exception>
         </member>
+        <member name="M:Libplanet.Blocks.Block`1.ToBlockDigest">
+            <summary>
+            Gets <see cref="T:Libplanet.Blocks.BlockDigest"/> representation of the <see cref="T:Libplanet.Blocks.Block`1"/>.
+            </summary>
+            <returns><see cref="T:Libplanet.Blocks.BlockDigest"/> representation of the <see cref="T:Libplanet.Blocks.Block`1"/>.
+            </returns>
+        </member>
+        <member name="T:Libplanet.Blocks.BlockDigest">
+            <summary>
+            Class that store uses to save blocks. This contains:
+            <see cref="T:Libplanet.Blocks.BlockHeader"/>, and list of <see cref="T:Libplanet.Tx.TxId"/>s.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockDigest.#ctor(Libplanet.Blocks.BlockHeader,System.Collections.Immutable.ImmutableArray{System.Collections.Immutable.ImmutableArray{System.Byte}})">
+            <summary>
+            Creates <see cref="T:Libplanet.Blocks.BlockDigest"/> instance from <see cref="T:Libplanet.Blocks.BlockHeader"/> and
+            <see cref="T:Libplanet.Tx.Transaction`1"/> ids the <see cref="T:Libplanet.Blocks.Block`1"/> has.
+            </summary>
+            <param name="header"><see cref="T:Libplanet.Blocks.BlockHeader"/> of the <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
+            <param name="txIds"><see cref="T:Libplanet.Tx.Transaction`1"/> ids the <see cref="T:Libplanet.Blocks.Block`1"/> has.
+            </param>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockDigest.#ctor(Bencodex.Types.Dictionary)">
+            <summary>
+            Creates <see cref="T:Libplanet.Blocks.BlockDigest"/> instance from
+            <see cref="T:Bencodex.Types.Dictionary"/> representation of the <see cref="T:Libplanet.Blocks.Block`1"/>.
+            </summary>
+            <param name="dict">
+            <see cref="T:Bencodex.Types.Dictionary"/> representation of the <see cref="T:Libplanet.Blocks.Block`1"/>.
+            </param>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockDigest.Deserialize(System.Byte[])">
+            <summary>
+            Gets <see cref="T:Libplanet.Blocks.BlockDigest"/> instance from serialized <paramref name="bytes"/>.
+            </summary>
+            <param name="bytes">Serialized <see cref="T:Libplanet.Blocks.BlockDigest"/>.</param>
+            <returns>Deserialized <see cref="T:Libplanet.Blocks.BlockDigest"/>.</returns>
+            <exception cref="T:Bencodex.DecodingException">Thrown when decoded value is not
+            <see cref="T:Bencodex.Types.Dictionary"/> type.</exception>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockDigest.Serialize">
+            <summary>
+            Gets serialized byte array of the <see cref="T:Libplanet.Blocks.BlockDigest"/>.
+            </summary>
+            <returns>Serialized byte array of <see cref="T:Libplanet.Blocks.BlockDigest"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockDigest.ToBencodex">
+            <summary>
+            Gets <see cref="T:Bencodex.Types.Dictionary"/> representation of
+            <see cref="T:Libplanet.Blocks.BlockDigest"/>.
+            </summary>
+            <returns><see cref="T:Bencodex.Types.Dictionary"/> representation of
+            <see cref="T:Libplanet.Blocks.BlockDigest"/>.</returns>
+        </member>
+        <member name="T:Libplanet.Blocks.BlockHeader">
+            <summary>
+            Block header containing information about <see cref="T:Libplanet.Blocks.Block`1"/>s except transactions.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockHeader.#ctor(System.Int64,System.String,System.Collections.Immutable.ImmutableArray{System.Byte},System.Collections.Immutable.ImmutableArray{System.Byte},System.Int64,System.Collections.Immutable.ImmutableArray{System.Byte},System.Collections.Immutable.ImmutableArray{System.Byte},System.Collections.Immutable.ImmutableArray{System.Byte})">
+            <summary>
+            Creates a <see cref="T:Libplanet.Blocks.BlockHeader"/> instance.
+            </summary>
+            <param name="index">The height of the block.  Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.Index"/>.
+            </param>
+            <param name="timestamp">The time this block is created.
+            Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.Timestamp"/>.</param>
+            <param name="nonce">The nonce which satisfy the given <paramref name="difficulty"/>
+            with any other field values.  Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.Nonce"/>.</param>
+            <param name="miner">An optional address refers to who mines this block.
+            Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.Miner"/>.</param>
+            <param name="difficulty">The mining difficulty that <paramref name="nonce"/>
+            has to satisfy.  Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.Difficulty"/>.</param>
+            <param name="previousHash">The previous block's <see cref="P:Libplanet.Blocks.BlockHeader.Hash"/>.  If it's a genesis
+            block (i.e., <paramref name="index"/> is 0) this should be <c>null</c>.
+            Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.PreviousHash"/>.</param>
+            <param name="txHash">The result of hashing the transactions the block has.
+            Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.TxHash"/>.</param>
+            <param name="hash">The hash of the <see cref="T:Libplanet.Blocks.Block`1"/>.
+            Goes to the <see cref="P:Libplanet.Blocks.BlockHeader.Hash"/>.</param>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockHeader.Deserialize(System.Byte[])">
+            <summary>
+            Gets <see cref="T:Libplanet.Blocks.BlockHeader"/> instance from serialized <paramref name="bytes"/>.
+            </summary>
+            <param name="bytes">Serialized <see cref="T:Libplanet.Blocks.BlockHeader"/>.</param>
+            <returns>Deserialized <see cref="T:Libplanet.Blocks.BlockHeader"/>.</returns>
+            <exception cref="T:Bencodex.DecodingException">Thrown when decoded value is not
+            <see cref="T:Bencodex.Types.Dictionary"/> type.</exception>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockHeader.Serialize">
+            <summary>
+            Gets serialized byte array of the <see cref="T:Libplanet.Blocks.BlockHeader"/>.
+            </summary>
+            <returns>Serialized byte array of <see cref="T:Libplanet.Blocks.BlockHeader"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Blocks.BlockHeader.ToBencodex">
+            <summary>
+            Gets <see cref="T:Bencodex.Types.Dictionary"/> representation of
+            <see cref="T:Libplanet.Blocks.BlockHeader"/>.
+            </summary>
+            <returns><see cref="T:Bencodex.Types.Dictionary"/> representation of
+            <see cref="T:Libplanet.Blocks.BlockHeader"/>.</returns>
+        </member>
         <member name="T:Libplanet.Blocks.InvalidGenesisBlockException">
             <summary>
             The exception that is thrown when the genesis block the <see cref="T:Libplanet.Store.IStore"/> contains
@@ -1755,6 +1877,26 @@
             <summary>
             The genesis block that a local <see cref="T:Libplanet.Store.IStore"/> contains.
             </summary>
+        </member>
+        <member name="T:Libplanet.ByteArrayExtensions">
+            <summary>
+            This extension class enables some convenient methods to deal with byte array.
+            </summary>
+            <seealso cref="T:Libplanet.Address"/>
+        </member>
+        <member name="M:Libplanet.ByteArrayExtensions.StartsWith(System.Byte[],System.Byte[])">
+            <summary>
+            Determines whether the beginning of this byte array instance matches a specified string.
+            </summary>
+            <param name="bytes">A byte array to check.</param>
+            <param name="prefix">The prefix byte array to compare.</param>
+            <returns>
+            true if <paramref name="prefix"/> matches the beginning of <paramref name="bytes"/>;
+            otherwise, false.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+            <paramref name="bytes"/> or <paramref name="prefix"/> is null.
+            </exception>
         </member>
         <member name="T:Libplanet.ByteUtil">
             <summary>
@@ -1820,6 +1962,34 @@
             </returns>
             <exception cref="T:System.ArgumentNullException">Thrown when the given
             <paramref name="bytes"/> is <c>null</c>.</exception>
+        </member>
+        <member name="T:Libplanet.Crypto.CryptoConfig">
+            <summary>
+            Libplanet cryptography configuration information.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Crypto.CryptoConfig.CryptoBackend">
+            <summary>
+            Global cryptography backend to sign and verify messages.
+            </summary>
+        </member>
+        <member name="T:Libplanet.Crypto.ICryptoBackend">
+            <summary>
+            Cryptography backend interface.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Crypto.ICryptoBackend.Verify(Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Byte[],Libplanet.Crypto.PublicKey)">
+            <summary>
+            Verifies whether a <paramref name="signature"/> was created from
+            a <paramref name="messageHash"/> with the corresponding <see cref="T:Libplanet.Crypto.PrivateKey"/>.
+            </summary>
+            <param name="messageHash">A 32 bytes message hash digest hashed with SHA256.</param>
+            <param name="signature">A signature that was created from the
+            <paramref name="messageHash"/>.</param>
+            <param name="publicKey"><see cref="T:Libplanet.Crypto.PublicKey"/> used for verification.</param>
+            <returns><c>true</c> if the <paramref name="signature"/> was created
+            from the <paramref name="messageHash"/> with the corresponding
+            <see cref="T:Libplanet.Crypto.PrivateKey"/>. Otherwise <c>false</c>.</returns>
         </member>
         <member name="T:Libplanet.Crypto.PrivateKey">
             <summary>
@@ -2137,6 +2307,37 @@
             <seealso cref="P:Libplanet.Crypto.SymmetricKey.ByteArray"/>
             <seealso cref="M:Libplanet.Crypto.SymmetricKey.#ctor(System.Byte[])"/>
         </member>
+        <member name="T:Libplanet.FixedSizedQueue`1">
+            <summary>
+            Equivalent to <see cref="T:System.Collections.Concurrent.ConcurrentQueue`1"/>, except this does not accept more than
+            the specified maximum size.
+            </summary>
+            <typeparam name="T">Specifies the type of elements in the queue.</typeparam>
+        </member>
+        <member name="F:Libplanet.FixedSizedQueue`1._syncObject">
+            <summary>
+            Simple object for thread synchronization.
+            </summary>
+        </member>
+        <member name="M:Libplanet.FixedSizedQueue`1.#ctor(System.Int32)">
+            <summary>
+            Creates a new instance of the <see cref="T:Libplanet.FixedSizedQueue`1"/>
+            with the specified <paramref name="size"/>.
+            </summary>
+            <param name="size">The maximum size of the <see cref="T:Libplanet.FixedSizedQueue`1"/>.</param>
+        </member>
+        <member name="P:Libplanet.FixedSizedQueue`1.Size">
+            <summary>
+            Gets the fixed size of the <see cref="T:Libplanet.FixedSizedQueue`1"/>.
+            </summary>
+        </member>
+        <member name="M:Libplanet.FixedSizedQueue`1.Enqueue(`0)">
+            <summary>
+            Adds an object at the end of the <see cref="T:Libplanet.FixedSizedQueue`1"/>.
+            </summary>
+            <param name="obj">The object to add at the
+            end of the <see cref="T:Libplanet.FixedSizedQueue`1"/>.</param>
+        </member>
         <member name="T:Libplanet.Hashcash">
             <summary>
             This contains a set of functions that implements
@@ -2257,7 +2458,7 @@
             the <see cref="F:Libplanet.HashDigest`1.Size"/>, the hash algorithm
             (i.e., <typeparamref name="T"/> requires.</exception>
             <seealso cref="M:Libplanet.HashDigest`1.ToString"/>
-            <seealso cref="M:Libplanet.HashDigestExtension.ToHashDigest``1(System.String)"/>
+            <seealso cref="M:Libplanet.HashDigestExtensions.ToHashDigest``1(System.String)"/>
         </member>
         <member name="M:Libplanet.HashDigest`1.Satisfies(System.Int64)">
             <summary>
@@ -2291,13 +2492,13 @@
             <returns>A hexadecimal representation of a digest.</returns>
             <seealso cref="M:Libplanet.HashDigest`1.FromString(System.String)"/>
         </member>
-        <member name="T:Libplanet.HashDigestExtension">
+        <member name="T:Libplanet.HashDigestExtensions">
             <summary>
             Augments types to have some shortcut methods dealing with
             <see cref="T:Libplanet.HashDigest`1"/> values.
             </summary>
         </member>
-        <member name="M:Libplanet.HashDigestExtension.ToHashDigest``1(System.String)">
+        <member name="M:Libplanet.HashDigestExtensions.ToHashDigest``1(System.String)">
             <summary>
             Converts a given hexadecimal representation of a digest into
             a <see cref="T:Libplanet.HashDigest`1"/> object.
@@ -2742,6 +2943,39 @@
         <member name="P:Libplanet.Net.ActionExecutionState.CurrentPhase">
             <inheritdoc />
         </member>
+        <member name="M:Libplanet.Net.BlockCompletion`2.Complete(System.Collections.Generic.IReadOnlyList{`0},Libplanet.Net.BlockCompletion{`0,`1}.BlockFetcher,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Downloads blocks from <paramref name="peers"/> in parallel,
+            using the given <paramref name="blockFetcher"/> function.
+            </summary>
+            <param name="peers">A list of peers to download blocks.</param>
+            <param name="blockFetcher">A function to take demands and a peer, and then
+            download corresponding blocks.</param>
+            <param name="singleSessionTimeout">A maximum time to wait each single call of
+            <paramref name="blockFetcher"/>.  If a call is timed out unsatisfied demands
+            are automatically retried to fetch from other peers.</param>
+            <param name="cancellationToken">A cancellation token to observe while waiting
+            for the task to complete.</param>
+            <returns>An async enumerable that yields pairs of a fetched block and its source
+            peer.  It terminates when all demands are satisfied.</returns>
+        </member>
+        <member name="M:Libplanet.Net.BlockCompletion`2.Complete(System.Collections.Generic.IReadOnlyList{`0},Libplanet.Net.BlockCompletion{`0,`1}.BlockFetcher,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Downloads blocks from <paramref name="peers"/> in parallel,
+            using the given <paramref name="blockFetcher"/> function.
+            </summary>
+            <param name="peers">A list of peers to download blocks.</param>
+            <param name="blockFetcher">A function to take demands and a peer, and then
+            download corresponding blocks.</param>
+            <param name="millisecondsSingleSessionTimeout">A maximum time in milliseconds to wait
+            each single call of <paramref name="blockFetcher"/>.  If a call is timed out unsatisfied
+            demands are automatically retried to fetch from other peers.  10 seconds by default.
+            </param>
+            <param name="cancellationToken">A cancellation token to observe while waiting
+            for the task to complete.</param>
+            <returns>An async enumerable that yields pairs of a fetched block and its source
+            peer.  It terminates when all demands are satisfied.</returns>
+        </member>
         <member name="T:Libplanet.Net.BlockDownloadState">
             <summary>
             Indicates a progress of downloading blocks.
@@ -2769,6 +3003,52 @@
             <summary>
             The peer which sent the block.
             </summary>
+        </member>
+        <member name="T:Libplanet.Net.BlockHashDownloadState">
+            <summary>
+            Indicates a progress of downloading block hashes.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockHashDownloadState.EstimatedTotalBlockHashCount">
+            <summary>
+            The estimated number of block hashes to receive in the current batch.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockHashDownloadState.ReceivedBlockHashCount">
+            <summary>
+            The number of currently received block hashes.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockHashDownloadState.SourcePeer">
+            <summary>
+            The peer which sent the block hashes.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockHashDownloadState.CurrentPhase">
+            <inheritdoc />
+        </member>
+        <member name="T:Libplanet.Net.BlockVerificationState">
+            <summary>
+            Indicates a progress of verifying blocks.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockVerificationState.TotalBlockCount">
+            <summary>
+            Total number of blocks to verify in the current batch.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockVerificationState.VerifiedBlockCount">
+            <summary>
+            The number of blocks that completed verification.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockVerificationState.VerifiedBlockHash">
+            <summary>
+            The hash digest of the block just verified.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.BlockVerificationState.CurrentPhase">
+            <inheritdoc />
         </member>
         <member name="M:Libplanet.Net.BoundPeer.#ctor(Libplanet.Crypto.PublicKey,System.Net.DnsEndPoint,System.Int32)">
             <summary>
@@ -2826,7 +3106,7 @@
         <member name="T:Libplanet.Net.DifferentProtocolVersionEventArgs">
             <summary>
             The event data that provides a value when
-            <see cref="E:Libplanet.Net.Swarm`1.DifferentVersionPeerEncountered" /> is occurred.
+            <see cref="E:Libplanet.Net.NetMQTransport.DifferentVersionPeerEncountered" /> is occurred.
             </summary>
         </member>
         <member name="P:Libplanet.Net.DifferentProtocolVersionEventArgs.ExpectedVersion">
@@ -2838,6 +3118,17 @@
             <summary>
             The protocol version of the <see cref="T:Libplanet.Net.Peer"/> that the
             <see cref="T:Libplanet.Net.Swarm`1" /> is trying to connect to.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.Messages.BlockHashes.StartIndex">
+            <summary>
+            The block index of the first hash in <see cref="P:Libplanet.Net.Messages.BlockHashes.Hashes"/>.
+            It is <c>null</c> iff <see cref="P:Libplanet.Net.Messages.BlockHashes.Hashes"/> are empty.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.Messages.BlockHashes.Hashes">
+            <summary>
+            The continuous block hashes, from the lowest index to the highest index.
             </summary>
         </member>
         <member name="F:Libplanet.Net.Messages.Message.MessageType.Ping">
@@ -2853,11 +3144,6 @@
         <member name="F:Libplanet.Net.Messages.Message.MessageType.GetBlockHashes">
             <summary>
             Request to query block hashes.
-            </summary>
-        </member>
-        <member name="F:Libplanet.Net.Messages.Message.MessageType.BlockHashes">
-            <summary>
-            Inventory to transfer blocks.
             </summary>
         </member>
         <member name="F:Libplanet.Net.Messages.Message.MessageType.TxIds">
@@ -2906,11 +3192,38 @@
             Contains the calculated recent states and state references.
             </summary>
         </member>
+        <member name="F:Libplanet.Net.Messages.Message.MessageType.BlockHeaderMessage">
+            <summary>
+            Message containing a single <see cref="T:Libplanet.Blocks.BlockHeader"/>.
+            </summary>
+        </member>
+        <member name="F:Libplanet.Net.Messages.Message.MessageType.BlockHashes">
+            <summary>
+            Message containing demand block hashes with their index numbers.
+            </summary>
+        </member>
         <member name="P:Libplanet.Net.Messages.RecentStates.StateReferences">
             <summary>
             State references of all available accounts.  Each value has a list of
             state references in ascending order; the closest to the genesis block
             goes first, and the closest to the tip goes last.
+            </summary>
+        </member>
+        <member name="E:Libplanet.Net.NetMQTransport.DifferentVersionPeerEncountered">
+            <summary>
+            The <see cref="T:System.EventHandler" /> triggered when the different version of
+            <see cref="T:Libplanet.Net.Peer" /> is discovered.
+            </summary>
+        </member>
+        <member name="E:Libplanet.Net.NetMQTransport.ProcessMessageHandler">
+            <summary>
+            The <see cref="T:System.EventHandler" /> triggered when a <see cref="T:Libplanet.Net.Messages.Message"/> is
+            received and needs processing.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.NetMQTransport.Running">
+            <summary>
+            Whether this <see cref="T:Libplanet.Net.NetMQTransport"/> instance is running.
             </summary>
         </member>
         <member name="T:Libplanet.Net.Peer">
@@ -2929,7 +3242,7 @@
             <summary>
             The corresponding application protocol version of this peer.
             </summary>
-            <seealso cref="E:Libplanet.Net.Swarm`1.DifferentVersionPeerEncountered"/>
+            <seealso cref="E:Libplanet.Net.NetMQTransport.DifferentVersionPeerEncountered"/>
         </member>
         <member name="P:Libplanet.Net.Peer.Address">
             <summary>The peer's address which is derived from
@@ -2942,6 +3255,31 @@
         </member>
         <member name="M:Libplanet.Net.Peer.ToString">
             <inheritdoc/>
+        </member>
+        <member name="T:Libplanet.Net.PeerState">
+            <summary>
+            Represents a <see cref="P:Libplanet.Net.PeerState.Peer"/>'s state in the routing table.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.PeerState.Address">
+            <summary>
+            <see cref="P:Libplanet.Net.PeerState.Address"/> of peer.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.PeerState.LastUpdated">
+            <summary>
+            Last time messages were exchanged.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.PeerState.LastChecked">
+            <summary>
+            Last time the peer was verified.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Net.PeerState.Latency">
+            <summary>
+            Delay of verification in milliseconds.
+            </summary>
         </member>
         <member name="T:Libplanet.Net.PreloadBlockDownloadFailEventArgs">
             <summary>
@@ -3085,31 +3423,20 @@
         <member name="P:Libplanet.Net.StateDownloadState.CurrentPhase">
             <inheritdoc />
         </member>
-        <member name="E:Libplanet.Net.Swarm`1.DifferentVersionPeerEncountered">
-            <summary>
-            The <see cref="T:System.EventHandler" /> triggered when the different version of
-            <see cref="T:Libplanet.Net.Peer" /> is discovered.
-            </summary>
-        </member>
         <member name="P:Libplanet.Net.Swarm`1.BlockChain">
             <summary>
             The <see cref="T:Libplanet.Blockchain.BlockChain`1"/> instance this <see cref="T:Libplanet.Net.Swarm`1"/> instance
             synchronizes with.
             </summary>
         </member>
-        <member name="P:Libplanet.Net.Swarm`1.Running">
-            <summary>
-            Whether this <see cref="T:Libplanet.Net.Swarm`1"/> instance is running.
-            </summary>
-        </member>
         <member name="M:Libplanet.Net.Swarm`1.WaitForRunningAsync">
             <summary>
             Waits until this <see cref="T:Libplanet.Net.Swarm`1"/> instance gets started to run.
             </summary>
-            <returns>A <see cref="T:System.Threading.Tasks.Task"/> completed when <see cref="P:Libplanet.Net.Swarm`1.Running"/>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> completed when <see cref="P:Libplanet.Net.NetMQTransport.Running"/>
             property becomes <c>true</c>.</returns>
         </member>
-        <member name="M:Libplanet.Net.Swarm`1.StartAsync(System.TimeSpan,System.TimeSpan,System.EventHandler{Libplanet.Net.PreloadBlockDownloadFailEventArgs},System.Threading.CancellationToken)">
+        <member name="M:Libplanet.Net.Swarm`1.StartAsync(System.TimeSpan,System.TimeSpan,System.Threading.CancellationToken)">
             <summary>
             Starts to periodically synchronize the <see cref="P:Libplanet.Net.Swarm`1.BlockChain"/>.
             </summary>
@@ -3118,12 +3445,7 @@
             </param>
             <param name="broadcastTxInterval">The time period of exchange of staged transactions.
             </param>
-            <param name="preloadBlockDownloadFailed">
-            The <see cref="T:System.EventHandler" /> triggered when
-            <see cref="M:Libplanet.Net.Swarm`1.PreloadAsync(System.Nullable{System.TimeSpan},System.IProgress{Libplanet.Net.PreloadState},System.Collections.Immutable.IImmutableSet{Libplanet.Address},System.EventHandler{Libplanet.Net.PreloadBlockDownloadFailEventArgs},System.Threading.CancellationToken)" />
-            fails to download blocks.
-            </param>
-            /// <param name="cancellationToken">
+            <param name="cancellationToken">
             A cancellation token used to propagate notification that this
             operation should be canceled.
             </param>
@@ -3185,12 +3507,19 @@
             You only can <c>await</c> until the method is completed.
             </returns>
             <remarks>This does not render downloaded <see cref="T:Libplanet.Action.IAction"/>s, but fills states only.
-            If you want to render all <see cref="T:Libplanet.Action.IAction"/>s from the genesis block to the recent
-            blocks use
-            <see cref="M:Libplanet.Net.Swarm`1.StartAsync(System.TimeSpan,System.TimeSpan,System.EventHandler{Libplanet.Net.PreloadBlockDownloadFailEventArgs},System.Threading.CancellationToken)"/>
-            method instead.</remarks>
+            </remarks>
             <exception cref="T:System.AggregateException">Thrown when the given the block downloading is
             failed and if <paramref name="blockDownloadFailed "/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Libplanet.Net.Swarm`1.CheckAllPeersAsync(System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Validates all <see cref="T:Libplanet.Net.Peer"/>s in the routing table by sending a simple message.
+            </summary>
+            <param name="timeout">Timeout for this operation. If it is set to <c>null</c>,
+            wait infinitely until the requested operation is finished.</param>
+            <param name="cancellationToken">A cancellation token used to propagate notification
+            that this operation should be canceled.</param>
+            <returns>An awaitable task without value.</returns>
         </member>
         <member name="T:Libplanet.Nonce">
             <summary>
@@ -3249,7 +3578,7 @@
         <member name="M:Libplanet.Store.BaseStore.ForkBlockIndexes(System.Guid,System.Guid,Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
             <inheritdoc />
         </member>
-        <member name="M:Libplanet.Store.BaseStore.ListAddresses(System.Guid)">
+        <member name="M:Libplanet.Store.BaseStore.ListStateKeys(System.Guid)">
             <inheritdoc />
         </member>
         <member name="M:Libplanet.Store.BaseStore.ListAllStateReferences(System.Guid,System.Int64,System.Int64)">
@@ -3267,16 +3596,19 @@
         <member name="M:Libplanet.Store.BaseStore.GetBlockIndex(Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
             <inheritdoc/>
         </member>
+        <member name="M:Libplanet.Store.BaseStore.GetBlockDigest(Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
+            <inheritdoc/>
+        </member>
         <member name="M:Libplanet.Store.BaseStore.PutBlock``1(Libplanet.Blocks.Block{``0})">
             <inheritdoc />
         </member>
         <member name="M:Libplanet.Store.BaseStore.ContainsBlock(Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
             <inheritdoc />
         </member>
-        <member name="M:Libplanet.Store.BaseStore.LookupStateReference``1(System.Guid,Libplanet.Address,Libplanet.Blocks.Block{``0})">
+        <member name="M:Libplanet.Store.BaseStore.LookupStateReference``1(System.Guid,System.String,Libplanet.Blocks.Block{``0})">
             <inheritdoc />
         </member>
-        <member name="M:Libplanet.Store.BaseStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})">
+        <member name="M:Libplanet.Store.BaseStore.IterateStateReferences(System.Guid,System.String,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})">
             <inheritdoc />
         </member>
         <member name="M:Libplanet.Store.BaseStore.ForkStateReferences``1(System.Guid,System.Guid,Libplanet.Blocks.Block{``0})">
@@ -3295,6 +3627,9 @@
             <inheritdoc />
         </member>
         <member name="M:Libplanet.Store.BaseStore.DeleteChainId(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Store.BaseStore.Dispose">
             <inheritdoc/>
         </member>
         <member name="T:Libplanet.Store.ChainIdNotFoundException">
@@ -3323,12 +3658,13 @@
             </summary>
             <seealso cref="T:Libplanet.Store.IStore"/>
         </member>
-        <member name="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)">
+        <member name="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Boolean,System.Int32,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)">
             <summary>
             Creates a new <seealso cref="T:Libplanet.Store.DefaultStore"/>.
             </summary>
             <param name="path">The path of the directory where the storage files will be saved.
             If the path is <c>null</c>, the database is created in memory.</param>
+            <param name="compress">Whether to compress data.  Does not compress by default.</param>
             <param name="journal">
             Enables or disables double write check to ensure durability.
             </param>
@@ -3364,13 +3700,10 @@
         <member name="M:Libplanet.Store.DefaultStore.AppendIndex(System.Guid,Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
             <inheritdoc/>
         </member>
-        <member name="M:Libplanet.Store.DefaultStore.DeleteIndex(System.Guid,Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
-            <inheritdoc/>
-        </member>
         <member name="M:Libplanet.Store.DefaultStore.ForkBlockIndexes(System.Guid,System.Guid,Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
             <inheritdoc/>
         </member>
-        <member name="M:Libplanet.Store.DefaultStore.ListAddresses(System.Guid)">
+        <member name="M:Libplanet.Store.DefaultStore.ListStateKeys(System.Guid)">
             <inheritdoc/>
         </member>
         <member name="M:Libplanet.Store.DefaultStore.ListAllStateReferences(System.Guid,System.Int64,System.Int64)">
@@ -3403,6 +3736,9 @@
         <member name="M:Libplanet.Store.DefaultStore.IterateBlockHashes">
             <inheritdoc/>
         </member>
+        <member name="M:Libplanet.Store.DefaultStore.GetBlockDigest(Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
+            <inheritdoc/>
+        </member>
         <member name="M:Libplanet.Store.DefaultStore.PutBlock``1(Libplanet.Blocks.Block{``0})">
             <inheritdoc/>
         </member>
@@ -3415,13 +3751,13 @@
         <member name="M:Libplanet.Store.DefaultStore.GetBlockStates(Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
             <inheritdoc/>
         </member>
-        <member name="M:Libplanet.Store.DefaultStore.SetBlockStates(Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Collections.Immutable.IImmutableDictionary{Libplanet.Address,Bencodex.Types.IValue})">
+        <member name="M:Libplanet.Store.DefaultStore.SetBlockStates(Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Collections.Immutable.IImmutableDictionary{System.String,Bencodex.Types.IValue})">
             <inheritdoc/>
         </member>
-        <member name="M:Libplanet.Store.DefaultStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})">
+        <member name="M:Libplanet.Store.DefaultStore.IterateStateReferences(System.Guid,System.String,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})">
             <inheritdoc/>
         </member>
-        <member name="M:Libplanet.Store.DefaultStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{Libplanet.Address},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)">
+        <member name="M:Libplanet.Store.DefaultStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{System.String},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)">
             <inheritdoc/>
         </member>
         <member name="M:Libplanet.Store.DefaultStore.ForkStateReferences``1(System.Guid,System.Guid,Libplanet.Blocks.Block{``0})">
@@ -3502,12 +3838,12 @@
             <seealso cref="M:Libplanet.Store.IStore.IterateIndexes(System.Guid,System.Int32,System.Nullable{System.Int32})"/>
             <seealso cref="M:Libplanet.Store.IStore.AppendIndex(System.Guid,Libplanet.HashDigest{System.Security.Cryptography.SHA256})"/>
         </member>
-        <member name="M:Libplanet.Store.IStore.ListAddresses(System.Guid)">
+        <member name="M:Libplanet.Store.IStore.ListStateKeys(System.Guid)">
             <summary>
-            Lists all addresses that have ever had states.
+            Lists all keys that have ever had states.
             </summary>
-            <param name="chainId">The ID of the chain to list addresses.</param>
-            <returns>All addresses in an arbitrary order.  The order might
+            <param name="chainId">The ID of the chain to list state keys.</param>
+            <returns>All state keys in an arbitrary order.  The order might
             be vary for each call.</returns>
         </member>
         <member name="M:Libplanet.Store.IStore.ListAllStateReferences(System.Guid,System.Int64,System.Int64)">
@@ -3570,6 +3906,15 @@
             <returns>A found block's <see cref="P:Libplanet.Blocks.Block`1.Index"/>, or <c>null</c> if no block having
             such <paramref name="blockHash"/> is stored.</returns>
         </member>
+        <member name="M:Libplanet.Store.IStore.GetBlockDigest(Libplanet.HashDigest{System.Security.Cryptography.SHA256})">
+            <summary>
+            Gets the corresponding stored <see cref="T:Libplanet.Blocks.BlockDigest"/> to the given
+            <paramref name="blockHash"/>.
+            </summary>
+            <param name="blockHash"><see cref="P:Libplanet.Blocks.Block`1.Hash"/> to find.</param>
+            <returns>A found <see cref="T:Libplanet.Blocks.BlockDigest"/>, or <c>null</c> if no block having such
+            <paramref name="blockHash"/> is stored.</returns>
+        </member>
         <member name="M:Libplanet.Store.IStore.PutBlock``1(Libplanet.Blocks.Block{``0})">
             <summary>
             Puts the given <paramref name="block"/> in to the store.
@@ -3614,14 +3959,27 @@
             <c>a = 1; b = 2; c = 1</c> (all states) nor
             <c>b = 1; c = 1</c> (delta).</para>
             </remarks>
+            <seealso cref="M:Libplanet.Store.IStore.SetBlockStates(Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Collections.Immutable.IImmutableDictionary{System.String,Bencodex.Types.IValue})"/>
         </member>
-        <member name="M:Libplanet.Store.IStore.LookupStateReference``1(System.Guid,Libplanet.Address,Libplanet.Blocks.Block{``0})">
+        <member name="M:Libplanet.Store.IStore.SetBlockStates(Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Collections.Immutable.IImmutableDictionary{System.String,Bencodex.Types.IValue})">
+            <summary>
+            Sets the states updated by actions in the specified block
+            (i.e., <paramref name="blockHash"/>).
+            </summary>
+            <param name="blockHash"><see cref="P:Libplanet.Blocks.Block`1.Hash"/> to update states.
+            </param>
+            <param name="states">The states updated by actions in the specified block
+            (i.e., <paramref name="blockHash"/>).
+            </param>
+            <seealso cref="M:Libplanet.Store.IStore.GetBlockStates(Libplanet.HashDigest{System.Security.Cryptography.SHA256})"/>
+        </member>
+        <member name="M:Libplanet.Store.IStore.LookupStateReference``1(System.Guid,System.String,Libplanet.Blocks.Block{``0})">
             <summary>
             Looks up a state reference, which is a block's <see cref="P:Libplanet.Blocks.Block`1.Hash"/> that contains
-            an action mutating the <paramref name="address"/>' state.
+            an action mutating the <paramref name="key"/>'s tate.
             </summary>
             <param name="chainId">The chain ID to look up a state reference.</param>
-            <param name="address">The <see cref="T:Libplanet.Address"/> to look up.</param>
+            <param name="key">The state key to look up.</param>
             <param name="lookupUntil">The upper bound (i.e., the latest block) of the search range.
             <see cref="T:Libplanet.Blocks.Block`1"/>s after <paramref name="lookupUntil"/> are ignored.</param>
             <returns>Returns a nullable tuple consisting of <see cref="P:Libplanet.Blocks.Block`1.Hash"/> and
@@ -3629,16 +3987,18 @@
             address.</returns>
             <typeparam name="T">An <see cref="T:Libplanet.Action.IAction"/> class used with
             <paramref name="lookupUntil"/>.</typeparam>
-            <seealso cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{Libplanet.Address},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"/>
-            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
+            <seealso
+            cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{System.String},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"
+            />
+            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,System.String,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
         </member>
-        <member name="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})">
+        <member name="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,System.String,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})">
             <summary>
             Gets pairs of a state reference and a corresponding <see cref="P:Libplanet.Blocks.Block`1.Index"/> of
-            the requested <paramref name="address"/> in the specified <paramref name="chainId"/>.
+            the requested <paramref name="key"/> in the specified <paramref name="chainId"/>.
             </summary>
             <param name="chainId">The chain ID.</param>
-            <param name="address">The <see cref="T:Libplanet.Address"/> to get state references.</param>
+            <param name="key">The key to get state references.</param>
             <param name="highestIndex">The highest index of state references to get. If it is
             <c>null</c>, it will be the highest index possible.</param>
             <param name="lowestIndex">The lowest index of state references to get.  If it is
@@ -3651,23 +4011,19 @@
             <exception cref="T:System.ArgumentException">Thrown when the given
             <paramref name="highestIndex"/> is less than <paramref name="lowestIndex"/>.</exception>
             <seealso
-            cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{Libplanet.Address},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"/>
+            cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{System.String},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"/>
         </member>
-        <member name="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{Libplanet.Address},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)">
+        <member name="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{System.String},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)">
             <summary>
-            Stores a state reference, which is a <see cref="P:Libplanet.Blocks.Block`1.Hash"/>
-            that has the state of the <see cref="T:Libplanet.Address"/> for each updated
-            <see cref="T:Libplanet.Address"/>es by the <see cref="T:Libplanet.Tx.Transaction`1"/>s in the
-            <see cref="T:Libplanet.Blocks.Block`1" />.</summary>
+            Marks the specified <paramref name="keys"/> updated by any action in the specified block
+            (i.e., <paramref name="blockHash"/>).
+            </summary>
             <param name="chainId">The ID of the chain to store a state reference.</param>
-            <param name="addresses">The <see cref="T:Libplanet.Address"/>es to store state
-            reference.</param>
-            <param name="blockHash">The <see cref="P:Libplanet.Blocks.Block`1.Hash"/> which has the state
-            of the <see cref="T:Libplanet.Address"/>.</param>
-            <param name="blockIndex">The <see cref="P:Libplanet.Blocks.Block`1.Index"/> which has the state
-            of the <see cref="T:Libplanet.Address"/>. This must refer to the same block
-            that <paramref name="blockHash"/> refers to.</param>
-            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
+            <param name="keys">The keys updated by the block.</param>
+            <param name="blockHash">The <see cref="P:Libplanet.Blocks.Block`1.Hash"/> of the block which changes
+            the <paramref name="keys"/>' states.</param>
+            <param name="blockIndex">The block index.</param>
+            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,System.String,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
         </member>
         <member name="M:Libplanet.Store.IStore.ForkStateReferences``1(System.Guid,System.Guid,Libplanet.Blocks.Block{``0})">
             <summary>
@@ -3686,9 +4042,9 @@
             <paramref name="branchPoint"/>.</typeparam>
             <exception cref="T:Libplanet.Store.ChainIdNotFoundException">Thrown when the given
             <paramref name="sourceChainId"/> does not exist.</exception>
-            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
+            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,System.String,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
             <seealso
-            cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{Libplanet.Address},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"/>
+            cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{System.String},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"/>
         </member>
         <member name="M:Libplanet.Store.IStore.ListTxNonces(System.Guid)">
             <summary>
@@ -3740,23 +4096,38 @@
             with the specified <paramref name="txId"/>; otherwise, <c>false</c>.
             </returns>
         </member>
-        <member name="M:Libplanet.Store.StoreExtension.LookupStateReference``1(Libplanet.Store.IStore,System.Guid,Libplanet.Address,Libplanet.Blocks.Block{``0})">
+        <member name="M:Libplanet.Store.StoreExtensions.Copy(Libplanet.Store.IStore,Libplanet.Store.IStore)">
             <summary>
-            Looks up a state reference, which is a block's <see cref="P:Libplanet.Blocks.Block`1.Hash"/> that contains
-            an action mutating the <paramref name="address"/>' state.
+            Makes a store, <paramref name="to"/>, logically (but not necessarily physically)
+            identical to another store, <paramref name="from"/>.  As this copies the contents
+            of the store, instead of its physicall data, this can be used for migrating
+            between two different types of <see cref="T:Libplanet.Store.IStore"/> implementations.
             </summary>
-            <param name="store">The store object expected to contain the state reference.</param>
-            <param name="chainId">The chain ID to look up a state reference.</param>
-            <param name="address">The <see cref="T:Libplanet.Address"/> to look up.</param>
-            <param name="lookupUntil">The upper bound (i.e., the latest block) of the search range.
-            <see cref="T:Libplanet.Blocks.Block`1"/>s after <paramref name="lookupUntil"/> are ignored.</param>
-            <returns>Returns a nullable tuple consisting of <see cref="P:Libplanet.Blocks.Block`1.Hash"/> and
-            <see cref="P:Libplanet.Blocks.Block`1.Index"/> of the <see cref="T:Libplanet.Blocks.Block`1"/> with the state of the
-            address.</returns>
-            <typeparam name="T">An <see cref="T:Libplanet.Action.IAction"/> class used with
-            <paramref name="lookupUntil"/>.</typeparam>
-            <seealso cref="M:Libplanet.Store.IStore.StoreStateReference(System.Guid,System.Collections.Immutable.IImmutableSet{Libplanet.Address},Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64)"/>
-            <seealso cref="M:Libplanet.Store.IStore.IterateStateReferences(System.Guid,Libplanet.Address,System.Nullable{System.Int64},System.Nullable{System.Int64},System.Nullable{System.Int32})"/>
+            <param name="from">The store containing the source contents.</param>
+            <param name="to">The store to contain the copied contents. Expected to be empty.</param>
+            <exception cref="T:System.ArgumentException">Thrown when the store passed through
+            <paramref name="to"/> is not empty.</exception>
+        </member>
+        <member name="T:Libplanet.Store.StoreExtensions.NullAction">
+            <summary>
+            An action implementation which does nothing for filling type parameter taking of
+            <see cref="T:Libplanet.Action.IAction"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Store.StoreExtensions.NullAction.PlainValue">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Store.StoreExtensions.NullAction.Execute(Libplanet.Action.IActionContext)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Store.StoreExtensions.NullAction.LoadPlainValue(Bencodex.Types.IValue)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Store.StoreExtensions.NullAction.Render(Libplanet.Action.IActionContext,Libplanet.Action.IAccountStateDelta)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Store.StoreExtensions.NullAction.Unrender(Libplanet.Action.IActionContext,Libplanet.Action.IAccountStateDelta)">
+            <inheritdoc/>
         </member>
         <member name="T:Libplanet.Tx.InvalidTxException">
             <summary>
@@ -3969,6 +4340,14 @@
             <paramref name="signer"/> is not derived from its
             <paramref name="publicKey"/>.</exception>
         </member>
+        <member name="M:Libplanet.Tx.Transaction`1.#ctor(Bencodex.Types.Dictionary)">
+            <summary>
+            Creates a <see cref="T:Libplanet.Tx.Transaction`1"/> instance from its serialization.
+            </summary>
+            <param name="dict">The <see cref="T:Bencodex.Types.Dictionary"/>
+            representation of <see cref="T:Libplanet.Tx.Transaction`1"/> instance.
+            </param>
+        </member>
         <member name="P:Libplanet.Tx.Transaction`1.Id">
             <summary>
             A unique identifier derived from this <see cref="T:Libplanet.Tx.Transaction`1"/>'s
@@ -4025,15 +4404,15 @@
             for each transaction.  This cannot be <c>null</c>.
             </summary>
         </member>
-        <member name="M:Libplanet.Tx.Transaction`1.FromBencodex(System.Byte[])">
+        <member name="M:Libplanet.Tx.Transaction`1.Deserialize(System.Byte[])">
             <summary>
-            Decodes a transaction's
+            Decodes a <see cref="T:Libplanet.Tx.Transaction`1"/>'s
             <a href="https://bencodex.org/">Bencodex</a> representation.
             </summary>
             <param name="bytes">A <a href="https://bencodex.org/">Bencodex</a>
-            representation of a transaction.</param>
+            representation of a <see cref="T:Libplanet.Tx.Transaction`1"/>.</param>
             <returns>A decoded <see cref="T:Libplanet.Tx.Transaction`1"/> object.</returns>
-            <seealso cref="M:Libplanet.Tx.Transaction`1.ToBencodex(System.Boolean)"/>
+            <seealso cref="M:Libplanet.Tx.Transaction`1.Serialize(System.Boolean)"/>
         </member>
         <member name="M:Libplanet.Tx.Transaction`1.Create(System.Int64,Libplanet.Crypto.PrivateKey,System.Collections.Generic.IEnumerable{`0},System.Collections.Immutable.IImmutableSet{Libplanet.Address},System.Nullable{System.DateTimeOffset})">
             <summary>
@@ -4134,21 +4513,25 @@
             </para>
             </exception>
         </member>
-        <member name="M:Libplanet.Tx.Transaction`1.ToBencodex(System.Boolean)">
+        <member name="M:Libplanet.Tx.Transaction`1.Serialize(System.Boolean)">
             <summary>
-            Encodes this <see cref="T:Libplanet.Tx.Transaction`1"/> into a <see cref="T:System.Byte"/>
-            array.
-            <para>This is an inverse function of
-            <see cref="M:Libplanet.Tx.Transaction`1.FromBencodex(System.Byte[])"/> method
-            where <paramref name="sign"/> is <c>true</c>.</para>
+            Encodes this <see cref="T:Libplanet.Tx.Transaction`1"/> into a <see cref="T:System.Byte"/> array.
             </summary>
             <param name="sign">Whether to include its <see cref="P:Libplanet.Tx.Transaction`1.Signature"/>.
-            Note that an encoding without signature cannot be decoded using
-            <see cref="M:Libplanet.Tx.Transaction`1.FromBencodex(System.Byte[])"/> method.
             </param>
             <returns>A <a href="https://bencodex.org/">Bencodex</a>
             representation of this <see cref="T:Libplanet.Tx.Transaction`1"/>.</returns>
-            <seealso cref="M:Libplanet.Tx.Transaction`1.FromBencodex(System.Byte[])"/>
+        </member>
+        <member name="M:Libplanet.Tx.Transaction`1.ToBencodex(System.Boolean)">
+            <summary>
+            Encodes this <see cref="T:Libplanet.Tx.Transaction`1"/> into a <see cref="T:Bencodex.Types.IValue"/>.
+            </summary>
+            <param name="sign">Whether to include its <see cref="P:Libplanet.Tx.Transaction`1.Signature"/>.
+            Note that an encoding without signature cannot be decoded.
+            </param>
+            <returns>A <see cref="T:Bencodex.Types.Dictionary"/> typed
+            <a href="https://bencodex.org/">Bencodex</a>
+            representation of this <see cref="T:Libplanet.Tx.Transaction`1"/>.</returns>
         </member>
         <member name="M:Libplanet.Tx.Transaction`1.EvaluateActionsGradually(Libplanet.HashDigest{System.Security.Cryptography.SHA256},System.Int64,Libplanet.Action.IAccountStateDelta,Libplanet.Address,System.Boolean)">
             <summary>
@@ -4233,9 +4616,6 @@
             <exception cref="T:Libplanet.Tx.InvalidTxPublicKeyException">Thrown when its
             <see cref="P:Libplanet.Tx.Transaction`1.Signer"/> is not derived from its
             <see cref="P:Libplanet.Tx.Transaction`1.PublicKey"/>.</exception>
-        </member>
-        <member name="M:Libplanet.Tx.Transaction`1.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
-            <inheritdoc />
         </member>
         <member name="M:Libplanet.Tx.Transaction`1.Equals(Libplanet.Tx.Transaction{`0})">
             <inheritdoc />
