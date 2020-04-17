@@ -10,6 +10,8 @@ namespace LibplanetUnity.Helper
     [Serializable]
         public class Options
         {
+            public bool logging;
+
             public string privateKey;
 
             public string host;
@@ -19,10 +21,17 @@ namespace LibplanetUnity.Helper
             public bool noMiner;
 
             public string[] peers = new string[]{ };
-            
+
             public string[] iceServers = new string[]{ };
 
             public string storagePath;
+
+            public string appProtocolVersion;
+
+            public string[] trustedAppProtocolVersionSigners = new string[] { };
+
+            [Option("logging", Required = false, HelpText = "Turn on Libplanet logging.")]
+            public bool Logging { get => logging; set => logging = value; }
 
             [Option("private-key", Required = false, HelpText = "The private key to use.")]
             public string PrivateKey { get => privateKey; set => privateKey = value; }
@@ -51,6 +60,18 @@ namespace LibplanetUnity.Helper
 
             [Option("storage-path", Required = false, HelpText = "The path to store game data.")]
             public string StoragePath { get => storagePath; set => storagePath = value; }
+
+            [Option("app-protocol-version", Required = false, HelpText = "App protocol version token.")]
+            public string AppProtocolVersion { get => appProtocolVersion; set => appProtocolVersion = value; }
+
+            [Option("trusted-app-protocol-version-signer",
+                Required = false,
+                HelpText = "Trustworthy signers who claim new app protocol versions")]
+            public IEnumerable<string> TrustedAppProtocolVersionSigners
+            {
+                get => trustedAppProtocolVersionSigners;
+                set => trustedAppProtocolVersionSigners = value.ToArray();
+            }
         }
 
     public static class CommnadLineParser

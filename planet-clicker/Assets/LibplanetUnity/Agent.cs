@@ -22,6 +22,7 @@ using Libplanet.Blockchain.Policies;
 using Libplanet.Store;
 using Libplanet.Tx;
 using Libplanet.Blocks;
+using Serilog;
 
 namespace LibplanetUnity
 {
@@ -96,8 +97,30 @@ namespace LibplanetUnity
             var host = options.Host;
             int? port = options.Port;
             var storagePath = options.StoragePath ?? DefaultStoragePath;
+            var appProtocolVersion = options.AppProtocolVersion is null
+                ? default
+                : AppProtocolVersion.FromToken(options.AppProtocolVersion);
+            var trustedAppProtocolVersionSigners = options.TrustedAppProtocolVersionSigners
+                .Select(s => new PublicKey(ByteUtil.ParseHex(s)));
 
-            Init(privateKey, storagePath, peers, iceServers, host, port);
+            if (options.Logging)
+            {
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Debug()
+                    .WriteTo.Console()
+                    .CreateLogger();
+            }
+
+            Init(
+                privateKey,
+                storagePath,
+                peers,
+                iceServers,
+                host,
+                port,
+                appProtocolVersion,
+                trustedAppProtocolVersionSigners
+                );
 
             _miner = options.NoMiner ? null : CoMiner();
 
@@ -105,8 +128,15 @@ namespace LibplanetUnity
             StartNullableCoroutine(_miner);
         }
 
-        private void Init(PrivateKey privateKey, string path, IEnumerable<Peer> peers,
-            IEnumerable<IceServer> iceServers, string host, int? port)
+        private void Init(
+            PrivateKey privateKey,
+            string path,
+            IEnumerable<Peer> peers,
+            IEnumerable<IceServer> iceServers,
+            string host,
+            int? port,
+            AppProtocolVersion appProtocolVersion,
+            IEnumerable<PublicKey> trustedAppProtocolVersionSigners)
         {
             var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
                 null,
@@ -131,12 +161,12 @@ namespace LibplanetUnity
                 _swarm = new Swarm<PolymorphicAction<ActionBase>>(
                     _blocks,
                     privateKey,
-                    appProtocolVersion: 1,
+                    appProtocolVersion: appProtocolVersion,
                     host: host,
                     listenPort: port,
                     iceServers: iceServers,
-                    differentVersionPeerEncountered: DifferentAppProtocolVersionPeerEncountered
-                );
+                    differentAppProtocolVersionEncountered: DifferentAppProtocolVersionEncountered,
+                    trustedAppProtocolVersionSigners: trustedAppProtocolVersionSigners);
 
                 _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
                 _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
@@ -188,7 +218,7 @@ namespace LibplanetUnity
             string host = tokens[1];
             var port = int.Parse(tokens[2]);
 
-            return new BoundPeer(pubKey, new DnsEndPoint(host, port), 0);
+            return new BoundPeer(pubKey, new DnsEndPoint(host, port), default(AppProtocolVersion));
         }
 
         private static IceServer LoadIceServer(string iceServerInfo)
@@ -319,10 +349,16 @@ namespace LibplanetUnity
             yield return new WaitUntil(() => swarmStartTask.IsCompleted);
         }
 
-        private void DifferentAppProtocolVersionPeerEncountered(object sender, DifferentProtocolVersionEventArgs e)
+        private bool DifferentAppProtocolVersionEncountered(
+            Peer peer,
+            AppProtocolVersion peerVersion,
+            AppProtocolVersion localVersion)
         {
-            Debug.LogWarningFormat("Different Version Encountered Expected: {0} Actual : {1}",
-                e.ExpectedVersion, e.ActualVersion);
+            Debug.LogWarningFormat(
+                "Different Version Encountered; expected (local): {0}; actual ({1}): {2}",
+                localVersion, peer, peerVersion
+            );
+            return false;
         }
 
         private IEnumerator CoProcessActions()
@@ -410,7 +446,11 @@ namespace LibplanetUnity
                             Debug.LogException(ex);
                         }
                     }
-                    _blocks.UnstageTransactions(invalidTxs);
+
+                    foreach (var invalidTx in invalidTxs)
+                    {
+                        _blocks.UnstageTransaction(invalidTx);
+                    }
 
                     foreach (var retryAction in retryActions)
                     {
