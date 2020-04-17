@@ -10,6 +10,8 @@ namespace LibplanetUnity.Helper
     [Serializable]
         public class Options
         {
+            public bool logging;
+
             public string privateKey;
 
             public string host;
@@ -28,6 +30,8 @@ namespace LibplanetUnity.Helper
 
             public string[] trustedAppProtocolVersionSigners = new string[] { };
 
+            [Option("logging", Required = false, HelpText = "Turn on Libplanet logging.")]
+            public bool Logging { get => logging; set => logging = value; }
 
             [Option("private-key", Required = false, HelpText = "The private key to use.")]
             public string PrivateKey { get => privateKey; set => privateKey = value; }

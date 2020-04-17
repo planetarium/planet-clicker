@@ -22,6 +22,7 @@ using Libplanet.Blockchain.Policies;
 using Libplanet.Store;
 using Libplanet.Tx;
 using Libplanet.Blocks;
+using Serilog;
 
 namespace LibplanetUnity
 {
@@ -101,6 +102,14 @@ namespace LibplanetUnity
                 : AppProtocolVersion.FromToken(options.AppProtocolVersion);
             var trustedAppProtocolVersionSigners = options.TrustedAppProtocolVersionSigners
                 .Select(s => new PublicKey(ByteUtil.ParseHex(s)));
+
+            if (options.Logging)
+            {
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Debug()
+                    .WriteTo.Console()
+                    .CreateLogger();
+            }
 
             Init(
                 privateKey,
