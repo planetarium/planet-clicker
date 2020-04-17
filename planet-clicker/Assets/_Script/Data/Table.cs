@@ -45,7 +45,7 @@ namespace _Script.Data
                         value = arr[index];
 
                     }
-                    catch (IndexOutOfRangeException e)
+                    catch (IndexOutOfRangeException)
                     {
                         Debug.LogError($"Invalid Table: {GetType()}");
                         throw;
