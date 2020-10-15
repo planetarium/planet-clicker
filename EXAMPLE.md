@@ -116,7 +116,6 @@ The overall State, including ranking and player scores, is shown below.
 +----------------------------------------------------------------------+
 ```
 
-
 Lifetime of Action
 -------------------
 
@@ -129,22 +128,29 @@ Below is a schematic of the flow until the action is reflected in the game.
 |                |
 +--------+-------+
          |
++--------v----------------+
+|                         |
+| Agent.MakeTransaction() |
+|                         |
++--------+----------------+
          |
-         v
-+--------+----------------+     +----------------------+
-|                         |     |                      |
-| Agent.MakeTransaction() |---->| BlockChain<T>.Mine() |
-|                         |     |                      |
-+-------------------------+     +-----------+----------+
-                                            |
-                                            |
-                                            v
-+-------------------------+     +----------------------+     +----------------------+
-|                         |     |                      |     |                      |
-| Game.UpdateScore()      |<----+ AddCount.Render()    +---->| Game.UpdateRanking() |
-|                         |     |                      |     |                      |
-+-------------------------+     +----------------------+     +----------------------+
-```
++--------v----------------+
+|                         |
+| Block<T>.Mine()         |
+|                         |
++--------+----------------+
+         |
++--------v--------------------------+     +----------------------+
+|                                   |     |                      |
+| IActionRenderer<T>.RenderAction() +---->| Game.UpdateRanking() |
+|                                   |     |                      |
++--------+--------------------------+     +----------------------+
+         |
++--------v----------------+
+|                         |
+| Game.UpdateTotalCount() |
+|                         |
++-------------------------+
 
 
 How to implement `AddCount`
@@ -195,7 +201,6 @@ namespace _Script.Action
 - Set `_count` as a member variable so that we can determine how much the value is incremented.
 - Define default constructor (`AddCount()`), and `PlainValue`, ` LoadPlainValue()` so that they can be serialized / deserialized to file storage or network.
 
-
 The next thing to look at is `Execute()`, where the actual game code is implemented.
 
 ```csharp
@@ -218,27 +223,40 @@ The next thing to look at is `Execute()`, where the actual game code is implemen
 - Since the ranking(`RankingState`) is information shared by all users, the state is obtained and updated using a predetermined constant (`RankingState.Address`).
 - Because this method runs on multiple nodes, it must not have any side effects and depend on any global variables or data other than `ctx` or member variable` _count` passed as an argument.
 
-The last thing to look at is `Render()`. `AddCount` needs to update 'My Score' and 'Ranking' when executed, so it will invoke `Game.OnCountUpdated`, `Game.OnRunkUpdated` event for them.
+
+IActionRenderer<T>.RenderAction()
+----------------------------------
+
+To render updated states into game UI, you need to write your own `IActionRenderer<T>` implementation and feed it to `Agent`. For the sake of convinience, Libplanet also provides `AnonymousActionRenderer` as adapter class.
 
 ```csharp
-        public override void Render(IActionContext context, IAccountStateDelta nextStates)
+    new AnonymousActionRenderer<PolymorphicAction<ActionBase>>()
+    {
+        ActionRenderer = (action, ctx, nextStates) =>
         {
-            var agent = Agent.instance;
-            var count = (long?)nextStates.GetState(context.Signer) ?? 0;
-            var rankingState = (RankingState)nextStates.GetState(RankingState.Address) ?? new RankingState();
+            // Renders only when the count has updated.
+            if (nextStates.GetState(ctx.Signer) is Bencodex.Types.Integer nextCount)
+            {
+                Agent.instance.RunOnMainThread(() =>
+                {
+                    OnCountUpdated.Invoke(nextCount);
+                });
+            }
 
-            agent.RunOnMainThread(() =>
+            // Renders only when the ranking has changed.
+            if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rawRank)
             {
-                Game.OnCountUpdated.Invoke(count);
-            });
-            agent.RunOnMainThread(() =>
-            {
-                Game.OnRankUpdated.Invoke(rankingState);
-            });
+                var rankingState = new RankingState(rawRank);
+                Agent.instance.RunOnMainThread(() =>
+                {
+                    OnRankUpdated.Invoke(rankingState);
+                });
+            }
         }
+    }
 ```
 
-Caution) The thread that `Render()` is invoked is prohibited from handling Unity UI object because it may not be the main Unity thread. To avoid this problem, we use the `Agent.RunOnMainthread()`.
+The thread that `RenderAction()` is invoked is prohibited from handling Unity UI object because it may not be the main Unity thread. To avoid this problem, we use the `Agent.RunOnMainthread()`.
 
 
 `Agent`
@@ -275,7 +293,12 @@ Instead, we can use `Agent`, a helper class provided by Libplanet for Unity for 
             // ...
 
             // Initialize Agent object globally.
-            Agent.Initialize();
+            Agent.Initialize(
+                new[]
+                {
+                    new AnonymousActionRenderer<PolymorphicAction<ActionBase>>(){}
+                }
+            );
 
 
             // Install event listener for `AddCount.Render()`

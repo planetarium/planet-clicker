@@ -47,27 +47,5 @@ namespace _Script.Action
             states = states.SetState(rankingAddress, rankingState.Serialize());
             return states.SetState(ctx.Signer, (Bencodex.Types.Integer)nextCount);
         }
-
-        public override void Render(IActionContext ctx, IAccountStateDelta nextStates)
-        {
-            var agent = Agent.instance;
-            var count = (Integer)nextStates.GetState(ctx.Signer);
-            var rankingState = new RankingState(
-                (Bencodex.Types.Dictionary)nextStates.GetState(RankingState.Address)
-            );
-
-            agent.RunOnMainThread(() =>
-            {
-                Game.OnCountUpdated.Invoke(count);
-            });
-            agent.RunOnMainThread(() =>
-            {
-                Game.OnRankUpdated.Invoke(rankingState);
-            });
-        }
-
-        public override void Unrender(IActionContext context, IAccountStateDelta nextStates)
-        {
-        }
     }
 }

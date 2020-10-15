@@ -11,6 +11,8 @@ using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using Libplanet.Blockchain.Renderers;
+using Libplanet.Action;
 
 namespace _Script
 {
@@ -47,7 +49,35 @@ namespace _Script
             Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
 
-            Agent.Initialize();
+            Agent.Initialize(
+                new[]
+                {
+                    new AnonymousActionRenderer<PolymorphicAction<ActionBase>>()
+                    {
+                        ActionRenderer = (action, ctx, nextStates) =>
+                        {
+                            // Renders only when the count has updated.
+                            if (nextStates.GetState(ctx.Signer) is Bencodex.Types.Integer nextCount)
+                            {
+                                Agent.instance.RunOnMainThread(() =>
+                                {
+                                    OnCountUpdated.Invoke(nextCount);
+                                });
+                            }
+
+                            // Renders only when the ranking has changed.
+                            if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rawRank)
+                            {
+                                var rankingState = new RankingState(rawRank);
+                                Agent.instance.RunOnMainThread(() =>
+                                {
+                                    OnRankUpdated.Invoke(rankingState);
+                                });
+                            }
+                        }
+                    }
+                }
+            );
             var agent = Agent.instance;
             var hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"My Address: {hex}";

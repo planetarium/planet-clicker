@@ -1,28 +1,29 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using Libplanet;
-using Libplanet.Crypto;
-using Libplanet.Net;
-using NetMQ;
-using UnityEngine;
-using LibplanetUnity.Helper;
-using LibplanetUnity.Action;
-using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.Threading;
-using System.Threading.Tasks;
 using Bencodex.Types;
+using Libplanet;
 using Libplanet.Action;
 using Libplanet.Blockchain;
 using Libplanet.Blockchain.Policies;
+using Libplanet.Blockchain.Renderers;
+using Libplanet.Blocks;
+using Libplanet.Crypto;
+using Libplanet.Net;
 using Libplanet.Store;
 using Libplanet.Tx;
-using Libplanet.Blocks;
+using LibplanetUnity.Action;
+using LibplanetUnity.Helper;
+using NetMQ;
 using Serilog;
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace LibplanetUnity
 {
@@ -65,9 +66,11 @@ namespace LibplanetUnity
 
         public Address Address { get; private set; }
 
-        public static void Initialize()
+        public IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> Renderers { get; private set; }
+
+        public static void Initialize(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            instance.InitAgent();
+            instance.InitAgent(renderers);
         }
 
         public static void CreateGenesisBlock(IEnumerable<PolymorphicAction<ActionBase>> actions = null)
@@ -88,7 +91,7 @@ namespace LibplanetUnity
             Task.Run(() => MakeTransaction(actions, true));
         }
 
-        private void InitAgent()
+        private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var options = GetOptions(CommandLineOptionsJsonPath);
             var privateKey = GetPrivateKey(options);
@@ -119,7 +122,8 @@ namespace LibplanetUnity
                 host,
                 port,
                 appProtocolVersion,
-                trustedAppProtocolVersionSigners
+                trustedAppProtocolVersionSigners,
+                renderers
                 );
 
             _miner = options.NoMiner ? null : CoMiner();
@@ -136,7 +140,8 @@ namespace LibplanetUnity
             string host,
             int? port,
             AppProtocolVersion appProtocolVersion,
-            IEnumerable<PublicKey> trustedAppProtocolVersionSigners)
+            IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
                 null,
@@ -153,7 +158,9 @@ namespace LibplanetUnity
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
                 _store,
-                genesis
+                _store,
+                genesis,
+                renderers
             );
 
             if (!(host is null) || iceServers.Any())
@@ -218,7 +225,7 @@ namespace LibplanetUnity
             string host = tokens[1];
             var port = int.Parse(tokens[2]);
 
-            return new BoundPeer(pubKey, new DnsEndPoint(host, port), default(AppProtocolVersion));
+            return new BoundPeer(pubKey, new DnsEndPoint(host, port));
         }
 
         private static IceServer LoadIceServer(string iceServerInfo)
