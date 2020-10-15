@@ -12,7 +12,5 @@ namespace LibplanetUnity.Action
         public abstract IValue PlainValue { get; }
         public abstract void LoadPlainValue(IValue plainValue);
         public abstract IAccountStateDelta Execute(IActionContext ctx);
-        public abstract void Render(IActionContext context, IAccountStateDelta nextStates);
-        public abstract void Unrender(IActionContext context, IAccountStateDelta nextStates);
     }
 }
