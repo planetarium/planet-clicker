@@ -1,5 +1,7 @@
 # Planet Clicker
 
+[![check-libplanet-compatibility](https://github.com/planetarium/planet-clicker/actions/workflows/check-libplanet-compatibility.yaml/badge.svg)](https://github.com/moreal/planet-clicker/actions/workflows/check-libplanet-compatibility.yaml)
+
 Decentralized clicker game on Libplanet
 
 ### Dependecies
