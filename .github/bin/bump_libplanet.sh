@@ -43,6 +43,14 @@ dotnet_publish() {
     echo "$output_directory"
 }
 
+remove_system_files() {
+    directory="$1"
+
+    for file in `find $directory/System.*.{dll,xml}`; do
+        rm "$file"
+    done
+}
+
 copy_libplanet_files() {
     source_directory="$1"
     target_directory="$2"
@@ -63,6 +71,7 @@ libplanet_publish_directory=$(dotnet_publish "$libplanet_project_directory")
 LIBPLANET_UNITY_DIRECTORY="$(pwd)/planet-clicker/Assets/LibplanetUnity/Packages"
 
 echo "$libplanet_publish_directory"
+remove_system_files "$libplanet_publish_directory"
 copy_libplanet_files "$libplanet_publish_directory" "$LIBPLANET_UNITY_DIRECTORY"
 
 echo "::set-output name=libplanet_latest_tag::$latest_tag"
