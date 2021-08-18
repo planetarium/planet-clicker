@@ -38,7 +38,7 @@ dotnet_publish() {
 
     output_directory="$dotnet_directory/out"
 
-    dotnet publish "$dotnet_directory" -r -win-x64 -o "$output_directory" -f netstandard2.0 > /dev/stderr
+    dotnet publish "$dotnet_directory" -r win-x64 -o "$output_directory" -f netstandard2.0 > /dev/stderr
 
     echo "$output_directory"
 }
