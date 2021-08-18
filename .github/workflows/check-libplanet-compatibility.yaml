@@ -9,6 +9,9 @@ jobs:
     container: unityci/editor:ubuntu-2019.1.0f2-windows-mono-0.9.0
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
       - run: .github/bin/bump_libplanet.sh
       - name: build
         run: .github/bin/build.sh
