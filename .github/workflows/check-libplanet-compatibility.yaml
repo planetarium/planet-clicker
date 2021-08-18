@@ -13,7 +13,15 @@ jobs:
         with:
           dotnet-version: '3.1.x'
       - run: .github/bin/bump_libplanet.sh
+        id: bump_libplanet
       - name: build
         run: .github/bin/build.sh
         env:
           ULF: "${{ secrets.ULF }}"
+      - name: send slack message
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        uses: abinoda/slack-action@v1.0.9
+        with:
+          args: '{\"channel\":\"engineering\",\"text\":\"planet-clicker is not compatible with the latest libplanet, ${{ steps.bump_libplanet.outputs.libplanet_latest_tag }}.\"}'
+        if: ${{ failure() }}

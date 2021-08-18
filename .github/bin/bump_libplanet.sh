@@ -64,3 +64,5 @@ LIBPLANET_UNITY_DIRECTORY="$(pwd)/planet-clicker/Assets/LibplanetUnity/Packages"
 
 echo "$libplanet_publish_directory"
 copy_libplanet_files "$libplanet_publish_directory" "$LIBPLANET_UNITY_DIRECTORY"
+
+echo "::set-output name=libplanet_latest_tag::$latest_tag"
