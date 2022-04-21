@@ -34,11 +34,12 @@ namespace LibplanetUnity.Editor
         public static void BuildLinuxHeadless()
         {
             Debug.Log("Build Linux Headless");
-            Build(BuildTarget.StandaloneLinux64, BuildOptions.EnableHeadlessMode, "LinuxHeadless");
+            Build(BuildTarget.StandaloneLinux64, StandaloneBuildSubtarget.Server, targetDirName: "LinuxHeadless");
         }
 
         public static void Build(
             BuildTarget buildTarget,
+            StandaloneBuildSubtarget buildSubtarget = StandaloneBuildSubtarget.Player,
             BuildOptions options = BuildOptions.None,
             string targetDirName = null)
         {
@@ -55,6 +56,7 @@ namespace LibplanetUnity.Editor
                 locationPathName = locationPathName,
                 target = buildTarget,
                 options = options | BuildOptions.Development,
+                subtarget = (int)buildSubtarget,
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);

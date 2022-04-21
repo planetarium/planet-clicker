@@ -40,9 +40,18 @@ sysinfo.txt
 .vscode/
 .sln.DotSettins
 
+# Unity Editor
+/planet-clicker/UserSettings/
+/planet-clicker/Logs/
+
 # Rider
 /planet-clicker/.idea
 /planet-clicker/Assets/Plugins/Editor/JetBrains*
 
 # UnityTestRunner
 /planet-clicker/Assets/InitTestscene*.unity*
+
+# gVim
+*.swp
+*~
+.*.un~
