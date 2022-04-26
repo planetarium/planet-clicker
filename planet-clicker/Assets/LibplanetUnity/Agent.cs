@@ -21,8 +21,11 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Bencodex;
+using Libplanet.Store.Trie;
 using UnityEngine;
 
 namespace LibplanetUnity
@@ -43,6 +46,8 @@ namespace LibplanetUnity
 
         public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
+            
+        public static readonly HashAlgorithmType HashAlgorithm = HashAlgorithmType.Of<SHA256>();
 
         private static IEnumerator _miner;
 
@@ -58,9 +63,9 @@ namespace LibplanetUnity
 
         private DefaultStore _store;
 
-        private ImmutableList<Peer> _seedPeers;
+        private TrieStateStore _stateStore;
 
-        private IImmutableSet<Address> _trustedPeers;
+        private ImmutableList<Peer> _seedPeers;
 
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -76,8 +81,10 @@ namespace LibplanetUnity
         public static void CreateGenesisBlock(IEnumerable<PolymorphicAction<ActionBase>> actions = null)
         {
             Block<PolymorphicAction<ActionBase>> genesis =
-                BlockChain<PolymorphicAction<ActionBase>>.MakeGenesisBlock(actions);
-            File.WriteAllBytes(Agent.GenesisBlockPath, genesis.Serialize());
+                BlockChain<PolymorphicAction<ActionBase>>.MakeGenesisBlock(HashAlgorithm, actions);
+            var codec = new Codec();
+            using FileStream stream = File.OpenWrite(GenesisBlockPath);
+            codec.Encode(genesis.MarshalBlock(), stream);
         }
 
         public IValue GetState(Address address)
@@ -146,19 +153,29 @@ namespace LibplanetUnity
             var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
                 null,
                 BlockInterval,
-                100000,
+                2048,
                 2048);
+            var stagePolicy = new VolatileStagePolicy<PolymorphicAction<ActionBase>>();
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
-            _store = new DefaultStore(path, flush: false);
-            Block<PolymorphicAction<ActionBase>> genesis =
-                Block<PolymorphicAction<ActionBase>>.Deserialize(
-                    File.ReadAllBytes(GenesisBlockPath)
+            // TODO: Use RocksDBStore instead:
+            _store = new DefaultStore(Path.Combine(path, "chain"), flush: false);
+            _stateStore = new TrieStateStore(new DefaultKeyValueStore(Path.Combine(path, "states")));
+            var codec = new Codec();
+            Block<PolymorphicAction<ActionBase>> genesis;
+            using (FileStream blockStream = File.OpenRead(GenesisBlockPath))
+            {
+                IValue serializedBlock = codec.Decode(blockStream);
+                genesis = BlockMarshaler.UnmarshalBlock<PolymorphicAction<ActionBase>>(
+                    _ => HashAlgorithm,
+                    (Bencodex.Types.Dictionary)serializedBlock
                 );
+            }
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
+                stagePolicy,
                 _store,
-                _store,
+                _stateStore,
                 genesis,
                 renderers
             );
@@ -172,11 +189,10 @@ namespace LibplanetUnity
                     host: host,
                     listenPort: port,
                     iceServers: iceServers,
-                    differentAppProtocolVersionEncountered: DifferentAppProtocolVersionEncountered,
                     trustedAppProtocolVersionSigners: trustedAppProtocolVersionSigners);
 
                 _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
-                _trustedPeers = _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
+                _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
             }
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -298,7 +314,7 @@ namespace LibplanetUnity
                 await _swarm.PreloadAsync(
                     TimeSpan.FromMilliseconds(SwarmDialTimeout),
                     null,
-                    trustedStateValidators: _trustedPeers,
+                    false,
                     cancellationToken: _cancellationTokenSource.Token
                 );
             });
@@ -356,18 +372,6 @@ namespace LibplanetUnity
             yield return new WaitUntil(() => swarmStartTask.IsCompleted);
         }
 
-        private bool DifferentAppProtocolVersionEncountered(
-            Peer peer,
-            AppProtocolVersion peerVersion,
-            AppProtocolVersion localVersion)
-        {
-            Debug.LogWarningFormat(
-                "Different Version Encountered; expected (local): {0}; actual ({1}): {2}",
-                localVersion, peer, peerVersion
-            );
-            return false;
-        }
-
         private IEnumerator CoProcessActions()
         {
             while (true)
@@ -408,7 +412,7 @@ namespace LibplanetUnity
 
                 var task = Task.Run(async () =>
                 {
-                    var block = await _blocks.MineBlock(Address);
+                    var block = await _blocks.MineBlock(PrivateKey);
 
                     if (_swarm?.Running ?? false)
                     {

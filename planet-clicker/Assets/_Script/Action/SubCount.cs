@@ -34,7 +34,7 @@ namespace _Script.Action
         {
             var serialized = (Bencodex.Types.Dictionary)plainValue;
             _count = (long)((Integer)serialized["count"]).Value;
-            _address = new Address(((Bencodex.Types.Binary)serialized["address"]).Value);
+            _address = new Address(((Bencodex.Types.Binary)serialized["address"]));
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
