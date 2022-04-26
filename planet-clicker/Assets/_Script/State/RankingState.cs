@@ -37,7 +37,7 @@ namespace _Script.State
         public RankingState(Bencodex.Types.Dictionary bdict) : base(Address)
         {
             _map = bdict.ToDictionary(
-                pair => new Address(pair.Key.EncodeAsByteArray()),
+                pair => new Address((Bencodex.Types.Binary)pair.Key),
                 pair => (long)(Bencodex.Types.Integer)pair.Value
             );
         }
