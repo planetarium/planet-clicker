@@ -7,7 +7,7 @@ In this document, we'll learn how to use Libplanet through a simple clicker game
 Prerequisites & Requirements
 ----------------------------
 
-- Libplanet is compatible with Unity 2019.1.0f2 or above.
+- Libplanet is compatible with Unity 2021.3.0f1 or above.
 - Unity Player must be set to Scripting Runtime version 4.x equivalent, Mono as Scripting backend, and API compatibility level must be set to .NET 4.x.
 - Support for Windows/macOS/Linux (including Headless).
 
