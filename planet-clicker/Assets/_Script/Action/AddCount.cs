@@ -34,18 +34,21 @@ namespace _Script.Action
         {
             var states = ctx.PreviousStates;
             var rankingAddress = RankingState.Address;
-            states.TryGetState(ctx.Signer, out Bencodex.Types.Integer currentCount);
-            var nextCount = currentCount + _count;
 
-            Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
+            var playerState = states.TryGetState(ctx.Signer, out Bencodex.Types.Dictionary playerBDict)
+                ? new PlayerState(ctx.Signer, playerBDict)
+                : new PlayerState(ctx.Signer);
 
-            var rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict)
-                ? new RankingState(bdict)
+            Debug.Log($"add_count: CurrentCount: {playerState.Count}, SumCount: {_count}");
+            playerState.SumCount((int) _count);
+
+            var rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary rankingBDict)
+                ? new RankingState(rankingBDict)
                 : new RankingState();
 
-            rankingState.Update(ctx.Signer, nextCount);
+            rankingState.Update(ctx.Signer, playerState.Count);
             states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(ctx.Signer, (Bencodex.Types.Integer)nextCount);
+            return states.SetState(ctx.Signer, playerState.Serialize());
         }
     }
 }

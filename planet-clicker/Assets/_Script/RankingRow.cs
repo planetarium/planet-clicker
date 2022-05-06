@@ -15,9 +15,9 @@ namespace _Script
 
         public void Set(int ranking, PlayerState player)
         {
-            address = player.Address;
+            address = player.address;
             rankingText.text = ranking.ToString();
-            addressText.text = player.Address.ToHex().Substring(0, 4).ToString();
+            addressText.text = player.address.ToHex().Substring(0, 4).ToString();
             countText.text = player.Count.ToString();
         }
     }

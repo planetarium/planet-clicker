@@ -32,7 +32,7 @@ namespace _Script
         private Table<Level> _levelTable;
         private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
 
-        public class CountUpdated : UnityEvent<long>
+        public class PlayerUpdated : UnityEvent<PlayerState>
         {
         }
 
@@ -40,7 +40,7 @@ namespace _Script
         {
         }
 
-        public static CountUpdated OnCountUpdated = new CountUpdated();
+        public static PlayerUpdated OnPlayerUpdated = new PlayerUpdated();
 
         public static RankUpdated OnRankUpdated = new RankUpdated();
 
@@ -57,11 +57,12 @@ namespace _Script
                         ActionRenderer = (action, ctx, nextStates) =>
                         {
                             // Renders only when the count has updated.
-                            if (nextStates.GetState(ctx.Signer) is Bencodex.Types.Integer nextCount)
+                            if (nextStates.GetState(ctx.Signer) is Bencodex.Types.Dictionary playerBDict)
                             {
+                                var playerState = new PlayerState(ctx.Signer, playerBDict);
                                 Agent.instance.RunOnMainThread(() =>
                                 {
-                                    OnCountUpdated.Invoke(nextCount);
+                                    OnPlayerUpdated.Invoke(playerState);
                                 });
                             }
 
@@ -88,7 +89,7 @@ namespace _Script
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
 
-            OnCountUpdated.AddListener(UpdateTotalCount);
+            OnPlayerUpdated.AddListener(UpdateTotalCount);
             OnRankUpdated.AddListener(rs =>
             {
                 StartCoroutine(UpdateRankingBoard(rs));
@@ -96,14 +97,14 @@ namespace _Script
 
             var initialCount = agent.GetState(Agent.instance.Address);
             var initialRanking = agent.GetState(RankingState.Address);
-            if (initialCount is Bencodex.Types.Integer count)
+            if (initialCount is Bencodex.Types.Dictionary playerDBict)
             {
-                OnCountUpdated.Invoke(count);
+                OnPlayerUpdated.Invoke(new PlayerState(agent.Address, playerDBict));
             }
 
-            if (initialRanking is Bencodex.Types.Dictionary bdict)
+            if (initialRanking is Bencodex.Types.Dictionary rankingBDict)
             {
-                OnRankUpdated.Invoke(new RankingState(bdict));
+                OnRankUpdated.Invoke(new RankingState(rankingBDict));
             }
         }
 
@@ -146,9 +147,9 @@ namespace _Script
             }
         }
 
-        private void UpdateTotalCount(long count)
+        private void UpdateTotalCount(PlayerState playerState)
         {
-            _totalCount = count;
+            _totalCount = playerState.Count;
             var selected = _levelTable.Values.FirstOrDefault(i => i.exp > _totalCount) ?? _levelTable.Values.Last();
             click.Set(selected.id);
             countText.text = $"Total Count: {_totalCount.ToString()}";
@@ -176,7 +177,7 @@ namespace _Script
                 var row = go.GetComponent<RankingRow>();
                 var rank = i + 1;
                 row.Set(rank, rankingInfo);
-                if (rankingInfo.Address == Agent.instance.Address)
+                if (rankingInfo.address == Agent.instance.Address)
                 {
                     rankingText.text = $"My Ranking: {rank}";
                 }
