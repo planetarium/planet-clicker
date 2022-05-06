@@ -6,18 +6,6 @@ using Libplanet;
 
 namespace _Script.State
 {
-    public class RankingInfo
-    {
-        public Address Address;
-        public long Count;
-
-        public RankingInfo(Address address, long count)
-        {
-            Address = address;
-            Count = count;
-        }
-    }
-
     [Serializable]
     public class RankingState : State
     {
@@ -47,11 +35,11 @@ namespace _Script.State
             _map[address] = count;
         }
 
-        public IEnumerable<RankingInfo> GetRanking()
+        public IEnumerable<PlayerState> GetRanking()
         {
             return _map
-                .Select(pair => new RankingInfo(pair.Key, pair.Value))
-                .OrderByDescending(info => info.Count);
+                .Select(pair => new PlayerState(pair.Key, pair.Value))
+                .OrderByDescending(player => player.Count);
         }
 
         public IValue Serialize()

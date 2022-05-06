@@ -13,12 +13,12 @@ namespace _Script
         public Button attackButton;
         public Address address;
 
-        public void Set(int ranking, RankingInfo info)
+        public void Set(int ranking, PlayerState player)
         {
-            address = info.Address;
+            address = player.Address;
             rankingText.text = ranking.ToString();
-            addressText.text = info.Address.ToHex().Substring(0, 4).ToString();
-            countText.text = info.Count.ToString();
+            addressText.text = player.Address.ToHex().Substring(0, 4).ToString();
+            countText.text = player.Count.ToString();
         }
     }
 }
