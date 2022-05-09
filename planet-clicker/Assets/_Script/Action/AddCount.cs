@@ -1,6 +1,7 @@
 using _Script.State;
 using Bencodex.Types;
 using Libplanet.Action;
+using Libplanet.Store;
 using LibplanetUnity;
 using LibplanetUnity.Action;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace _Script.Action
     [ActionType("add_count")]
     public class AddCount : ActionBase
     {
-        private long _count;
+        private AddCountData _data;
 
         public AddCount()
         {
@@ -18,16 +19,14 @@ namespace _Script.Action
 
         public AddCount(long count)
         {
-            _count = count;
+            _data = new AddCountData(count);
         }
 
-        public override IValue PlainValue =>
-            Bencodex.Types.Dictionary.Empty.SetItem("count", _count);
+        public override IValue PlainValue => _data.Encode();
 
         public override void LoadPlainValue(IValue plainValue)
         {
-            var serialized = (Bencodex.Types.Dictionary)plainValue;
-            _count = (long)((Integer)serialized["count"]).Value;
+            _data = (AddCountData)DataModel.Decode<AddCountData>((Bencodex.Types.Dictionary)plainValue);
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
@@ -35,7 +34,7 @@ namespace _Script.Action
             var states = ctx.PreviousStates;
             var rankingAddress = RankingState.Address;
             states.TryGetState(ctx.Signer, out Bencodex.Types.Integer currentCount);
-            var nextCount = currentCount + _count;
+            var nextCount = currentCount + _data.count;
 
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
