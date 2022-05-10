@@ -51,12 +51,12 @@ namespace _Script.Action
             Debug.Log($"sub_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
             RankingState rankingState;
-            rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary bdict)
-                ? new RankingState(bdict)
+            rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary encodedRanking)
+                ? new RankingState(encodedRanking)
                 : new RankingState();
 
             rankingState.Update(_data.address, countState.Count);
-            states = states.SetState(RankingState.Address, rankingState.Serialize());
+            states = states.SetState(RankingState.Address, rankingState.Encode());
             return states.SetState(_data.address, countState.Encode());
         }
     }

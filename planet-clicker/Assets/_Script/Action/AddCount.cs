@@ -42,12 +42,12 @@ namespace _Script.Action
 
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary bdict)
-                ? new RankingState(bdict)
+            var rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary encodedRanking)
+                ? new RankingState(encodedRanking)
                 : new RankingState();
 
             rankingState.Update(ctx.Signer, countState.Count);
-            states = states.SetState(RankingState.Address, rankingState.Serialize());
+            states = states.SetState(RankingState.Address, rankingState.Encode());
             return states.SetState(ctx.Signer, countState.Encode());
         }
     }
