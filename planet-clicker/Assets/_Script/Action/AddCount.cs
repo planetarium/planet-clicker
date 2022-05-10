@@ -26,25 +26,29 @@ namespace _Script.Action
 
         public override void LoadPlainValue(IValue plainValue)
         {
-            _data = (AddCountData)DataModel.Decode<AddCountData>((Bencodex.Types.Dictionary)plainValue);
+            _data = new AddCountData((Bencodex.Types.Dictionary)plainValue);
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
         {
             var states = ctx.PreviousStates;
-            var rankingAddress = RankingState.Address;
-            states.TryGetState(ctx.Signer, out Bencodex.Types.Integer currentCount);
-            var nextCount = currentCount + _data.count;
+            CountState countState = states.TryGetState(ctx.Signer, out Bencodex.Types.Integer encodedCount)
+                ? new CountState(encodedCount)
+                : new CountState();
+
+            var currentCount = countState.Count;
+            countState.AddCount(_data.count);
+            var nextCount = countState.Count;
 
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict)
+            var rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary bdict)
                 ? new RankingState(bdict)
                 : new RankingState();
 
-            rankingState.Update(ctx.Signer, nextCount);
-            states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(ctx.Signer, (Bencodex.Types.Integer)nextCount);
+            rankingState.Update(ctx.Signer, countState.Count);
+            states = states.SetState(RankingState.Address, rankingState.Serialize());
+            return states.SetState(ctx.Signer, countState.Encode());
         }
     }
 }

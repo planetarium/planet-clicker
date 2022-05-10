@@ -28,33 +28,36 @@ namespace _Script.Action
 
         public override void LoadPlainValue(IValue plainValue)
         {
-            _data = (SubCountData)DataModel.Decode<SubCountData>((Bencodex.Types.Dictionary)plainValue);
+            _data = new SubCountData((Bencodex.Types.Dictionary)plainValue);
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
         {
             var states = ctx.PreviousStates;
-            var rankingAddress = RankingState.Address;
 
             if (ctx.Rehearsal)
             {
-                states = states.SetState(rankingAddress, MarkChanged);
+                states = states.SetState(RankingState.Address, MarkChanged);
                 return states.SetState(_data.address, MarkChanged);
             }
 
-            states.TryGetState(_data.address, out Bencodex.Types.Integer currentCount);
-            var nextCount = Math.Max(currentCount - _data.count, 0);
+            CountState countState = states.TryGetState(_data.address, out Bencodex.Types.Integer encodedCount)
+                ? new CountState(encodedCount)
+                : new CountState();
+            var currentCount = countState.Count;
+            countState.SubCount(_data.count);
+            var nextCount = countState.Count;
 
             Debug.Log($"sub_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
             RankingState rankingState;
-            rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict)
+            rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary bdict)
                 ? new RankingState(bdict)
                 : new RankingState();
 
-            rankingState.Update(_data.address, nextCount);
-            states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(_data.address, (Bencodex.Types.Integer)nextCount);
+            rankingState.Update(_data.address, countState.Count);
+            states = states.SetState(RankingState.Address, rankingState.Serialize());
+            return states.SetState(_data.address, countState.Encode());
         }
     }
 }
