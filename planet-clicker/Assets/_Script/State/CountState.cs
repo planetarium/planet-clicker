@@ -14,8 +14,8 @@ namespace _Script.State
             Count = 0;
         }
 
-        public CountState(Bencodex.Types.IValue encoded) :
-            base(Bencodex.Types.Dictionary.Empty.Add(nameof(Count), encoded))
+        public CountState(IValue encoded)
+            : base(Dictionary.Empty.Add(nameof(Count), encoded))
         {
         }
 

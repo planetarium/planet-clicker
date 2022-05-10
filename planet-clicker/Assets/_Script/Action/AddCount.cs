@@ -1,8 +1,6 @@
 using _Script.State;
 using Bencodex.Types;
 using Libplanet.Action;
-using Libplanet.Store;
-using LibplanetUnity;
 using LibplanetUnity.Action;
 using UnityEngine;
 
@@ -26,13 +24,13 @@ namespace _Script.Action
 
         public override void LoadPlainValue(IValue plainValue)
         {
-            _data = new AddCountData((Bencodex.Types.Dictionary)plainValue);
+            _data = new AddCountData((Dictionary)plainValue);
         }
 
         public override IAccountStateDelta Execute(IActionContext ctx)
         {
             var states = ctx.PreviousStates;
-            CountState countState = states.TryGetState(ctx.Signer, out Bencodex.Types.Integer encodedCount)
+            CountState countState = states.TryGetState(ctx.Signer, out Integer encodedCount)
                 ? new CountState(encodedCount)
                 : new CountState();
 
@@ -42,7 +40,7 @@ namespace _Script.Action
 
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = states.TryGetState(RankingState.Address, out Bencodex.Types.Dictionary encodedRanking)
+            var rankingState = states.TryGetState(RankingState.Address, out Dictionary encodedRanking)
                 ? new RankingState(encodedRanking)
                 : new RankingState();
 

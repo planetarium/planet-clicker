@@ -16,7 +16,7 @@ namespace _Script.Action
             count = c;
         }
 
-        public SubCountData(Bencodex.Types.Dictionary encoded)
+        public SubCountData(Dictionary encoded)
             : base(encoded)
         {
         }

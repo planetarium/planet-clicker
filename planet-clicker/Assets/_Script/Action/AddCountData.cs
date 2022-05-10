@@ -13,7 +13,7 @@ namespace _Script.Action
             count = c;
         }
 
-        public AddCountData(Bencodex.Types.Dictionary encoded)
+        public AddCountData(Dictionary encoded)
             : base(encoded)
         {
         }

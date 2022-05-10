@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Bencodex.Types;
 using Libplanet;
 using Libplanet.Store;
 
@@ -40,15 +41,14 @@ namespace _Script.State
         // should take precedence over a string and long pair.
         // Also, Add() should return Bencodex.Types.Dictionary not
         // an ImmutableDictionary<K, V>.
-        public RankingState(Bencodex.Types.Dictionary encoded)
-            : base((Bencodex.Types.Dictionary)Bencodex.Types.Dictionary.Empty.Add(
-                (Bencodex.Types.IKey)new Bencodex.Types.Text(nameof(Map)),
-                (Bencodex.Types.IValue)encoded))
+        public RankingState(Dictionary encoded)
+            : base((Dictionary)Bencodex.Types.Dictionary.Empty.Add(
+                (IKey)new Bencodex.Types.Text(nameof(Map)),
+                (IValue)encoded))
         {
         }
 
-        public new Bencodex.Types.IValue Encode()
-            => (Bencodex.Types.Dictionary)base.Encode()[nameof(Map)];
+        public new Bencodex.Types.IValue Encode() => base.Encode()[nameof(Map)];
 
         public void Update(Address address, long count)
         {
