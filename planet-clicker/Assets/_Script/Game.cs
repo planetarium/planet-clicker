@@ -66,9 +66,9 @@ namespace _Script
                             }
 
                             // Renders only when the ranking has changed.
-                            if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rawRank)
+                            if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary nextRanking)
                             {
-                                var rankingState = new RankingState(rawRank);
+                                var rankingState = new RankingState(nextRanking);
                                 Agent.instance.RunOnMainThread(() =>
                                 {
                                     OnRankUpdated.Invoke(rankingState);
@@ -96,14 +96,14 @@ namespace _Script
 
             var initialCount = agent.GetState(Agent.instance.Address);
             var initialRanking = agent.GetState(RankingState.Address);
-            if (initialCount is Bencodex.Types.Integer count)
+            if (initialCount is Bencodex.Types.Integer encodedCount)
             {
-                OnCountUpdated.Invoke(count);
+                OnCountUpdated.Invoke(encodedCount);
             }
 
-            if (initialRanking is Bencodex.Types.Dictionary bdict)
+            if (initialRanking is Bencodex.Types.Dictionary encodedRanking)
             {
-                OnRankUpdated.Invoke(new RankingState(bdict));
+                OnRankUpdated.Invoke(new RankingState(encodedRanking));
             }
         }
 

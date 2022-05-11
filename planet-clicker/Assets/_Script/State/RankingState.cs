@@ -1,8 +1,9 @@
-using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Bencodex.Types;
 using Libplanet;
+using Libplanet.Store;
 
 namespace _Script.State
 {
@@ -18,50 +19,47 @@ namespace _Script.State
         }
     }
 
-    [Serializable]
-    public class RankingState : State
+    public class RankingState : DataModel
     {
+        // Fields are ignored when encoding.
         public static readonly Address Address = new Address(new byte[]
             {
                 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1
             }
         );
 
-        private readonly Dictionary<Address, long> _map;
+        public ImmutableDictionary<Address, long> Map { get; private set; }
 
-        public RankingState() : base(Address)
+        public RankingState()
+            : base()
         {
-            _map = new Dictionary<Address, long>();
+            Map = ImmutableDictionary<Address, long>.Empty;
         }
 
-        public RankingState(Bencodex.Types.Dictionary bdict) : base(Address)
+        // NOTE: Just to make a point. A pair of string and long works fine,
+        // but so should an IKey and IValue pair, which in my opinion,
+        // should take precedence over a string and long pair.
+        // Also, Add() should return Bencodex.Types.Dictionary not
+        // an ImmutableDictionary<K, V>.
+        public RankingState(Dictionary encoded)
+            : base((Dictionary)Bencodex.Types.Dictionary.Empty.Add(
+                (IKey)new Bencodex.Types.Text(nameof(Map)),
+                (IValue)encoded))
         {
-            _map = bdict.ToDictionary(
-                pair => new Address((Bencodex.Types.Binary)pair.Key),
-                pair => (long)(Bencodex.Types.Integer)pair.Value
-            );
         }
+
+        public new Bencodex.Types.IValue Encode() => base.Encode()[nameof(Map)];
 
         public void Update(Address address, long count)
         {
-            _map[address] = count;
+            Map = Map.SetItem(address, count);
         }
 
         public IEnumerable<RankingInfo> GetRanking()
         {
-            return _map
-                .Select(pair => new RankingInfo(pair.Key, pair.Value))
+            return Map
+                .Select(kv => new RankingInfo(kv.Key, kv.Value))
                 .OrderByDescending(info => info.Count);
-        }
-
-        public IValue Serialize()
-        {
-            return new Bencodex.Types.Dictionary(
-                _map.Select(pair => new KeyValuePair<IKey, IValue>(
-                    new Bencodex.Types.Binary(pair.Key.ToByteArray()),
-                    new Bencodex.Types.Integer(pair.Value)
-                ))
-            );
         }
     }
 }
