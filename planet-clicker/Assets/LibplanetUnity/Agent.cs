@@ -46,7 +46,7 @@ namespace LibplanetUnity
 
         public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
-            
+
         public static readonly HashAlgorithmType HashAlgorithm = HashAlgorithmType.Of<SHA256>();
 
         private static IEnumerator _miner;
@@ -290,8 +290,8 @@ namespace LibplanetUnity
                 {
                     await _swarm.BootstrapAsync(
                         _seedPeers,
-                        5000,
-                        5000,
+                        TimeSpan.FromMilliseconds(5000),
+                        TimeSpan.FromMilliseconds(5000),
                         cancellationToken: _cancellationTokenSource.Token
                     );
                 }

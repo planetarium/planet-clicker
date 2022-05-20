@@ -7729,6 +7729,103 @@
         <member name="M:Libplanet.Misc.ArrayEqualityComparer`1.GetHashCode(`0[])">
             <inheritdoc cref="M:System.Collections.Generic.IEqualityComparer`1.GetHashCode(`0)"/>
         </member>
+        <member name="T:Libplanet.Misc.NameValueCollectionExtensions">
+            <summary>
+            Useful extension methods for <see cref="T:System.Collections.Specialized.NameValueCollection"/>.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Misc.NameValueCollectionExtensions.GetInt32(System.Collections.Specialized.NameValueCollection,System.String)">
+            <summary>
+            Tries to get the numeric text associated with the specified <paramref name="name"/> as
+            an <see cref="T:System.Int32"/> value from the specified name-value <paramref name="collection"/>.
+            </summary>
+            <param name="collection">The <see cref="T:System.Collections.Specialized.NameValueCollection"/> that contains the entry
+            to find.</param>
+            <param name="name">The <see cref="T:System.String"/> key of the entry that contains the value to
+            find.</param>
+            <returns>An <see cref="T:System.Int32"/> value converted from the text value associated with
+            the specified key <paramref name="name"/> from the <paramref name="collection"/>,
+            if found; otherwise, <see langword="null"/>.</returns>
+            <exception cref="T:System.FormatException">Thrown when the value is not a numeric text.
+            </exception>
+            <exception cref="T:System.OverflowException">Thrown when the value is outside the range of the
+            <see cref="T:System.Int32"/> type.</exception>
+            <remarks>This method assumes the <paramref name="collection"/> contains zero or
+            one entry for the specified <paramref name="name"/>.</remarks>
+        </member>
+        <member name="M:Libplanet.Misc.NameValueCollectionExtensions.GetInt32(System.Collections.Specialized.NameValueCollection,System.String,System.Int32)">
+            <summary>
+            Tries to get the numeric text associated with the specified <paramref name="name"/> as
+            an <see cref="T:System.Int32"/> value from the specified name-value <paramref name="collection"/>.
+            </summary>
+            <param name="collection">The <see cref="T:System.Collections.Specialized.NameValueCollection"/> that contains the entry
+            to find.</param>
+            <param name="name">The <see cref="T:System.String"/> key of the entry that contains the value to
+            find.</param>
+            <param name="defaultValue">Returns this value if the specified key
+            <paramref name="name"/> is not found in the <paramref name="collection"/>, or
+            the associated value is not a numeric text or outside the range of the <see cref="T:System.Int32"/>
+            type.</param>
+            <returns>An <see cref="T:System.Int32"/> value converted from the text value associated with
+            the specified key <paramref name="name"/> from the <paramref name="collection"/>,
+            if found; otherwise, <paramref name="defaultValue"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Misc.NameValueCollectionExtensions.GetUInt64(System.Collections.Specialized.NameValueCollection,System.String)">
+            <summary>
+            Tries to get the numeric text associated with the specified <paramref name="name"/> as
+            a <see cref="T:System.UInt64"/> value from the specified name-value <paramref name="collection"/>.
+            </summary>
+            <param name="collection">The <see cref="T:System.Collections.Specialized.NameValueCollection"/> that contains the entry
+            to find.</param>
+            <param name="name">The <see cref="T:System.String"/> key of the entry that contains the value to
+            find.</param>
+            <returns>A <see cref="T:System.UInt64"/> value converted from the text value associated with
+            the specified key <paramref name="name"/> from the <paramref name="collection"/>,
+            if found; otherwise, <see langword="null"/>.</returns>
+            <exception cref="T:System.FormatException">Thrown when the value is not a numeric text.
+            </exception>
+            <exception cref="T:System.OverflowException">Thrown when the value is outside the range of the
+            <see cref="T:System.UInt64"/> type.</exception>
+            <remarks>This method assumes the <paramref name="collection"/> contains zero or
+            one entry for the specified <paramref name="name"/>.</remarks>
+        </member>
+        <member name="M:Libplanet.Misc.NameValueCollectionExtensions.GetUInt64(System.Collections.Specialized.NameValueCollection,System.String,System.UInt64)">
+            <summary>
+            Tries to get the numeric text associated with the specified <paramref name="name"/> as
+            a <see cref="T:System.UInt64"/> value from the specified name-value <paramref name="collection"/>.
+            </summary>
+            <param name="collection">The <see cref="T:System.Collections.Specialized.NameValueCollection"/> that contains the entry
+            to find.</param>
+            <param name="name">The <see cref="T:System.String"/> key of the entry that contains the value to
+            find.</param>
+            <param name="defaultValue">Returns this value if the specified key
+            <paramref name="name"/> is not found in the <paramref name="collection"/>, or
+            the associated value is not a numeric text or outside the range of
+            the <see cref="T:System.UInt64"/> type.</param>
+            <returns>An <see cref="T:System.Int32"/> value converted from the text value associated with
+            the specified key <paramref name="name"/> from the <paramref name="collection"/>,
+            if found; otherwise, <paramref name="defaultValue"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Misc.NameValueCollectionExtensions.GetBoolean(System.Collections.Specialized.NameValueCollection,System.String,System.Boolean)">
+            <summary>
+            Tries to get the boolean text associated with the specified <paramref name="name"/> as
+            a <see cref="T:System.Boolean"/> value from the specified name-value <paramref name="collection"/>.
+            <para>Supported keywords are: <c>true</c>, <c>false</c>, <c>yes</c>, <c>no</c>,
+            <c>on</c>, <c>off</c>, <c>t</c>, <c>f</c>, <c>y</c>, <c>n</c>, <c>1</c>, <c>0</c>
+            (all case-insensitive).</para>
+            </summary>
+            <param name="collection">The <see cref="T:System.Collections.Specialized.NameValueCollection"/> that contains the entry
+            to find.</param>
+            <param name="name">The <see cref="T:System.String"/> key of the entry that contains the value to
+            find.</param>
+            <param name="defaultValue">Returns this value if the specified key
+            <paramref name="name"/> is not found in the <paramref name="collection"/>, or
+            the associated value is not a valid boolean text.  Configured as <see langword="false"/>
+            by default.</param>
+            <returns>A <see cref="T:System.Boolean"/> value converted from the text value associated with
+            the specified key <paramref name="name"/> from the <paramref name="collection"/>,
+            if found; otherwise, <paramref name="defaultValue"/>.</returns>
+        </member>
         <member name="T:Libplanet.Nonce">
             <summary>
             An arbitrary <see cref="T:System.Byte"/>s that determines a
@@ -8004,11 +8101,260 @@
             Gets the ID of the chain not found.
             </summary>
         </member>
+        <member name="T:Libplanet.Store.DataModel">
+             <summary>
+             <para>
+             A <c>class</c> representing an abstract data model that can be easily
+             encoded and decoded to and from a <see cref="T:Bencodex.Types.Dictionary"/>.
+             </para>
+             <para>
+             Inheriting this class and simply declaring properties allows an instance of the child class
+             to encode its data into a <see cref="T:Bencodex.Types.Dictionary"/> where the encoded
+             <see cref="T:Bencodex.Types.Dictionary"/> has the concrete class'es each property name as its key and
+             the each corresponding property value as its value.
+             </para>
+             <para>
+             However, there are certain restrictions that apply when using this <c>class</c>:
+             <list type="bullet">
+                 <item><description>
+                     The complete list of allowed property types are as follows:
+                     <list type="bullet">
+                         <item><description>
+                             Primitive types: <c>bool</c>, <c>int</c>, <c>long</c>, <c>BigInteger</c>,
+                             <c><![CDATA[ImmutableArray<byte>]]></c>, <c>Guid</c>, <c>Address</c>,
+                             and <c>string</c>.
+                         </description></item>
+                         <item><description>
+                             Special types: Any type inherited from <see cref="T:Libplanet.Store.DataModel"/>.
+                         </description></item>
+                         <item><description>
+                             Collective types:
+                             <list type="bullet">
+                                 <item><description>
+                                     <see cref="T:System.Collections.Immutable.ImmutableList`1"/> where <c>T</c> is a primitive type.
+                                 </description></item>
+                                 <item><description>
+                                     <see cref="T:System.Collections.Immutable.ImmutableDictionary`2"/> where
+                                     <list type="bullet">
+                                         <item><description>
+                                             <c>TKey</c> is one of
+                                             <c><![CDATA[ImmutableArray<byte>]]></c>, <c>Address</c>,
+                                             <c>Guid</c>, and <c>string</c>.
+                                         </description></item>
+                                         <item><description>
+                                             <c>TValue</c> is a primitive type.
+                                         </description></item>
+                                     </list>
+                                 </description></item>
+                             </list>
+                         </description></item>
+                     </list>
+                 </description></item>
+                 <item><description>
+                     Value types are not allowed to be declared as <c>nullable</c>, not even as
+                     a generic type parameter.  That is, types such as <c>bool?</c>, <c>Address?</c>,
+                     and <c><![CDATA[ImmutableList<int?>]]></c>are not allowed.
+                 </description></item>
+                 <item><description>
+                     Reference types are not allowed to be assigned <c>null</c>.  This will result
+                     in an <see cref="T:System.Exception"/> when <see cref="M:Libplanet.Store.DataModel.Encode"/> is called.
+                 </description></item>
+                 <item><description>
+                     Trying to assign <c>null</c> to any property or to a part of a collection will
+                     result in an <see cref="T:System.Exception"/> when
+                     <see cref="M:Libplanet.Store.DataModel.#ctor(Bencodex.Types.Dictionary)"/> is called.
+                 </description></item>
+             </list>
+             </para>
+             </summary>
+             <example>
+             The following example shows how this class can be used:
+             <code><![CDATA[
+             public class CharacterData : DataModel
+             {
+                 /// <summary>
+                 /// Name of the character.
+                 /// </summary>
+                 public string Name { get; private set; }
+            
+                 /// <summary>
+                 /// Current level of the character.
+                 /// </summary>
+                 public int Level { get; private set; }
+            
+                 /// <summary>
+                 /// Inventory of the character.
+                 /// </summary>
+                 public InventoryData Inv { get; private set; }
+            
+                 public CharacterData(string name, int level, InventoryData inv)
+                     : base()
+                 {
+                     Name = name;
+                     Level = level;
+                     Inv = inv;
+                 }
+            
+                 public CharacterData(Bencodex.Types.Dictionary encoded)
+                     : base(encoded)
+                 {
+                 }
+             }
+            
+             public class InventoryData : DataModel
+             {
+                 /// <summary>
+                 /// The amount of gold in the inventory.
+                 /// </summary>
+                 public int Gold { get; private set; }
+            
+                 public InventoryData(int gold)
+                     : base()
+                 {
+                     Gold = gold;
+                 }
+            
+                 public InventoryData(Bencodex.Types.Dictionary encoded)
+                     : base(encoded)
+                 {
+                 }
+             }
+             ]]></code>
+             Then the concrete model defined above can be used as shown below:
+             <code><![CDATA[
+             CharacterData characterData = new CharacterData("John", 5, new InventoryData(100));
+             Bencodex.Types.Dictionary encoded = characterData.Encode()
+             ]]></code>
+             This would result in <c>encoded</c> in a following format:
+             <code><![CDATA[
+             Bencodex.Types.Dictionary {
+               "Name": "John",
+               "Level": 5,
+               "Inv": {
+                   "Gold": 100,
+               },
+             }
+             ]]></code>
+             To decode this back into an instance, simply use it as shown below:
+             <code><![CDATA[
+             CharacterData decoded = new CharacterData(encoded);
+             ]]></code>
+             Then <c>decoded.Name</c>, <c>decoded.Level</c>, and <c>decoded.Inv.Gold</c> will have
+             values <c>"John"</c>, <c>5</c>, and <c>100</c> respectively.
+             </example>
+             <remarks>
+             There are certain caveats for using this class:
+             <list type="bullet">
+                 <item><description>
+                     Encoded data type is fixed to <see cref="T:Bencodex.Types.Dictionary"/>.  As each
+                     property name is encoded into <see cref="T:Bencodex.Types.Text"/> as a key, it is
+                     advisable to give short names for properties.  For example, <c>int HP</c> is better
+                     than <c>int HealthPoint</c> to reduce storage size and/or network traffic.
+                     As seen in the example above, actively use documented properties instead.
+                 </description></item>
+                 <item><description>
+                     Property type of <see cref="T:System.Collections.Immutable.ImmutableDictionary`2"/> is inefficient
+                     to encode and decode.  Additional caution is needed when declaring
+                     <see cref="T:System.Collections.Immutable.ImmutableDictionary`2"/> property type.
+                 </description></item>
+                 <item><description>
+                     As supported types are limited, in particular, nullable types and nested
+                     collection types not being allowed, if a custom data model that isn't supported
+                     by this class is needed, manual implementation of encoding and decoding
+                     should be done separately.
+                 </description></item>
+             </list>
+             </remarks>
+        </member>
+        <member name="M:Libplanet.Store.DataModel.#ctor(Bencodex.Types.Dictionary)">
+            <summary>
+            Decodes a <see cref="T:Bencodex.Types.Dictionary"/> data into an instance.
+            </summary>
+            <param name="encoded">The <see cref="T:Bencodex.Types.Dictionary"/> instance to decode.</param>
+            <returns>A decoded instance from <paramref name="encoded"/>.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown when <c>null</c> value is encountered
+            while decoding.</exception>
+            <exception cref="T:System.ArgumentException">Thrown when invalid encoded type is encountered.
+            </exception>
+            <exception cref="T:System.NullReferenceException">Thrown when <paramref name="encoded"/> is
+            <c>null</c> or <c>null</c> reference is returned by inner instantiation.</exception>
+        </member>
+        <member name="P:Libplanet.Store.DataModel.PropertyInfos">
+            <summary>
+            Cached property info for performance.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Store.DataModel.Encode">
+            <summary>
+            Encodes an instance into a <see cref="T:Bencodex.Types.Dictionary"/>.
+            </summary>
+            <returns>An encoded <see cref="T:Bencodex.Types.Dictionary"/> instance.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown when <c>nullable</c> value type property
+            or <c>null</c> value inside a reference type is encountered.</exception>
+            <exception cref="T:System.ArgumentException">Thrown when an unknown invalid property type is
+            encountered.</exception>
+        </member>
         <member name="T:Libplanet.Store.DefaultStore">
             <summary>
             The default built-in <see cref="T:Libplanet.Store.IStore"/> implementation.  This stores data in
             the file system or in memory.  It also uses <a href="https://www.litedb.org/">LiteDB</a>
             for some complex indices.
+            <para><see cref="T:Libplanet.Store.DefaultStore"/> and <see cref="T:Libplanet.Store.Trie.DefaultKeyValueStore"/>-backed
+            <see cref="T:Libplanet.Store.TrieStateStore"/> can be instantiated from a URI with <c>default+file:</c> scheme
+            using <see cref="M:Libplanet.Store.StoreLoaderAttribute.LoadStore(System.Uri)"/>, e.g.:</para>
+            <list type="bullet">
+            <item><description><c>default+file:///var/data/planet/</c></description></item>
+            <item><description><c>default+file:///c:/Users/john/AppData/Local/planet/</c></description>
+            </item>
+            <item><description><c>default+file:///var/data/planet/?secure=true</c>
+            (trie keys are hashed)</description></item>
+            </list>
+            <para>The following query string parameters are supported:</para>
+            <list type="table">
+            <item>
+            <term><c>journal</c></term>
+            <description><c>true</c> (default) or <c>false</c>.  Corresponds to
+            <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s <c>journal</c>
+            parameter.</description>
+            </item>
+            <item>
+            <term><c>index-cache</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s
+            <c>indexCacheSize</c> parameter.  50000 by default.</description>
+            </item>
+            <item>
+            <term><c>block-cache</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s
+            <c>blockCacheSize</c> parameter.  512 by default.</description>
+            </item>
+            <item>
+            <term><c>tx-cache</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s
+            <c>txCacheSize</c> parameter.  1024 by default.</description>
+            </item>
+            <item>
+            <term><c>flush</c></term>
+            <description><c>true</c> (default) or <c>false</c>.  Corresponds to
+            <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s <c>flush</c>
+            parameter.</description>
+            </item>
+            <item>
+            <term><c>readonly</c></term>
+            <description><c>true</c> or <c>false</c> (default).  Corresponds to
+            <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s <c>readOnly</c>
+            parameter.</description>
+            </item>
+            <item>
+            <term><c>states-dir</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.Trie.DefaultKeyValueStore.#ctor(System.String)"/>'s <c>path</c>
+            parameter.  It is relative to the URI path, and defaults to <c>states</c>.</description>
+            </item>
+            <item>
+            <term><c>secure</c></term>
+            <description><c>true</c> or <c>false</c> (default).  Corresponds to
+            <see cref="M:Libplanet.Store.TrieStateStore.#ctor(Libplanet.Store.Trie.IKeyValueStore,System.Boolean)"/>'s <c>secure</c> parameter.</description>
+            </item>
+            </list>
             </summary>
             <seealso cref="T:Libplanet.Store.IStore"/>
         </member>
@@ -8475,6 +8821,13 @@
             Volatile in-memory store.
             <para>It is useful for storing temporal small chains, e.g., fixtures for unit tests of
             game logic.</para>
+            <para><see cref="T:Libplanet.Store.MemoryStore"/> and <see cref="T:Libplanet.Store.Trie.MemoryKeyValueStore"/>-backed
+            <see cref="T:Libplanet.Store.TrieStateStore"/> can be instantiated from a URI with <c>memory:</c> scheme
+            using <see cref="M:Libplanet.Store.StoreLoaderAttribute.LoadStore(System.Uri)"/>, e.g.:</para>
+            <list type="bullet">
+            <item><description><c>memory:</c></description></item>
+            <item><description><c>memory://?secure=true</c> (trie keys are hashed)</description></item>
+            </list>
             </summary>
         </member>
         <member name="T:Libplanet.Store.StateStoreExtensions">
@@ -8564,6 +8917,64 @@
             <returns>The state root hash of the block, or <c>null</c> if the block is not found or
             <paramref name="blockHash"/> is <c>null</c>.</returns>
         </member>
+        <member name="T:Libplanet.Store.StoreLoader">
+            <summary>
+            A function that parses a URI and returns a pair of <see cref="T:Libplanet.Store.IStore"/> and
+            <see cref="T:Libplanet.Store.IStateStore"/>.
+            </summary>
+            <param name="storeUri">A URI referring to a store.</param>
+            <returns>A pair of loaded <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/> instances.
+            </returns>
+        </member>
+        <member name="T:Libplanet.Store.StoreLoaderAttribute">
+            <summary>
+            Registers a static method as a store loader.  The method must comply with
+            <see cref="T:Libplanet.Store.StoreLoader"/> delegate.
+            </summary>
+            <example>
+            <para>With the below code, <c>SampleStore</c> and <c>SampleStateStore</c>-backed
+            <see cref="T:Libplanet.Store.TrieStateStore"/> can be instantiated from a URI like
+            <c>sample:///home/foo/bar?cache=512</c>:</para>
+            <code><![CDATA[
+            [StoreLoader("sample")]
+            private static (IStore Store, IStateStore StateStore) Loader(Uri storeUri)
+            {
+                NameValueCollection query = HttpUtility.ParseQueryString(storeUri.Query);
+                int cache = query.GetInt32("cache", 128);
+                var store = new SampleStore(storeUri.LocalPath, cache);
+                var stateStore = new SampleStateStore(storeUri.LocalPath, cache);
+                return (store, stateStore);
+            }
+            ]]></code>
+            </example>
+        </member>
+        <member name="M:Libplanet.Store.StoreLoaderAttribute.#ctor(System.String)">
+            <summary>
+            Instniates a new <see cref="T:Libplanet.Store.StoreLoaderAttribute"/> with the specified
+            <paramref name="uriScheme"/>.
+            </summary>
+            <param name="uriScheme">The URI scheme to associate with the attributed store loader
+            method.</param>
+        </member>
+        <member name="P:Libplanet.Store.StoreLoaderAttribute.UriScheme">
+            <summary>
+            The URI scheme to associate with the attributed store loader method.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Store.StoreLoaderAttribute.LoadStore(System.Uri)">
+            <summary>
+            Loads a pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/> from the specified
+            <paramref name="storeUri"/>.
+            </summary>
+            <param name="storeUri">A URI referring to a store.</param>
+            <returns>A pair of loaded <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Store.StoreLoaderAttribute.ListStoreLoaders">
+            <summary>
+            Lists all registered store loaders.
+            </summary>
+            <returns>Pairs of registered URI scheme and declaring type.</returns>
+        </member>
         <member name="T:Libplanet.Store.Trie.CacheableKeyValueStore">
             <summary>
             The proxy class to cache <see cref="T:Libplanet.Store.Trie.IKeyValueStore"/> operations.
@@ -8605,6 +9016,62 @@
             <summary>
             The default built-in <see cref="T:Libplanet.Store.Trie.IKeyValueStore"/> implementation. This stores data in
             the file system or in memory.
+            <para><see cref="T:Libplanet.Store.DefaultStore"/> and <see cref="T:Libplanet.Store.Trie.DefaultKeyValueStore"/>-backed
+            <see cref="T:Libplanet.Store.TrieStateStore"/> can be instantiated from a URI with <c>default+file:</c> scheme
+            using <see cref="M:Libplanet.Store.StoreLoaderAttribute.LoadStore(System.Uri)"/>, e.g.:</para>
+            <list type="bullet">
+            <item><description><c>default+file:///var/data/planet/</c></description></item>
+            <item><description><c>default+file:///c:/Users/john/AppData/Local/planet/</c></description>
+            </item>
+            <item><description><c>default+file:///var/data/planet/?secure=true</c>
+            (trie keys are hashed)</description></item>
+            </list>
+            <para>The following query string parameters are supported:</para>
+            <list type="table">
+            <item>
+            <term><c>journal</c></term>
+            <description><c>true</c> (default) or <c>false</c>.  Corresponds to
+            <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s <c>journal</c>
+            parameter.</description>
+            </item>
+            <item>
+            <term><c>index-cache</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s
+            <c>indexCacheSize</c> parameter.  50000 by default.</description>
+            </item>
+            <item>
+            <term><c>block-cache</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s
+            <c>blockCacheSize</c> parameter.  512 by default.</description>
+            </item>
+            <item>
+            <term><c>tx-cache</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s
+            <c>txCacheSize</c> parameter.  1024 by default.</description>
+            </item>
+            <item>
+            <term><c>flush</c></term>
+            <description><c>true</c> (default) or <c>false</c>.  Corresponds to
+            <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s <c>flush</c>
+            parameter.</description>
+            </item>
+            <item>
+            <term><c>readonly</c></term>
+            <description><c>true</c> or <c>false</c> (default).  Corresponds to
+            <see cref="M:Libplanet.Store.DefaultStore.#ctor(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)"/>'s <c>readOnly</c>
+            parameter.</description>
+            </item>
+            <item>
+            <term><c>states-dir</c></term>
+            <description>Corresponds to <see cref="M:Libplanet.Store.Trie.DefaultKeyValueStore.#ctor(System.String)"/>'s <c>path</c>
+            parameter.  It is relative to the URI path, and defaults to <c>states</c>.</description>
+            </item>
+            <item>
+            <term><c>secure</c></term>
+            <description><c>true</c> or <c>false</c> (default).  Corresponds to
+            <see cref="M:Libplanet.Store.TrieStateStore.#ctor(Libplanet.Store.Trie.IKeyValueStore,System.Boolean)"/>'s <c>secure</c> parameter.</description>
+            </item>
+            </list>
             </summary>
         </member>
         <member name="M:Libplanet.Store.Trie.DefaultKeyValueStore.#ctor(System.String)">
@@ -8844,6 +9311,13 @@
             Volatile in-memory key-value store.
             <para>It is useful for storing temporal small chains, e.g., fixtures for unit tests of
             game logic.</para>
+            <para><see cref="T:Libplanet.Store.MemoryStore"/> and <see cref="T:Libplanet.Store.Trie.MemoryKeyValueStore"/>-backed
+            <see cref="T:Libplanet.Store.TrieStateStore"/> can be instantiated from a URI with <c>memory:</c> scheme
+            using <see cref="M:Libplanet.Store.StoreLoaderAttribute.LoadStore(System.Uri)"/>, e.g.:</para>
+            <list type="bullet">
+            <item><description><c>memory:</c></description></item>
+            <item><description><c>memory://?secure=true</c> (trie keys are hashed)</description></item>
+            </list>
             </summary>
         </member>
         <member name="M:Libplanet.Store.Trie.MemoryKeyValueStore.Libplanet#Store#Trie#IKeyValueStore#Get(Libplanet.Store.Trie.KeyBytes@)">
@@ -8998,6 +9472,12 @@
             <param name="secure">Whether to use <see cref="T:Libplanet.Store.Trie.MerkleTrie"/> in secure mode.
             <seealso cref="M:Libplanet.Store.Trie.MerkleTrie.#ctor(Libplanet.Store.Trie.IKeyValueStore,Libplanet.Store.Trie.Nodes.INode,System.Boolean)"/>.</param>
         </member>
+        <member name="P:Libplanet.Store.TrieStateStore.Secure">
+            <summary>
+            <see langword="true"/> if the <see cref="T:Libplanet.Store.Trie.MerkleTrie"/> is in secure mode.
+            In secure mode, keys are hashed under the hood.
+            </summary>
+        </member>
         <member name="M:Libplanet.Store.TrieStateStore.PruneStates(System.Collections.Immutable.IImmutableSet{Libplanet.HashDigest{System.Security.Cryptography.SHA256}})">
             <inheritdoc cref="M:Libplanet.Store.IStateStore.PruneStates(System.Collections.Immutable.IImmutableSet{Libplanet.HashDigest{System.Security.Cryptography.SHA256}})"/>
         </member>
@@ -9023,13 +9503,25 @@
         </member>
         <member name="M:Libplanet.Tx.InvalidTxException.#ctor(Libplanet.Tx.TxId,System.String)">
             <summary>
-            Instantiates a new exception object with proper metadata.
+            Instantiates a new exception object with proper metadata. Use
+            <see cref="M:Libplanet.Tx.InvalidTxException.#ctor(Libplanet.Tx.TxId,System.String,System.Exception)"/> if innerException
+            is required.
             </summary>
             <param name="txid">The invalid <see cref="T:Libplanet.Tx.Transaction`1"/>'s
             <see cref="P:Libplanet.Tx.Transaction`1.Id"/>.  It is automatically included to
             the <see cref="P:System.Exception.Message"/> string.</param>
             <param name="message">A descriptive error message for programmers.
             </param>
+        </member>
+        <member name="M:Libplanet.Tx.InvalidTxException.#ctor(Libplanet.Tx.TxId,System.String,System.Exception)">
+            <inheritdoc cref="M:Libplanet.Tx.InvalidTxException.#ctor(Libplanet.Tx.TxId,System.String)"/>
+            <param name="txid">The invalid <see cref="T:Libplanet.Tx.Transaction`1"/>'s
+            <see cref="P:Libplanet.Tx.Transaction`1.Id"/>.  It is automatically included to
+            the <see cref="P:System.Exception.Message"/> string.</param>
+            <param name="message">A descriptive error message for programmers.
+            </param>
+            <param name="innerException">The <see cref="T:System.Exception"/> for
+            <see cref="P:System.Exception.InnerException"/>.</param>
         </member>
         <member name="P:Libplanet.Tx.InvalidTxException.TxId">
             <summary>
@@ -9675,7 +10167,9 @@
         </member>
         <member name="M:Libplanet.Tx.TxPolicyViolationException.#ctor(Libplanet.Tx.TxId,System.String)">
             <summary>
-            Creates a new <see cref="T:Libplanet.Tx.TxPolicyViolationException"/> instance.
+            Creates a new <see cref="T:Libplanet.Tx.TxPolicyViolationException"/> instance. Use
+            <see cref="M:Libplanet.Tx.TxPolicyViolationException.#ctor(Libplanet.Tx.TxId,System.String,System.Exception)"/> if innerException
+            is required.
             </summary>
             <param name="txid">The <see cref="P:Libplanet.Tx.Transaction`1.Id"/> of the
             <see cref="T:Libplanet.Tx.Transaction`1"/> violating a <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/>.
@@ -9683,6 +10177,16 @@
             <param name="message">A description for the reason of violation
             given by an implementation of <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/>.
             </param>
+        </member>
+        <member name="M:Libplanet.Tx.TxPolicyViolationException.#ctor(Libplanet.Tx.TxId,System.String,System.Exception)">
+            <inheritdoc cref="M:Libplanet.Tx.TxPolicyViolationException.#ctor(Libplanet.Tx.TxId,System.String)"/>
+            <param name="txid">The <see cref="P:Libplanet.Tx.Transaction`1.Id"/> of the
+            <see cref="T:Libplanet.Tx.Transaction`1"/> violating a <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/>.
+            Gets prepended to <paramref name="message"/>.</param>
+            <param name="message">A description for the reason of violation
+            given by an implementation of <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/>. </param>
+            <param name="innerException">The <see cref="T:System.Exception"/> for
+            <see cref="P:System.Exception.InnerException"/>.</param>
         </member>
         <member name="T:Libplanet.Tx.TxSuccess">
             <summary>
