@@ -291,7 +291,6 @@ namespace LibplanetUnity
                     await _swarm.BootstrapAsync(
                         _seedPeers,
                         TimeSpan.FromMilliseconds(5000),
-                        TimeSpan.FromMilliseconds(5000),
                         cancellationToken: _cancellationTokenSource.Token
                     );
                 }
