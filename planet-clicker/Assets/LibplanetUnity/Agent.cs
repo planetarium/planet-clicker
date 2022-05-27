@@ -21,11 +21,9 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Bencodex;
-using Libplanet.Store.Trie;
+using Libplanet.Node;
 using UnityEngine;
 
 namespace LibplanetUnity
@@ -47,8 +45,6 @@ namespace LibplanetUnity
         public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
 
-        public static readonly HashAlgorithmType HashAlgorithm = HashAlgorithmType.Of<SHA256>();
-
         private static IEnumerator _miner;
 
         private static IEnumerator _swarmRunner;
@@ -61,9 +57,9 @@ namespace LibplanetUnity
 
         private Swarm<PolymorphicAction<ActionBase>> _swarm;
 
-        private DefaultStore _store;
+        private IStore _store;
 
-        private TrieStateStore _stateStore;
+        private IStateStore _stateStore;
 
         private ImmutableList<Peer> _seedPeers;
 
@@ -78,13 +74,11 @@ namespace LibplanetUnity
             instance.InitAgent(renderers);
         }
 
-        public static void CreateGenesisBlock(IEnumerable<PolymorphicAction<ActionBase>> actions = null)
+        public static void CreateGenesisBlock()
         {
-            Block<PolymorphicAction<ActionBase>> genesis =
-                BlockChain<PolymorphicAction<ActionBase>>.MakeGenesisBlock(HashAlgorithm, actions);
-            var codec = new Codec();
-            using FileStream stream = File.OpenWrite(GenesisBlockPath);
-            codec.Encode(genesis.MarshalBlock(), stream);
+            Block<PolymorphicAction<ActionBase>> genesisBlock =
+                NodeUtils<PolymorphicAction<ActionBase>>.CreateGenesisBlock();
+            NodeUtils<PolymorphicAction<ActionBase>>.SaveGenesisBlock(GenesisBlockPath, genesisBlock);
         }
 
         public IValue GetState(Address address)
@@ -159,18 +153,9 @@ namespace LibplanetUnity
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
             // TODO: Use RocksDBStore instead:
-            _store = new DefaultStore(Path.Combine(path, "chain"), flush: false);
-            _stateStore = new TrieStateStore(new DefaultKeyValueStore(Path.Combine(path, "states")));
-            var codec = new Codec();
-            Block<PolymorphicAction<ActionBase>> genesis;
-            using (FileStream blockStream = File.OpenRead(GenesisBlockPath))
-            {
-                IValue serializedBlock = codec.Decode(blockStream);
-                genesis = BlockMarshaler.UnmarshalBlock<PolymorphicAction<ActionBase>>(
-                    _ => HashAlgorithm,
-                    (Bencodex.Types.Dictionary)serializedBlock
-                );
-            }
+            (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(path);
+            Block<PolymorphicAction<ActionBase>> genesis =
+                NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(GenesisBlockPath);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
                 stagePolicy,

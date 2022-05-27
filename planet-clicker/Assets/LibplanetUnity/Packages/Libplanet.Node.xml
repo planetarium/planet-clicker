@@ -1,0 +1,307 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Libplanet.Node</name>
+    </assembly>
+    <members>
+        <member name="T:Libplanet.Node.NodeUtils`1">
+            <summary>
+            A helper class for creating a new <see cref="T:Libplanet.Blockchain.BlockChain`1"/>.
+            </summary>
+            <typeparam name="T">An <see cref="T:Libplanet.Action.IAction"/> type.  It should match to
+            <seealso cref="T:Libplanet.Blockchain.BlockChain`1"/> and <see cref="T:Libplanet.Net.Swarm`1"/>.</typeparam>
+        </member>
+        <member name="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy">
+            <summary>
+            The default <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NodeUtils`1.DefaultStagePolicy">
+            <summary>
+            The default <see cref="T:Libplanet.Blockchain.Policies.IStagePolicy`1"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NodeUtils`1.DefaultStoreUriScheme">
+            <summary>
+            The default scheme used for storage.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.CreateGenesisBlock">
+            <summary>
+            Creates an empty genesis <see cref="T:Libplanet.Blocks.Block`1"/> using <see cref="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy"/>
+            signed with a random <see cref="T:Libplanet.Crypto.PrivateKey"/>.
+            </summary>
+            <returns>An empty genesis <see cref="T:Libplanet.Blocks.Block`1"/> using <see cref="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy"/>
+            signed with a random <see cref="T:Libplanet.Crypto.PrivateKey"/>.</returns>
+            <remarks>
+            A <see cref="T:Libplanet.Crypto.PrivateKey"/> used to sign a newly created genesis <see cref="T:Libplanet.Blocks.Block`1"/>
+            is ephemeral, i.e. lost after its creation.  This method is mostly for developmental
+            purposes and testing.
+            </remarks>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.CreateGenesisBlock(Libplanet.Crypto.PrivateKey,Libplanet.Blockchain.Policies.IBlockPolicy{`0})">
+            <summary>
+            Creates an empty genesis <see cref="T:Libplanet.Blocks.Block`1"/> signed with
+            <paramref name="privateKey"/>.
+            </summary>
+            <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to sign the genesis
+            <see cref="T:Libplanet.Blocks.Block`1"/> with.</param>
+            <param name="blockPolicy">The <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/> to use.</param>
+            <returns>An empty genesis <see cref="T:Libplanet.Blocks.Block`1"/> signed with
+            <paramref name="privateKey"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.LoadGenesisBlock(System.String)">
+            <summary>
+            Loads a saved genesis <see cref="T:Libplanet.Blocks.Block`1"/> from <paramref name="path"/>
+            using <see cref="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy"/>.
+            </summary>
+            <param name="path">The location of which a genesis <see cref="T:Libplanet.Blocks.Block`1"/> is saved.
+            </param>
+            <returns>A genesis <see cref="T:Libplanet.Blocks.Block`1"/> loaded from <paramref name="path"/>
+            using <see cref="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy"/>.
+            </returns>
+            <seealso cref="M:Libplanet.Node.NodeUtils`1.SaveGenesisBlock(System.String,Libplanet.Blocks.Block{`0})"/>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.LoadGenesisBlock(System.String,Libplanet.Blockchain.Policies.IBlockPolicy{`0})">
+            <summary>
+            Loads a saved genesis <see cref="T:Libplanet.Blocks.Block`1"/> from <paramref name="path"/>
+            using <paramref name="blockPolicy"/>.
+            </summary>
+            <param name="path">The location of which a genesis <see cref="T:Libplanet.Blocks.Block`1"/> is saved.
+            </param>
+            <param name="blockPolicy">The <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/> to use when loading
+            a saved genesis <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
+            <returns>A genesis <see cref="T:Libplanet.Blocks.Block`1"/> loaded from <paramref name="path"/>
+            using <paramref name="blockPolicy"/>.
+            </returns>
+            <remarks>
+            When loading, <paramref name="blockPolicy"/> should be applicable, i.e. the saved
+            genesis <see cref="T:Libplanet.Blocks.Block`1"/> should not violate <paramref name="blockPolicy"/>.
+            Otherwise, this may fail and throw an <see cref="T:System.Exception"/>.
+            </remarks>
+            <seealso cref="M:Libplanet.Node.NodeUtils`1.SaveGenesisBlock(System.String,Libplanet.Blocks.Block{`0})"/>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.SaveGenesisBlock(System.String,Libplanet.Blocks.Block{`0})">
+            <summary>
+            Saves a genesis <see cref="T:Libplanet.Blocks.Block`1"/> to <paramref name="path"/>.
+            </summary>
+            <param name="path">The location of which <paramref name="genesisBlock"/>
+            is to be saved. </param>
+            <param name="genesisBlock">The genesis <see cref="T:Libplanet.Blocks.Block`1"/> to save.</param>
+            <exception cref="T:System.ArgumentException">Thrown when <paramref name="genesisBlock"/>
+            is not a genesis <see cref="T:Libplanet.Blocks.Block`1"/>, i.e. does not have an index of 0.</exception>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.LoadStore(System.String)">
+            <summary>
+            Loads a pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/>
+            from <paramref name="path"/>.  See <see cref="T:Libplanet.Store.StoreLoaderAttribute"/>
+            for more information.
+            </summary>
+            <param name="path">The location of which <see cref="T:Libplanet.Store.IStore"/> and
+            <see cref="T:Libplanet.Store.IStateStore"/> are saved.</param>
+            <returns>A pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/>
+            loaded from <paramref name="path"/>.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if stores can't be loaded from
+            <paramref name="path"/>.</exception>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.LoadStore(System.Uri)">
+            <summary>
+            Loads a pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/>
+            with <paramref name="uri"/>.  See <see cref="T:Libplanet.Store.StoreLoaderAttribute"/>
+            for more information.
+            </summary>
+            <param name="uri">The <see cref="T:System.Uri"/> to use when locating and loading
+            <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/>.</param>
+            <returns>A pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/>
+            loaded with <paramref name="uri"/>.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if stores can't be loaded with
+            <paramref name="uri"/>.</exception>
+            <seealso cref="T:Libplanet.Store.StoreLoaderAttribute"/>.
+        </member>
+        <member name="T:Libplanet.Node.UntypedBlock">
+            <summary>
+            Untyped equivalent of <see cref="T:Libplanet.Blocks.Block`1"/>.  It's guaranteed that all proofs are valid.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.UntypedBlock.#ctor(Libplanet.Blocks.IBlockHeader,System.Collections.Generic.IEnumerable{Libplanet.Node.UntypedTransaction})">
+            <summary>
+            Creates an <see cref="T:Libplanet.Node.UntypedBlock"/> instance.
+            </summary>
+            <param name="header">A block header without transactions.</param>
+            <param name="untypedTransactions">A list of transactions.  Ordering does not matter.
+            </param>
+            <exception cref="T:Libplanet.Tx.InvalidTxNonceException">Thrown when the same tx nonce is used by
+            a signer twice or more, or a tx nonce is used without its previous nonce by a signer.
+            Note that this validates only a block's intrinsic integrity between its transactions,
+            but does not guarantee integrity between blocks.  Such validation needs to be conducted
+            by <see cref="T:Libplanet.Blockchain.BlockChain`1"/>.</exception>
+            <exception cref="T:Libplanet.Tx.InvalidTxGenesisHashException">Thrown when transactions to set have
+            inconsistent genesis hashes.</exception>
+            <exception cref="T:Libplanet.Blocks.InvalidBlockTxHashException">Thrown when the given
+            <paramref name="header"/>'s <see cref="P:Libplanet.Blocks.IBlockMetadata.TxHash"/> is invalid.</exception>
+        </member>
+        <member name="M:Libplanet.Node.UntypedBlock.#ctor(Libplanet.Blocks.HashAlgorithmGetter,Bencodex.Types.Dictionary)">
+            <summary>
+            Decodes a Bencodex <paramref name="dictionary"/> into an <see cref="T:Libplanet.Node.UntypedBlock"/>
+            instance.
+            </summary>
+            <param name="hashAlgorithmGetter">A function to determine the hash algorithm used
+            for the block to decode.  See also <see cref="M:Libplanet.Blockchain.Policies.IBlockPolicy`1.GetHashAlgorithm(System.Int64)"/>
+            method.</param>
+            <param name="dictionary">A Bencodex dictionary made using <see cref="M:Libplanet.Node.UntypedBlock.ToBencodex"/>
+            method or <see cref="M:Libplanet.Blocks.BlockMarshaler.MarshalBlock``1(Libplanet.Blocks.Block{``0})"/> method.</param>
+            <seealso cref="M:Libplanet.Node.UntypedBlock.ToBencodex"/>
+            <seealso cref="M:Libplanet.Blocks.BlockMarshaler.MarshalBlock``1(Libplanet.Blocks.Block{``0})"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.ProtocolVersion">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.ProtocolVersion"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.HashAlgorithm">
+            <inheritdoc cref="P:Libplanet.Blocks.IPreEvaluationBlockHeader.HashAlgorithm"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Index">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.Index"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Timestamp">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.Timestamp"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Nonce">
+            <inheritdoc cref="P:Libplanet.Blocks.IPreEvaluationBlockHeader.Nonce"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Miner">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.Miner"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.PublicKey">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.PublicKey"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Difficulty">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.Difficulty"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.TotalDifficulty">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.TotalDifficulty"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.PreviousHash">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.PreviousHash"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.TxHash">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockMetadata.TxHash"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Signature">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockHeader.Signature"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.PreEvaluationHash">
+            <inheritdoc cref="P:Libplanet.Blocks.IPreEvaluationBlockHeader.PreEvaluationHash"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.StateRootHash">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockHeader.StateRootHash"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.Hash">
+            <inheritdoc cref="P:Libplanet.Blocks.IBlockExcerpt.Hash"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedBlock.UntypedTransactions">
+            <summary>
+            The list of untyped transactions belonging to the block.
+            </summary>
+            <remarks>This is always ordered by <see cref="P:Libplanet.Node.UntypedTransaction.Id"/>.</remarks>
+        </member>
+        <member name="M:Libplanet.Node.UntypedBlock.ToBencodex">
+            <summary>
+            Encodes this block into a Bencodex dictionary.
+            </summary>
+            <returns>A Bencodex dictionary which encodes this block.  This is equivalent to
+            <see cref="M:Libplanet.Blocks.BlockMarshaler.MarshalBlock``1(Libplanet.Blocks.Block{``0})"/> method's return value.
+            This can be decoded back to <see cref="T:Libplanet.Node.UntypedBlock"/> using
+            <see cref="M:Libplanet.Node.UntypedBlock.#ctor(Libplanet.Blocks.HashAlgorithmGetter,Bencodex.Types.Dictionary)"/> constructor or
+            <see cref="M:Libplanet.Blocks.BlockMarshaler.UnmarshalBlock``1(Libplanet.Blocks.HashAlgorithmGetter,Bencodex.Types.Dictionary)"/>
+            method.</returns>
+            <seealso cref="M:Libplanet.Node.UntypedBlock.#ctor(Libplanet.Blocks.HashAlgorithmGetter,Bencodex.Types.Dictionary)"/>
+            <seealso cref="M:Libplanet.Blocks.BlockMarshaler.UnmarshalBlock``1(Libplanet.Blocks.HashAlgorithmGetter,Bencodex.Types.Dictionary)"/>
+        </member>
+        <member name="M:Libplanet.Node.UntypedBlock.DeriveTxHash(System.Collections.Generic.IReadOnlyList{Libplanet.Node.UntypedTransaction})">
+            <summary>
+            Derives <see cref="P:Libplanet.Node.UntypedBlock.TxHash"/> from the given <paramref name="transactions"/>.
+            </summary>
+            <param name="transactions">The transactions to derive <see cref="P:Libplanet.Node.UntypedBlock.TxHash"/> from.
+            This must be ordered by <see cref="T:Libplanet.Tx.TxId"/>.</param>
+            <returns>The derived <see cref="P:Libplanet.Node.UntypedBlock.TxHash"/>.</returns>
+            <exception cref="T:System.ArgumentException">Thrown when the <paramref name="transactions"/> are
+            not ordered by their <see cref="T:Libplanet.Tx.TxId"/>s.</exception>
+        </member>
+        <member name="T:Libplanet.Node.UntypedTransaction">
+            <summary>
+            Untyped equivalent of <see cref="T:Libplanet.Tx.Transaction`1"/>.  It's guaranteed that the transaction
+            is properly signed.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.UntypedTransaction.#ctor(Libplanet.Tx.ITxMetadata,System.Collections.Generic.IEnumerable{Bencodex.Types.IValue},System.Collections.Immutable.ImmutableArray{System.Byte})">
+            <summary>
+            Creates an <see cref="T:Libplanet.Node.UntypedTransaction"/> instance.
+            </summary>
+            <param name="metadata">A transaction metadata without actions and signature.</param>
+            <param name="actionValues">A list of <see cref="P:Libplanet.Action.IAction.PlainValue"/>s.</param>
+            <param name="signature">A signature made by transaction's signer.</param>
+            <exception cref="T:Libplanet.Tx.InvalidTxSignatureException">Thrown when
+            the <paramref name="signature"/> is invalid.</exception>
+        </member>
+        <member name="M:Libplanet.Node.UntypedTransaction.#ctor(Bencodex.Types.Dictionary)">
+            <summary>
+            Creates an <see cref="T:Libplanet.Node.UntypedTransaction"/> instance from a Bencodex
+            <paramref name="dictionary"/>.
+            </summary>
+            <param name="dictionary">A Bencodex dictionary made using <see cref="M:Libplanet.Node.UntypedTransaction.ToBencodex"/>
+            method.</param>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown when the given
+            <paramref name="dictionary"/> lacks some fields.</exception>
+            <exception cref="T:System.InvalidCastException">Thrown when the given
+            <paramref name="dictionary"/> has some invalid values.</exception>
+            <exception cref="T:Libplanet.Tx.InvalidTxSignatureException">Thrown when the signature is invalid.
+            </exception>
+            <seealso cref="M:Libplanet.Node.UntypedTransaction.ToBencodex"/>
+            <seealso cref="M:Libplanet.Tx.Transaction`1.ToBencodex(System.Boolean)"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.Id">
+            <inheritdoc cref="P:Libplanet.Tx.ITxExcerpt.Id"/>
+            <seealso cref="P:Libplanet.Tx.Transaction`1.Id"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.Nonce">
+            <inheritdoc cref="P:Libplanet.Tx.ITxMetadata.Nonce"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.Signer">
+            <inheritdoc cref="P:Libplanet.Tx.ITxMetadata.Signer"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.UpdatedAddresses">
+            <inheritdoc cref="P:Libplanet.Tx.ITxMetadata.UpdatedAddresses"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.Timestamp">
+            <inheritdoc cref="P:Libplanet.Tx.ITxMetadata.Timestamp"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.PublicKey">
+            <inheritdoc cref="P:Libplanet.Tx.ITxMetadata.PublicKey"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.GenesisHash">
+            <inheritdoc cref="P:Libplanet.Tx.ITxMetadata.GenesisHash"/>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.ActionValues">
+            <summary>
+            A list of <see cref="P:Libplanet.Action.IAction.PlainValue"/>s.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.UntypedTransaction.Signature">
+            <summary>
+            A <see cref="P:Libplanet.Node.UntypedTransaction.Signer"/>'s signature on this transaction.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.UntypedTransaction.ToBencodex">
+            <summary>
+            Builds a Bencodex dictionary used for calculating <see cref="T:Libplanet.Tx.TxId"/>.
+            </summary>
+            <returns>A Bencodex dictionary that this transaction turns into.
+            This can be deserialized using
+            <see cref="M:Libplanet.Node.UntypedTransaction.#ctor(Bencodex.Types.Dictionary)"/> method or
+            <see cref="M:Libplanet.Tx.Transaction`1.#ctor(Bencodex.Types.Dictionary)"/> method.
+            </returns>
+            <seealso cref="M:Libplanet.Node.UntypedTransaction.#ctor(Bencodex.Types.Dictionary)"/>
+            <seealso cref="M:Libplanet.Tx.Transaction`1.#ctor(Bencodex.Types.Dictionary)"/>
+        </member>
+    </members>
+</doc>
