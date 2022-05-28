@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Libplanet.Node;
 using UnityEngine;
+using UnityEditor;
 
 namespace LibplanetUnity
 {
@@ -34,13 +35,14 @@ namespace LibplanetUnity
 
         private const int SwarmDialTimeout = 5000;
 
-        private const string PlayerPrefsKeyOfAgentPrivateKey = "private_key_agent";
-
         private const string AgentStoreDirName = "planetarium";
 
         private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
 
         public static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
+
+        public static readonly string DefaultPrivateKeyPath =
+            Path.Combine(Application.persistentDataPath, "private_key");
 
         public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, AgentStoreDirName);
@@ -78,7 +80,15 @@ namespace LibplanetUnity
         {
             Block<PolymorphicAction<ActionBase>> genesisBlock =
                 NodeUtils<PolymorphicAction<ActionBase>>.CreateGenesisBlock();
+            File.Delete(GenesisBlockPath);
             NodeUtils<PolymorphicAction<ActionBase>>.SaveGenesisBlock(GenesisBlockPath, genesisBlock);
+        }
+
+        public static void CreatePrivateKey()
+        {
+            PrivateKey privateKey = new PrivateKey();
+            File.Delete(DefaultPrivateKeyPath);
+            NodeUtils<PolymorphicAction<ActionBase>>.SavePrivateKey(DefaultPrivateKeyPath, privateKey);
         }
 
         public IValue GetState(Address address)
@@ -95,7 +105,6 @@ namespace LibplanetUnity
         private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var options = GetOptions(CommandLineOptionsJsonPath);
-            var privateKey = GetPrivateKey(options);
             var peers = options.Peers.Select(LoadPeer).ToImmutableList();
             var iceServers = options.IceServers.Select(LoadIceServer).ToImmutableList();
             var host = options.Host;
@@ -116,7 +125,6 @@ namespace LibplanetUnity
             }
 
             Init(
-                privateKey,
                 storagePath,
                 peers,
                 iceServers,
@@ -134,7 +142,6 @@ namespace LibplanetUnity
         }
 
         private void Init(
-            PrivateKey privateKey,
             string path,
             IEnumerable<Peer> peers,
             IEnumerable<IceServer> iceServers,
@@ -144,18 +151,18 @@ namespace LibplanetUnity
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
+            Block<PolymorphicAction<ActionBase>> genesis = GetGenesisBlock();
+            PrivateKey privateKey = GetPrivateKey();
+            PrivateKey = privateKey;
+            Address = privateKey.PublicKey.ToAddress();
             var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
                 null,
                 BlockInterval,
                 2048,
                 2048);
             var stagePolicy = new VolatileStagePolicy<PolymorphicAction<ActionBase>>();
-            PrivateKey = privateKey;
-            Address = privateKey.PublicKey.ToAddress();
             // TODO: Use RocksDBStore instead:
             (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(path);
-            Block<PolymorphicAction<ActionBase>> genesis =
-                NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(GenesisBlockPath);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
                 stagePolicy,
@@ -201,22 +208,24 @@ namespace LibplanetUnity
             _actions.Enqueue(action);
         }
 
-        private static PrivateKey GetPrivateKey(Options options)
+        private static Block<PolymorphicAction<ActionBase>> GetGenesisBlock()
         {
-            PrivateKey privateKey;
-            var privateKeyHex = options.PrivateKey ?? PlayerPrefs.GetString(PlayerPrefsKeyOfAgentPrivateKey, "");
-
-            if (string.IsNullOrEmpty(privateKeyHex))
+            if (!File.Exists(GenesisBlockPath))
             {
-                privateKey = new PrivateKey();
-                PlayerPrefs.SetString(PlayerPrefsKeyOfAgentPrivateKey, ByteUtil.Hex(privateKey.ByteArray));
-            }
-            else
-            {
-                privateKey = new PrivateKey(ByteUtil.ParseHex(privateKeyHex));
+                CreateGenesisBlock();
             }
 
-            return privateKey;
+            return NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(GenesisBlockPath);
+        }
+
+        private static PrivateKey GetPrivateKey()
+        {
+            if (!File.Exists(DefaultPrivateKeyPath))
+            {
+                CreatePrivateKey();
+            }
+
+            return NodeUtils<PolymorphicAction<ActionBase>>.LoadPrivateKey(DefaultPrivateKeyPath);
         }
 
         private static BoundPeer LoadPeer(string peerInfo)
