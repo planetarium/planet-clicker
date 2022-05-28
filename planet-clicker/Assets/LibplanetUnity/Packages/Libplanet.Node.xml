@@ -89,7 +89,8 @@
             is to be saved. </param>
             <param name="genesisBlock">The genesis <see cref="T:Libplanet.Blocks.Block`1"/> to save.</param>
             <exception cref="T:System.ArgumentException">Thrown when <paramref name="genesisBlock"/>
-            is not a genesis <see cref="T:Libplanet.Blocks.Block`1"/>, i.e. does not have an index of 0.</exception>
+            is not a genesis <see cref="T:Libplanet.Blocks.Block`1"/>, i.e. does not have an index of 0, or
+            a file already exists at <paramref name="path"/>.</exception>
         </member>
         <member name="M:Libplanet.Node.NodeUtils`1.LoadStore(System.String)">
             <summary>
@@ -117,6 +118,23 @@
             <exception cref="T:System.ArgumentException">Thrown if stores can't be loaded with
             <paramref name="uri"/>.</exception>
             <seealso cref="T:Libplanet.Store.StoreLoaderAttribute"/>.
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.LoadPrivateKey(System.String)">
+            <summary>
+            Loads a <see cref="T:Libplanet.Crypto.PrivateKey"/> from <paramref name="path"/>.
+            </summary>
+            <param name="path">The location of which a <see cref="T:Libplanet.Crypto.PrivateKey"/> is saved.</param>
+            <returns>A <see cref="T:Libplanet.Crypto.PrivateKey"/> loaded from <paramref name="path"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Node.NodeUtils`1.SavePrivateKey(System.String,Libplanet.Crypto.PrivateKey)">
+            <summary>
+            Saves a <see cref="T:Libplanet.Crypto.PrivateKey"/> from <paramref name="path"/>.
+            </summary>
+            <param name="path">The location of which a <see cref="T:Libplanet.Crypto.PrivateKey"/> is to be saved.
+            </param>
+            <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to save.</param>
+            <exception cref="T:System.ArgumentException">Thrown when a file already exists
+            at <paramref name="path"/>.</exception>
         </member>
         <member name="T:Libplanet.Node.UntypedBlock">
             <summary>
