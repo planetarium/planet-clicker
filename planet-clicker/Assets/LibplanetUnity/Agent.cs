@@ -31,11 +31,9 @@ namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
-
         private const int SwarmDialTimeout = 5000;
 
-        private const string AgentStoreDirName = "planetarium";
+        private const string StoreDir = "planetarium";
 
         private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
 
@@ -45,7 +43,7 @@ namespace LibplanetUnity
             Path.Combine(Application.persistentDataPath, "private_key");
 
         public static readonly string DefaultStoragePath =
-            Path.Combine(Application.persistentDataPath, AgentStoreDirName);
+            Path.Combine(Application.persistentDataPath, StoreDir);
 
         private static IEnumerator _miner;
 
@@ -155,12 +153,10 @@ namespace LibplanetUnity
             PrivateKey privateKey = GetPrivateKey();
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
-            var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
-                null,
-                BlockInterval,
-                2048,
-                2048);
-            var stagePolicy = new VolatileStagePolicy<PolymorphicAction<ActionBase>>();
+            IBlockPolicy<PolymorphicAction<ActionBase>> policy =
+                NodeUtils<PolymorphicAction<ActionBase>>.DefaultBlockPolicy;
+            IStagePolicy<PolymorphicAction<ActionBase>> stagePolicy =
+                NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy;
             // TODO: Use RocksDBStore instead:
             (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(path);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
