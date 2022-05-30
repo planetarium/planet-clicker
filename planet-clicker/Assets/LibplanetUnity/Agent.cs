@@ -35,9 +35,14 @@ namespace LibplanetUnity
 
         private const string StoreDir = "planetarium";
 
-        private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
+        private static readonly string CommandLineOptionsJsonPath =
+            Path.Combine(Application.streamingAssetsPath, "clo.json");
 
-        public static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
+        public static readonly string GenesisBlockPath =
+            Path.Combine(Application.streamingAssetsPath, "genesis");
+
+        public static readonly string SwarmConfigPath =
+            Path.Combine(Application.streamingAssetsPath, "swarm_config.json");
 
         public static readonly string DefaultPrivateKeyPath =
             Path.Combine(Application.persistentDataPath, "private_key");
@@ -72,6 +77,13 @@ namespace LibplanetUnity
         public static void Initialize(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             instance.InitAgent(renderers);
+        }
+
+        public static void CreateSwarmConfig()
+        {
+            SwarmConfig swarmConfig = new SwarmConfig();
+            File.Delete(SwarmConfigPath);
+            File.WriteAllText(SwarmConfigPath, swarmConfig.ToJson());
         }
 
         public static void CreateGenesisBlock()
@@ -140,7 +152,7 @@ namespace LibplanetUnity
         }
 
         private void Init(
-            string path,
+            string storagePath,
             IEnumerable<Peer> peers,
             IEnumerable<IceServer> iceServers,
             string host,
@@ -158,7 +170,7 @@ namespace LibplanetUnity
             IStagePolicy<PolymorphicAction<ActionBase>> stagePolicy =
                 NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy;
             // TODO: Use RocksDBStore instead:
-            (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(path);
+            (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
                 stagePolicy,
@@ -202,6 +214,16 @@ namespace LibplanetUnity
         public void RunOnMainThread(System.Action action)
         {
             _actions.Enqueue(action);
+        }
+
+        private static SwarmConfig GetSwarmConfig()
+        {
+            if (!File.Exists(SwarmConfigPath))
+            {
+                CreateSwarmConfig();
+            }
+
+            return SwarmConfig.FromJson(File.ReadAllText(SwarmConfigPath));
         }
 
         private static Block<PolymorphicAction<ActionBase>> GetGenesisBlock()

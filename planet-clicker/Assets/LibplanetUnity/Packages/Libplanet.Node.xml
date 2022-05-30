@@ -4,6 +4,75 @@
         <name>Libplanet.Node</name>
     </assembly>
     <members>
+        <member name="T:Libplanet.Node.BootstrapConfig">
+            <summary>
+            Various options for a <see cref="T:Libplanet.Net.Swarm`1"/>'s bootstrapping phase.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.BootstrapConfig.SeedPeers">
+            <summary>
+            The list of seed peers to connect to.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.BootstrapConfig.SearchDepth">
+            <summary>
+            Determines the depth of the search when discovering neighbors for the local node.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.BootstrapConfig.DialTimeout">
+            <summary>
+            Determines how long to wait for dial responses during the bootstrapping phase.
+            </summary>
+        </member>
+        <member name="T:Libplanet.Node.InitConfig">
+            <summary>
+            Various options for initializing a <see cref="T:Libplanet.Net.Swarm`1"/> instance.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.MaxTimeout">
+            <summary>
+            Hard upper limit on how long to wait for a response when sending messages to peers.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.MinTimeout">
+            <summary>
+            Hard lower limit on how long to wait for a response when sending messages to peers.
+            </summary>
+            <remarks>
+            Currently unused.
+            </remarks>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.RoutingTableNumBuckets">
+            <summary>
+            Determines how many buckets there are for a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.RoutingTableBucketSize">
+            <summary>
+            Determines the bucket size for each bucket in a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.BlockLocatorIndexSampleThreshold">
+            <summary>
+            Determines sampling threshold for <see cref="T:Libplanet.Blockchain.BlockLocator"/>s.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.Host">
+            <summary>
+            Determines the host.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.Port">
+            <summary>
+            Determines the <em>incoming</em> port.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.InitConfig.IceServers">
+            <summary>
+            The list of <see cref="P:Libplanet.Node.InitConfig.IceServers"/> to use when connecting to the network.
+            If <see cref="P:Libplanet.Node.InitConfig.Host"/> is provided, this gets ignored.
+            </summary>
+        </member>
         <member name="T:Libplanet.Node.NodeUtils`1">
             <summary>
             A helper class for creating a new <see cref="T:Libplanet.Blockchain.BlockChain`1"/>.
@@ -135,6 +204,149 @@
             <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to save.</param>
             <exception cref="T:System.ArgumentException">Thrown when a file already exists
             at <paramref name="path"/>.</exception>
+        </member>
+        <member name="T:Libplanet.Node.PreloadConfig">
+            <summary>
+            Various options for a <see cref="T:Libplanet.Net.Swarm`1"/>'s preloading phase.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.PreloadConfig.Render">
+            <summary>
+            Determines whether to call renderers during the preloading phase.
+            Set to <c>false</c> by default.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.PreloadConfig.DeltaThreshold">
+            <summary>
+            Determines when to stop preloading. Preloading is considered complete when
+            the delta between the local node's tip index and the best known tip
+            index is less than or equal to this value. Set to <c>10L</c> by default.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.PreloadConfig.DialTimeout">
+            <summary>
+            Determines how long to wait for dial responses during the preloading phase.
+            </summary>
+        </member>
+        <member name="T:Libplanet.Node.SwarmConfig">
+            <summary>
+            A <see cref="T:Libplanet.Net.Swarm`1"/> configuration.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SwarmConfig.InitConfig">
+            <summary>
+            The <see cref="P:Libplanet.Node.SwarmConfig.InitConfig"/> to use.
+            </summary>
+            <seealso cref="P:Libplanet.Node.SwarmConfig.InitConfig"/>
+        </member>
+        <member name="P:Libplanet.Node.SwarmConfig.BootstrapConfig">
+            <summary>
+            The <see cref="P:Libplanet.Node.SwarmConfig.BootstrapConfig"/> to use.
+            </summary>
+            <seealso cref="P:Libplanet.Node.SwarmConfig.BootstrapConfig"/>
+        </member>
+        <member name="P:Libplanet.Node.SwarmConfig.PreloadConfig">
+            <summary>
+            The <see cref="P:Libplanet.Node.SwarmConfig.PreloadConfig"/> to use.
+            </summary>
+            <seealso cref="P:Libplanet.Node.SwarmConfig.PreloadConfig"/>
+        </member>
+        <member name="P:Libplanet.Node.SwarmConfig.SyncConfig">
+            <summary>
+            The <see cref="P:Libplanet.Node.SwarmConfig.SyncConfig"/> to use.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.SwarmConfig.FromJson(System.String)">
+            <summary>
+            Instantiate a <see cref="T:Libplanet.Node.SwarmConfig"/> instance from a json <see cref="T:System.String"/>.
+            </summary>
+            <param name="jsonString">The json <see cref="T:System.String"/> to parse.</param>
+            <returns>The <see cref="T:Libplanet.Node.SwarmConfig"/> instance parsed from
+            <paramref name="jsonString"/>.</returns>
+        </member>
+        <member name="M:Libplanet.Node.SwarmConfig.ToSwarmOptions">
+            <summary>
+            Creates a <see cref="T:Libplanet.Net.SwarmOptions"/> instance.
+            </summary>
+            <returns>The <see cref="T:Libplanet.Net.SwarmOptions"/> instance.</returns>
+        </member>
+        <member name="M:Libplanet.Node.SwarmConfig.ToJson">
+            <summary>
+            Converts the instance into a json <see cref="T:System.String"/>.
+            </summary>
+            <returns>A json <see cref="T:System.String"/> representation of this <see cref="T:Libplanet.Node.SwarmConfig"/>.
+            </returns>
+        </member>
+        <member name="T:Libplanet.Node.SyncConfig">
+            <summary>
+            Various options for a <see cref="T:Libplanet.Net.Swarm`1"/>'s sync phase.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.TipLifespan">
+            <summary>
+            Determines the lifespan of a tip.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.DialTimeout">
+            <summary>
+            Determines how long to wait for dial responses during the syncing phase.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.BlockBroadcastInterval">
+            <summary>
+            Determines how often to broadcast <see cref="T:Libplanet.Net.Messages.BlockHeaderMessage"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.TxBroadcastInterval">
+            <summary>
+            Determines how often to broadcast <see cref="T:Libplanet.Net.Messages.TxIds"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.StaticPeers">
+            <summary>
+            A list of <see cref="T:Libplanet.Net.BoundPeer"/>s to be treated as static.
+            </summary>
+            <remarks>
+            Despite its name, static peers are not truly static in the sense that it is not kept
+            in a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/>. <see cref="P:Libplanet.Node.SyncConfig.StaticPeers"/> are artificially added
+            to a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/> periodically.
+            </remarks>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.StaticPeersMaintainPeriod">
+            <summary>
+            Determines how often a <see cref="T:Libplanet.Net.BoundPeer"/> from <see cref="P:Libplanet.Node.SyncConfig.StaticPeers"/> is
+            artificially added to a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/>.
+            </summary>
+            <remarks>
+            A static <see cref="T:Libplanet.Net.BoundPeer"/> is only added to a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/> if
+            the dialing is successful, just like any other normal <see cref="T:Libplanet.Net.BoundPeer"/>.
+            </remarks>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.RoutingTableRefreshPeriod">
+            <summary>
+            Determines how often a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/> gets refreshed.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.RoutingTableBoundPeerLifespan">
+            <summary>
+            Determines the lifespan of a <see cref="T:Libplanet.Net.BoundPeer"/> in a <see cref="T:Libplanet.Net.Protocols.RoutingTable"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.MaximumPollNumPeers">
+            <summary>
+            Determines the maximum number of <see cref="T:Libplanet.Net.BoundPeer"/>s to poll when pulling
+            blocks.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.MinimumBroadcastNumPeers">
+            <summary>
+            Determines the minimum number of <see cref="T:Libplanet.Net.BoundPeer"/>s to broadcast.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.SyncConfig.BlockDemandLifespan">
+            <summary>
+            Determines the lifespan of blocks in <see cref="T:Libplanet.Net.BlockDemandTable`1"/>.
+            </summary>
         </member>
         <member name="T:Libplanet.Node.UntypedBlock">
             <summary>
