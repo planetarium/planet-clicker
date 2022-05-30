@@ -28,12 +28,56 @@ namespace LibplanetUnity.Editor
             }
         }
 
-        [MenuItem("Tools/Libplanet/Create genesis")]
+        [MenuItem("Tools/Libplanet/Create swarm config")]
+        public static void CreateSwarmConfig()
+        {
+            const string title = "Create swarm config";
+            if (File.Exists(Agent.SwarmConfigPath) &&
+                !EditorUtility.DisplayDialog(
+                    title,
+                    $"Swarm config found at {Agent.SwarmConfigPath}.\n" +
+                    "Do you want to overwrite it?",
+                    "Ok",
+                    "Cancel"))
+            {
+                return;
+            }
+
+            Agent.CreateSwarmConfig();
+            EditorUtility.DisplayDialog(title, "New swarm config created.", "Close");
+        }
+
+        [MenuItem("Tools/Libplanet/Delete swarm config")]
+        public static void DeleteSwarmConfig()
+        {
+            const string title = "Delete swarm config";
+            if (File.Exists(Agent.SwarmConfigPath))
+            {
+                if (EditorUtility.DisplayDialog(
+                    title,
+                    $"Swarm config found at {Agent.SwarmConfigPath}.\n" +
+                    "Do you want to delete it?",
+                    "Ok",
+                    "Cancel"))
+                {
+
+                    File.Delete(Agent.SwarmConfigPath);
+                    EditorUtility.DisplayDialog(title, "Swarm config deleted.", "Close");
+                }
+            }
+            else
+            {
+                EditorUtility.DisplayDialog(title, "Genesis block not found.", "Close");
+            }
+        }
+
+        [MenuItem("Tools/Libplanet/Create genesis block")]
         public static void CreateGenesisBlock()
         {
+            const string title = "Create genesis block";
             if (File.Exists(Agent.GenesisBlockPath) &&
                 !EditorUtility.DisplayDialog(
-                    "Create genesis",
+                    title,
                     $"Genesis block found at {Agent.GenesisBlockPath}.\n" +
                     "New genesis block will not be compatible with existing chain.\n" +
                     "Do you want to overwrite it?",
@@ -44,16 +88,17 @@ namespace LibplanetUnity.Editor
             }
 
             Agent.CreateGenesisBlock();
-            EditorUtility.DisplayDialog("Create genesis", "New genesis block created.", "Close");
+            EditorUtility.DisplayDialog(title, "New genesis block created.", "Close");
         }
 
-        [MenuItem("Tools/Libplanet/Delete genesis")]
+        [MenuItem("Tools/Libplanet/Delete genesis block")]
         public static void DeleteGenesisBlock()
         {
+            const string title = "Delete genesis block";
             if (File.Exists(Agent.GenesisBlockPath))
             {
                 if (EditorUtility.DisplayDialog(
-                    "Delete genesis",
+                    title,
                     $"Genesis block found at {Agent.GenesisBlockPath}.\n" +
                     "Do you want to delete it?",
                     "Ok",
@@ -61,21 +106,22 @@ namespace LibplanetUnity.Editor
                 {
 
                     File.Delete(Agent.GenesisBlockPath);
-                    EditorUtility.DisplayDialog("Delete genesis", "Genesis block deleted.", "Close");
+                    EditorUtility.DisplayDialog(title, "Genesis block deleted.", "Close");
                 }
             }
             else
             {
-                EditorUtility.DisplayDialog("Delete genesis", "Genesis block not found.", "Close");
+                EditorUtility.DisplayDialog(title, "Genesis block not found.", "Close");
             }
         }
 
         [MenuItem("Tools/Libplanet/Create private key")]
         public static void CreatePrivateKey()
         {
+            const string title = "Create private key";
             if (File.Exists(Agent.DefaultPrivateKeyPath) &&
                 !EditorUtility.DisplayDialog(
-                    "Create private key",
+                    title,
                     $"Private key found at {Agent.DefaultPrivateKeyPath}.\n" +
                     "Do you want to overwrite it?",
                     "Ok",
@@ -85,27 +131,28 @@ namespace LibplanetUnity.Editor
             }
 
             Agent.CreatePrivateKey();
-            EditorUtility.DisplayDialog("Create private key", "New private key created.", "Close");
+            EditorUtility.DisplayDialog(title, "New private key created.", "Close");
         }
 
         [MenuItem("Tools/Libplanet/Delete private key")]
         public static void DeletePrivateKey()
         {
+            const string title = "Delete private key";
             if (File.Exists(Agent.DefaultPrivateKeyPath))
             {
                 if (EditorUtility.DisplayDialog(
-                    "Delete private key",
+                    title,
                     $"Are you sure you want to delete private key found at {Agent.DefaultPrivateKeyPath}?",
                     "Ok",
                     "Cancel"))
                 {
                     File.Delete(Agent.DefaultPrivateKeyPath);
-                    EditorUtility.DisplayDialog("Delete private key", "Private key deleted.", "Close");
+                    EditorUtility.DisplayDialog(title, "Private key deleted.", "Close");
                 }
             }
             else
             {
-                EditorUtility.DisplayDialog("Delete private key", "Private key not found.", "Close");
+                EditorUtility.DisplayDialog(title, "Private key not found.", "Close");
             }
         }
 
