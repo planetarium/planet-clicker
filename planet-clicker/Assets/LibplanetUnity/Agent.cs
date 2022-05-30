@@ -62,10 +62,6 @@ namespace LibplanetUnity
 
         private Swarm<PolymorphicAction<ActionBase>> _swarm;
 
-        private IStore _store;
-
-        private IStateStore _stateStore;
-
         private ImmutableList<Peer> _seedPeers;
 
         private CancellationTokenSource _cancellationTokenSource;
@@ -170,12 +166,12 @@ namespace LibplanetUnity
             IStagePolicy<PolymorphicAction<ActionBase>> stagePolicy =
                 NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy;
             // TODO: Use RocksDBStore instead:
-            (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
+            (IStore store, IStateStore stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
                 stagePolicy,
-                _store,
-                _stateStore,
+                store,
+                stateStore,
                 genesis,
                 renderers
             );
@@ -271,7 +267,6 @@ namespace LibplanetUnity
             NetMQConfig.Cleanup(false);
 
             base.OnDestroy();
-            _store.Dispose();
         }
 
         #endregion
@@ -450,7 +445,7 @@ namespace LibplanetUnity
                         {
                             if (ex is InvalidTxNonceException invalidTxNonceException)
                             {
-                                var invalidNonceTx = _store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxNonceException.TxId);
+                                var invalidNonceTx = _blocks.GetTransaction(invalidTxNonceException.TxId);
 
                                 if (invalidNonceTx.Signer == Address)
                                 {
@@ -462,7 +457,7 @@ namespace LibplanetUnity
                             if (ex is InvalidTxException invalidTxException)
                             {
                                 Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxException.TxId));
+                                invalidTxs.Add(_blocks.GetTransaction(invalidTxException.TxId));
                             }
 
                             Debug.LogException(ex);
