@@ -31,12 +31,10 @@ namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private const int SwarmDialTimeout = 5000;
-
         private const string StoreDir = "planetarium";
 
         private static readonly string CommandLineOptionsJsonPath =
-            Path.Combine(Application.streamingAssetsPath, "clo.json");
+            Path.Combine(Application.streamingAssetsPath, "command_line_options.json");
 
         public static readonly string GenesisBlockPath =
             Path.Combine(Application.streamingAssetsPath, "genesis");
@@ -62,11 +60,7 @@ namespace LibplanetUnity
 
         private Swarm<PolymorphicAction<ActionBase>> _swarm;
 
-        private IStore _store;
-
-        private IStateStore _stateStore;
-
-        private ImmutableList<Peer> _seedPeers;
+        private SwarmConfig _swarmConfig;
 
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -115,10 +109,6 @@ namespace LibplanetUnity
         private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var options = GetOptions(CommandLineOptionsJsonPath);
-            var peers = options.Peers.Select(LoadPeer).ToImmutableList();
-            var iceServers = options.IceServers.Select(LoadIceServer).ToImmutableList();
-            var host = options.Host;
-            int? port = options.Port;
             var storagePath = options.StoragePath ?? DefaultStoragePath;
             var appProtocolVersion = options.AppProtocolVersion is null
                 ? default
@@ -136,14 +126,9 @@ namespace LibplanetUnity
 
             Init(
                 storagePath,
-                peers,
-                iceServers,
-                host,
-                port,
                 appProtocolVersion,
                 trustedAppProtocolVersionSigners,
-                renderers
-                );
+                renderers);
 
             _miner = options.NoMiner ? null : CoMiner();
 
@@ -153,16 +138,15 @@ namespace LibplanetUnity
 
         private void Init(
             string storagePath,
-            IEnumerable<Peer> peers,
-            IEnumerable<IceServer> iceServers,
-            string host,
-            int? port,
             AppProtocolVersion appProtocolVersion,
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
+            SwarmConfig _swarmConfig = GetSwarmConfig();
             Block<PolymorphicAction<ActionBase>> genesis = GetGenesisBlock();
             PrivateKey privateKey = GetPrivateKey();
+
+            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
             PrivateKey = privateKey;
             Address = privateKey.PublicKey.ToAddress();
             IBlockPolicy<PolymorphicAction<ActionBase>> policy =
@@ -170,29 +154,28 @@ namespace LibplanetUnity
             IStagePolicy<PolymorphicAction<ActionBase>> stagePolicy =
                 NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy;
             // TODO: Use RocksDBStore instead:
-            (_store, _stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
+            (IStore store, IStateStore stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
             _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
                 policy,
                 stagePolicy,
-                _store,
-                _stateStore,
+                store,
+                stateStore,
                 genesis,
                 renderers
             );
 
-            if (!(host is null) || iceServers.Any())
+            if (_swarmConfig.InitConfig.Host is string host
+                || _swarmConfig.InitConfig.IceServers.Any())
             {
                 _swarm = new Swarm<PolymorphicAction<ActionBase>>(
                     _blocks,
                     privateKey,
                     appProtocolVersion: appProtocolVersion,
-                    host: host,
-                    listenPort: port,
-                    iceServers: iceServers,
-                    trustedAppProtocolVersionSigners: trustedAppProtocolVersionSigners);
-
-                _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
-                _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
+                    host: _swarmConfig.InitConfig.Host,
+                    listenPort: _swarmConfig.InitConfig.Port,
+                    iceServers: _swarmConfig.InitConfig.IceServers,
+                    trustedAppProtocolVersionSigners: trustedAppProtocolVersionSigners,
+                    options: _swarmConfig.ToSwarmOptions());
             }
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -246,24 +229,6 @@ namespace LibplanetUnity
             return NodeUtils<PolymorphicAction<ActionBase>>.LoadPrivateKey(DefaultPrivateKeyPath);
         }
 
-        private static BoundPeer LoadPeer(string peerInfo)
-        {
-            string[] tokens = peerInfo.Split(',');
-            var pubKey = new PublicKey(ByteUtil.ParseHex(tokens[0]));
-            string host = tokens[1];
-            var port = int.Parse(tokens[2]);
-
-            return new BoundPeer(pubKey, new DnsEndPoint(host, port));
-        }
-
-        private static IceServer LoadIceServer(string iceServerInfo)
-        {
-            var uri = new Uri(iceServerInfo);
-            string[] userInfo = uri.UserInfo.Split(':');
-
-            return new IceServer(new[] { uri }, userInfo[0], userInfo[1]);
-        }
-
         #region Mono
 
         protected override void OnDestroy()
@@ -271,7 +236,6 @@ namespace LibplanetUnity
             NetMQConfig.Cleanup(false);
 
             base.OnDestroy();
-            _store.Dispose();
         }
 
         #endregion
@@ -300,11 +264,12 @@ namespace LibplanetUnity
             {
                 try
                 {
+                    // FIXME: Swarm<T> should handle the filtering internally.
                     await _swarm.BootstrapAsync(
-                        _seedPeers,
-                        TimeSpan.FromMilliseconds(5000),
-                        cancellationToken: _cancellationTokenSource.Token
-                    );
+                        seedPeers: _swarmConfig.BootstrapConfig.SeedPeers.Where(boundPeer => boundPeer.PublicKey != PrivateKey.PublicKey),
+                        dialTimeout: _swarmConfig.BootstrapConfig.DialTimeout,
+                        depth: _swarmConfig.BootstrapConfig.SearchDepth,
+                        cancellationToken: _cancellationTokenSource.Token);
                 }
                 catch (Exception e)
                 {
@@ -323,11 +288,11 @@ namespace LibplanetUnity
             var swarmPreloadTask = Task.Run(async () =>
             {
                 await _swarm.PreloadAsync(
-                    TimeSpan.FromMilliseconds(SwarmDialTimeout),
-                    null,
-                    false,
-                    cancellationToken: _cancellationTokenSource.Token
-                );
+                    dialTimeout: _swarmConfig.PreloadConfig.DialTimeout,
+                    progress: null,
+                    render: false,
+                    tipDeltaThreshold: _swarmConfig.PreloadConfig.DeltaThreshold,
+                    cancellationToken: _cancellationTokenSource.Token);
             });
 
             yield return new WaitUntil(() => swarmPreloadTask.IsCompleted);
@@ -353,7 +318,11 @@ namespace LibplanetUnity
             {
                 try
                 {
-                    await _swarm.StartAsync();
+                    await _swarm.StartAsync(
+                        dialTimeout: _swarmConfig.SyncConfig.DialTimeout,
+                        broadcastBlockInterval: _swarmConfig.SyncConfig.BlockBroadcastInterval,
+                        broadcastTxInterval: _swarmConfig.SyncConfig.TxBroadcastInterval,
+                        cancellationToken: _cancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -450,7 +419,7 @@ namespace LibplanetUnity
                         {
                             if (ex is InvalidTxNonceException invalidTxNonceException)
                             {
-                                var invalidNonceTx = _store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxNonceException.TxId);
+                                var invalidNonceTx = _blocks.GetTransaction(invalidTxNonceException.TxId);
 
                                 if (invalidNonceTx.Signer == Address)
                                 {
@@ -462,7 +431,7 @@ namespace LibplanetUnity
                             if (ex is InvalidTxException invalidTxException)
                             {
                                 Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxException.TxId));
+                                invalidTxs.Add(_blocks.GetTransaction(invalidTxException.TxId));
                             }
 
                             Debug.LogException(ex);
