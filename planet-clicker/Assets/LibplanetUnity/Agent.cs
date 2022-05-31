@@ -266,9 +266,6 @@ namespace LibplanetUnity
                 {
                     // FIXME: Swarm<T> should handle the filtering internally.
                     await _swarm.BootstrapAsync(
-                        seedPeers: _swarmConfig.BootstrapConfig.SeedPeers.Where(boundPeer => boundPeer.PublicKey != PrivateKey.PublicKey),
-                        dialTimeout: _swarmConfig.BootstrapConfig.DialTimeout,
-                        depth: _swarmConfig.BootstrapConfig.SearchDepth,
                         cancellationToken: _cancellationTokenSource.Token);
                 }
                 catch (Exception e)
@@ -288,10 +285,8 @@ namespace LibplanetUnity
             var swarmPreloadTask = Task.Run(async () =>
             {
                 await _swarm.PreloadAsync(
-                    dialTimeout: _swarmConfig.PreloadConfig.DialTimeout,
                     progress: null,
                     render: false,
-                    tipDeltaThreshold: _swarmConfig.PreloadConfig.DeltaThreshold,
                     cancellationToken: _cancellationTokenSource.Token);
             });
 
@@ -318,11 +313,7 @@ namespace LibplanetUnity
             {
                 try
                 {
-                    await _swarm.StartAsync(
-                        dialTimeout: _swarmConfig.SyncConfig.DialTimeout,
-                        broadcastBlockInterval: _swarmConfig.SyncConfig.BlockBroadcastInterval,
-                        broadcastTxInterval: _swarmConfig.SyncConfig.TxBroadcastInterval,
-                        cancellationToken: _cancellationTokenSource.Token);
+                    await _swarm.StartAsync(cancellationToken: _cancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException)
                 {
