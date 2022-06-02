@@ -2,7 +2,6 @@ using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
 using Libplanet.Blockchain;
-using Libplanet.Blockchain.Policies;
 using Libplanet.Blockchain.Renderers;
 using Libplanet.Blocks;
 using Libplanet.Crypto;
@@ -20,7 +19,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Libplanet.Node;
@@ -56,11 +54,11 @@ namespace LibplanetUnity
 
         private PrivateKey PrivateKey { get; set; }
 
-        private BlockChain<PolymorphicAction<ActionBase>> _blocks;
+        private NodeConfig<PolymorphicAction<ActionBase>> _nodeConfig;
 
         private Swarm<PolymorphicAction<ActionBase>> _swarm;
 
-        private SwarmConfig _swarmConfig;
+        private BlockChain<PolymorphicAction<ActionBase>> _blockChain;
 
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -97,7 +95,7 @@ namespace LibplanetUnity
 
         public IValue GetState(Address address)
         {
-            return _blocks.GetState(address);
+            return _blockChain.GetState(address);
         }
 
         public void MakeTransaction(IEnumerable<ActionBase> gameActions)
@@ -142,41 +140,27 @@ namespace LibplanetUnity
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            SwarmConfig _swarmConfig = GetSwarmConfig();
+            SwarmConfig swarmConfig = GetSwarmConfig();
             Block<PolymorphicAction<ActionBase>> genesis = GetGenesisBlock();
-            PrivateKey privateKey = GetPrivateKey();
-
-            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
-            PrivateKey = privateKey;
-            Address = privateKey.PublicKey.ToAddress();
-            IBlockPolicy<PolymorphicAction<ActionBase>> policy =
-                NodeUtils<PolymorphicAction<ActionBase>>.DefaultBlockPolicy;
-            IStagePolicy<PolymorphicAction<ActionBase>> stagePolicy =
-                NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy;
-            // TODO: Use RocksDBStore instead:
             (IStore store, IStateStore stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
-            _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
-                policy,
-                stagePolicy,
+            _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
+                new PrivateKey(),
+                new NetworkConfig<PolymorphicAction<ActionBase>>(
+                    NodeUtils<PolymorphicAction<ActionBase>>.DefaultBlockPolicy,
+                    NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy,
+                    genesis),
+                swarmConfig,
                 store,
                 stateStore,
-                genesis,
-                renderers
-            );
+                renderers);
+            _nodeConfig.SwarmConfig.InitConfig.Host = "localhost";
+            _swarm = _nodeConfig.GetSwarm();
+            _blockChain = _swarm.BlockChain;
 
-            if (_swarmConfig.InitConfig.Host is string host
-                || _swarmConfig.InitConfig.IceServers.Any())
-            {
-                _swarm = new Swarm<PolymorphicAction<ActionBase>>(
-                    _blocks,
-                    privateKey,
-                    appProtocolVersion: appProtocolVersion,
-                    host: _swarmConfig.InitConfig.Host,
-                    listenPort: _swarmConfig.InitConfig.Port,
-                    iceServers: _swarmConfig.InitConfig.IceServers,
-                    trustedAppProtocolVersionSigners: trustedAppProtocolVersionSigners,
-                    options: _swarmConfig.ToSwarmOptions());
-            }
+            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
+            PrivateKey = GetPrivateKey();
+            Address = PrivateKey.PublicKey.ToAddress();
+
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -236,6 +220,7 @@ namespace LibplanetUnity
             NetMQConfig.Cleanup(false);
 
             base.OnDestroy();
+            _swarm?.Dispose();
         }
 
         #endregion
@@ -279,8 +264,8 @@ namespace LibplanetUnity
             Debug.Log("PreloadingStarted event was invoked");
 
             DateTimeOffset started = DateTimeOffset.UtcNow;
-            long existingBlocks = _blocks?.Tip?.Index ?? 0;
-            Debug.Log("Preloading starts");
+            long existingBlocks = _blockChain?.Tip?.Index ?? 0;
+            Debug.Log("Starting preload...");
 
             var swarmPreloadTask = Task.Run(async () =>
             {
@@ -296,15 +281,15 @@ namespace LibplanetUnity
             if (swarmPreloadTask.Exception is Exception exc)
             {
                 Debug.LogErrorFormat(
-                    "Preloading terminated with an exception: {0}",
+                    "Preload terminated with an exception: {0}",
                     exc
                 );
                 throw exc;
             }
 
-            var index = _blocks?.Tip?.Index ?? 0;
+            var index = _blockChain?.Tip?.Index ?? 0;
             Debug.LogFormat(
-                "Preloading finished; elapsed time: {0}; blocks: {1}",
+                "Preload finished; elapsed time: {0}; blocks: {1}",
                 ended - started,
                 index - existingBlocks
             );
@@ -372,7 +357,7 @@ namespace LibplanetUnity
             var polymorphicActions = actions.ToArray();
             Debug.LogFormat("Make Transaction with Actions: `{0}`",
                 string.Join(",", polymorphicActions.Select(i => i.InnerAction)));
-            return _blocks.MakeTransaction(PrivateKey, polymorphicActions);
+            return _blockChain.MakeTransaction(PrivateKey, polymorphicActions);
         }
 
         private IEnumerator CoMiner()
@@ -383,7 +368,7 @@ namespace LibplanetUnity
 
                 var task = Task.Run(async () =>
                 {
-                    var block = await _blocks.MineBlock(PrivateKey);
+                    var block = await _blockChain.MineBlock(PrivateKey);
 
                     if (_swarm?.Running ?? false)
                     {
@@ -410,7 +395,7 @@ namespace LibplanetUnity
                         {
                             if (ex is InvalidTxNonceException invalidTxNonceException)
                             {
-                                var invalidNonceTx = _blocks.GetTransaction(invalidTxNonceException.TxId);
+                                var invalidNonceTx = _blockChain.GetTransaction(invalidTxNonceException.TxId);
 
                                 if (invalidNonceTx.Signer == Address)
                                 {
@@ -422,7 +407,7 @@ namespace LibplanetUnity
                             if (ex is InvalidTxException invalidTxException)
                             {
                                 Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_blocks.GetTransaction(invalidTxException.TxId));
+                                invalidTxs.Add(_blockChain.GetTransaction(invalidTxException.TxId));
                             }
 
                             Debug.LogException(ex);
@@ -431,7 +416,7 @@ namespace LibplanetUnity
 
                     foreach (var invalidTx in invalidTxs)
                     {
-                        _blocks.UnstageTransaction(invalidTx);
+                        _blockChain.UnstageTransaction(invalidTx);
                     }
 
                     foreach (var retryAction in retryActions)

@@ -67,7 +67,7 @@ namespace LibplanetUnity.Editor
             }
             else
             {
-                EditorUtility.DisplayDialog(title, "Genesis block not found.", "Close");
+                EditorUtility.DisplayDialog(title, "Swarm config not found.", "Close");
             }
         }
 
