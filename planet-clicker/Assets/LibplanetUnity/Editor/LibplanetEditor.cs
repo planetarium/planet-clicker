@@ -1,5 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEditor;
+using UnityEngine;
+using Libplanet;
+using Libplanet.Crypto;
 
 namespace LibplanetUnity.Editor
 {
@@ -163,6 +167,58 @@ namespace LibplanetUnity.Editor
             {
                 dir.Delete(recursive: true);
             }
+        }
+    }
+
+    public class GenerateBoundPeerStringWindow : EditorWindow
+    {
+        string privateKeyString = "";
+        string host = "";
+        int port;
+        string boundPeerString;
+
+        [MenuItem("Tools/Libplanet/Generate bound peer string")]
+        static void Init()
+        {
+            const string title = "Generate bound peer string";
+            var window = EditorWindow.GetWindowWithRect(
+                typeof(GenerateBoundPeerStringWindow),
+                new Rect(0, 0, 800, 200),
+                true,
+                title);
+            window.Show();
+        }
+
+        void OnGUI()
+        {
+            EditorGUILayout.LabelField("Bound peer information", EditorStyles.boldLabel);
+            privateKeyString = EditorGUILayout.TextField("Private key string", privateKeyString);
+            host = EditorGUILayout.TextField("Host", host);
+            port = EditorGUILayout.IntField("Port", port);
+
+            // Zero port is excluded.
+            if (port < 1 || port > 65535)
+            {
+                boundPeerString = "Invalid port number";
+            }
+            else
+            {
+                try
+                {
+                    PrivateKey privateKey = new PrivateKey(ByteUtil.ParseHex(privateKeyString));
+                    string publicKeyString = ByteUtil.Hex(privateKey.PublicKey.Format(true));
+                    boundPeerString = $"{publicKeyString},{host},{port}";
+                }
+                catch (Exception)
+                {
+                    boundPeerString = "Invalid private key string";
+                }
+            }
+
+            EditorGUILayout.Space();
+
+            EditorGUILayout.LabelField("Generated bound peer string", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(boundPeerString);
         }
     }
 }
