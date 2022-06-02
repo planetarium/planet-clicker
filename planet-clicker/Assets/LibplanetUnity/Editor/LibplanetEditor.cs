@@ -201,6 +201,10 @@ namespace LibplanetUnity.Editor
             {
                 boundPeerString = "Invalid port number";
             }
+            else if (host.Length < 1)
+            {
+                boundPeerString = "Invalid host";
+            }
             else
             {
                 try
@@ -218,7 +222,7 @@ namespace LibplanetUnity.Editor
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Generated bound peer string", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(boundPeerString);
+            EditorGUILayout.SelectableLabel(boundPeerString);
         }
     }
 }
