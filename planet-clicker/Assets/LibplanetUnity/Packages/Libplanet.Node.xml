@@ -59,12 +59,12 @@
         </member>
         <member name="P:Libplanet.Node.InitConfig.Host">
             <summary>
-            Determines the host.
+            Determines the host.  Set to <c>"localhost"</c> by default.
             </summary>
         </member>
         <member name="P:Libplanet.Node.InitConfig.Port">
             <summary>
-            Determines the <em>incoming</em> port.
+            Determines the <em>incoming</em> port.  Set to <c>null</c> by default.
             </summary>
         </member>
         <member name="P:Libplanet.Node.InitConfig.IceServers">
@@ -72,6 +72,139 @@
             The list of <see cref="P:Libplanet.Node.InitConfig.IceServers"/> to use when connecting to the network.
             If <see cref="P:Libplanet.Node.InitConfig.Host"/> is provided, this gets ignored.
             </summary>
+        </member>
+        <member name="T:Libplanet.Node.NetworkConfig`1">
+            <summary>
+            A network configuration.
+            </summary>
+            <typeparam name="T">An <see cref="T:Libplanet.Action.IAction"/> type.  It should match to
+            <seealso cref="T:Libplanet.Blockchain.BlockChain`1"/> and <see cref="T:Libplanet.Net.Swarm`1"/>.</typeparam>
+        </member>
+        <member name="M:Libplanet.Node.NetworkConfig`1.#ctor">
+            <summary>
+            Initializes a <see cref="T:Libplanet.Node.NetworkConfig`1"/> instance using
+            <see cref="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy"/>
+            and <see cref="P:Libplanet.Node.NodeUtils`1.DefaultStagePolicy"/>.
+            An empty genesis <see cref="T:Libplanet.Blocks.Block`1"/> compliant with
+            <see cref="P:Libplanet.Node.NodeUtils`1.DefaultBlockPolicy"/> is created and signed using
+            an ephemeral <see cref="T:Libplanet.Crypto.PrivateKey"/>.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.NetworkConfig`1.#ctor(Libplanet.Blockchain.Policies.IBlockPolicy{`0},Libplanet.Blockchain.Policies.IStagePolicy{`0},Libplanet.Blocks.Block{`0})">
+            <summary>
+            Initializes a <see cref="T:Libplanet.Node.NetworkConfig`1"/> instance using
+            <paramref name="blockPolicy"/>, <paramref name="stagePolicy"/>, and
+            <paramref name="genesisBlock"/>.
+            </summary>
+            <param name="blockPolicy">The <see cref="T:Libplanet.Blockchain.Policies.IBlockPolicy`1"/> to use.</param>
+            <param name="stagePolicy">The <see cref="T:Libplanet.Blockchain.Policies.IStagePolicy`1"/> to use.</param>
+            <param name="genesisBlock">The <see cref="T:Libplanet.Blocks.Block`1"/> to use.</param>
+        </member>
+        <member name="P:Libplanet.Node.NetworkConfig`1.AppProtocolVersion">
+            <summary>
+            The application protocol version to comply.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NetworkConfig`1.TrustedAppProtocolVersionSigners">
+            <summary>
+            The set of <see cref="T:Libplanet.Crypto.PublicKey"/>s to trust when a node encounters
+            an <see cref="T:Libplanet.Net.AppProtocolVersion"/> that is different from
+            <see cref="P:Libplanet.Node.NetworkConfig`1.AppProtocolVersion"/>.  To trust any party,
+            set this to <see langword="null"/>.  Set to <see langword="null"/> by default.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NetworkConfig`1.DifferentAppProtocolVersionEncountered">
+            <summary>
+            The event triggered when a node encounters
+            an <see cref="T:Libplanet.Net.AppProtocolVersion"/> that is different from
+            <see cref="P:Libplanet.Node.NetworkConfig`1.AppProtocolVersion"/> that is signed by
+            a <em>trusted party</em>, that is, one of
+            <see cref="P:Libplanet.Node.NetworkConfig`1.TrustedAppProtocolVersionSigners"/>.  Does nothing by default.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NetworkConfig`1.BlockPolicy">
+            <summary>
+            The network's policy used to decide which blocks to accept.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NetworkConfig`1.StagePolicy">
+            <summary>
+            The network's policy used to decide which transactions to accept and when to forget
+            them.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NetworkConfig`1.GenesisBlock">
+            <summary>
+            The genesis <see cref="T:Libplanet.Blocks.Block`1"/> of the network.
+            </summary>
+        </member>
+        <member name="T:Libplanet.Node.NodeConfig`1">
+            <summary>
+            A node configuration.  Largely comprised of two sub-configurations
+            <see cref="T:Libplanet.Node.NetworkConfig`1"/> and <see cref="T:Libplanet.Node.SwarmConfig"/>.
+            </summary>
+            <typeparam name="T">An <see cref="T:Libplanet.Action.IAction"/> type.  It should match to
+            <see cref="T:Libplanet.Blockchain.BlockChain`1"/> and <see cref="T:Libplanet.Net.Swarm`1"/>.</typeparam>
+            <seealso cref="T:Libplanet.Node.NetworkConfig`1"/>
+            <seealso cref="T:Libplanet.Node.SwarmConfig"/>
+        </member>
+        <member name="F:Libplanet.Node.NodeConfig`1._privateKey">
+            <summary>
+            The <see cref="T:Libplanet.Crypto.PrivateKey"/> used for defining the identity of a <see cref="T:Libplanet.Net.Swarm`1"/>.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.NodeConfig`1.#ctor(Libplanet.Crypto.PrivateKey,Libplanet.Node.NetworkConfig{`0},Libplanet.Node.SwarmConfig,Libplanet.Store.IStore,Libplanet.Store.IStateStore,System.Collections.Generic.IEnumerable{Libplanet.Blockchain.Renderers.IRenderer{`0}})">
+            <summary>
+            Initialize a <see cref="T:Libplanet.Node.NodeConfig`1"/> instance.
+            </summary>
+            <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to use to initialize
+            a <see cref="T:Libplanet.Net.Swarm`1"/> instance.  This determines the identity of a node
+            on the network.</param>
+            <param name="networkConfig">The <see cref="T:Libplanet.Node.NetworkConfig`1"/> to use.</param>
+            <param name="swarmConfig">The <see cref="T:Libplanet.Node.SwarmConfig"/> to use.</param>
+            <param name="store">The <see cref="T:Libplanet.Store.IStore"/> to use for storing chain data.</param>
+            <param name="stateStore">The <see cref="T:Libplanet.Store.IStateStore"/> to use for storing state data.
+            </param>
+            <param name="renderers">The <see cref="T:Libplanet.Blockchain.Renderers.IRenderer`1"/>s for rendering events when
+            <see cref="P:Libplanet.Blockchain.BlockChain`1.Tip"/> changes.</param>
+        </member>
+        <member name="P:Libplanet.Node.NodeConfig`1.NetworkConfig">
+            <summary>
+            The configuration of the network that a <see cref="T:Libplanet.Net.Swarm`1"/> will participate in.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NodeConfig`1.SwarmConfig">
+            <summary>
+            The configuration for the behavior of a <see cref="T:Libplanet.Net.Swarm`1"/>.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NodeConfig`1.Store">
+            <summary>
+            The <see cref="T:Libplanet.Store.IStore"/> for storing chain data.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NodeConfig`1.StateStore">
+            <summary>
+            The <see cref="T:Libplanet.Store.IStateStore"/> for storing state data.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Node.NodeConfig`1.Renderers">
+            <summary>
+            The <see cref="T:Libplanet.Blockchain.Renderers.IRenderer`1"/>s for rendering events when
+            <see cref="P:Libplanet.Blockchain.BlockChain`1.Tip"/> changes.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Node.NodeConfig`1.GetBlockChain">
+            <summary>
+            Creates a new <see cref="T:Libplanet.Blockchain.BlockChain`1"/> instance.
+            </summary>
+            <returns>A new <see cref="T:Libplanet.Blockchain.BlockChain`1"/> instance.</returns>
+        </member>
+        <member name="M:Libplanet.Node.NodeConfig`1.GetSwarm">
+            <summary>
+            Creates a new <see cref="T:Libplanet.Net.Swarm`1"/> instance.
+            </summary>
+            <returns>A new <see cref="T:Libplanet.Net.Swarm`1"/> instance.</returns>
         </member>
         <member name="T:Libplanet.Node.NodeUtils`1">
             <summary>
