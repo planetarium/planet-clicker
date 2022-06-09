@@ -129,11 +129,10 @@ namespace LibplanetUnity
                 trustedAppProtocolVersionSigners,
                 renderers);
 
-            // _miner = options.NoMiner ? null : ;
             _miner = new SoloMiner<PolymorphicAction<ActionBase>>(
                 _blockChain,
                 PrivateKey,
-                new MinerHandler());
+                new MineHandler());
 
             StartSystemCoroutines();
             StartNullableCoroutine(_miner.CoStart());
@@ -365,7 +364,7 @@ namespace LibplanetUnity
             return _blockChain.MakeTransaction(PrivateKey, polymorphicActions);
         }
 
-        public class MinerHandler : IMineListener<PolymorphicAction<ActionBase>>
+        public class MineHandler : IMineListener<PolymorphicAction<ActionBase>>
         {
             public void Failure(Task mineTask)
             {
