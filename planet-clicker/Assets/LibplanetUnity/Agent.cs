@@ -8,6 +8,7 @@ using Libplanet.Crypto;
 using Libplanet.Net;
 using Libplanet.Store;
 using Libplanet.Tx;
+using Libplanet.Unity.Miner;
 using LibplanetUnity.Action;
 using LibplanetUnity.Helper;
 using NetMQ;
@@ -46,7 +47,7 @@ namespace LibplanetUnity
         public static readonly string DefaultStoragePath =
             Path.Combine(Application.persistentDataPath, StoreDir);
 
-        private static IEnumerator _miner;
+        private static BaseMiner<PolymorphicAction<ActionBase>> _miner;
 
         private static IEnumerator _swarmRunner;
 
@@ -128,10 +129,13 @@ namespace LibplanetUnity
                 trustedAppProtocolVersionSigners,
                 renderers);
 
-            _miner = options.NoMiner ? null : CoMiner();
+            _miner = new SoloMiner<PolymorphicAction<ActionBase>>(
+                _blockChain,
+                PrivateKey,
+                new MineHandler());
 
             StartSystemCoroutines();
-            StartNullableCoroutine(_miner);
+            StartNullableCoroutine(_miner.CoStart());
         }
 
         private void Init(
@@ -360,70 +364,52 @@ namespace LibplanetUnity
             return _blockChain.MakeTransaction(PrivateKey, polymorphicActions);
         }
 
-        private IEnumerator CoMiner()
+        public class MineHandler : IMineListener<PolymorphicAction<ActionBase>>
         {
-            while (true)
+            public void Failure(Task mineTask)
             {
                 var txs = new HashSet<Transaction<PolymorphicAction<ActionBase>>>();
+                var invalidTxs = txs;
+                var retryActions = new HashSet<IImmutableList<PolymorphicAction<ActionBase>>>();
 
-                var task = Task.Run(async () =>
+                if (mineTask.IsFaulted)
                 {
-                    var block = await _blockChain.MineBlock(PrivateKey);
-
-                    if (_swarm?.Running ?? false)
+                    foreach (var ex in mineTask.Exception.InnerExceptions)
                     {
-                        _swarm.BroadcastBlock(block);
-                    }
-
-                    return block;
-                });
-                yield return new WaitUntil(() => task.IsCompleted);
-
-                if (!task.IsCanceled && !task.IsFaulted)
-                {
-                    var block = task.Result;
-                    Debug.Log($"created block index: {block.Index}, difficulty: {block.Difficulty}");
-                }
-                else
-                {
-                    var invalidTxs = txs;
-                    var retryActions = new HashSet<IImmutableList<PolymorphicAction<ActionBase>>>();
-
-                    if (task.IsFaulted)
-                    {
-                        foreach (var ex in task.Exception.InnerExceptions)
+                        if (ex is InvalidTxNonceException invalidTxNonceException)
                         {
-                            if (ex is InvalidTxNonceException invalidTxNonceException)
+                            var invalidNonceTx = Agent.instance._blockChain.GetTransaction(invalidTxNonceException.TxId);
+
+                            if (invalidNonceTx.Signer == Agent.instance.PrivateKey.PublicKey.ToAddress())
                             {
-                                var invalidNonceTx = _blockChain.GetTransaction(invalidTxNonceException.TxId);
-
-                                if (invalidNonceTx.Signer == Address)
-                                {
-                                    Debug.Log($"Tx[{invalidTxNonceException.TxId}] nonce is invalid. Retry it.");
-                                    retryActions.Add(invalidNonceTx.Actions);
-                                }
+                                Debug.Log($"Tx[{invalidTxNonceException.TxId}] nonce is invalid. Retry it.");
+                                retryActions.Add(invalidNonceTx.Actions);
                             }
-
-                            if (ex is InvalidTxException invalidTxException)
-                            {
-                                Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_blockChain.GetTransaction(invalidTxException.TxId));
-                            }
-
-                            Debug.LogException(ex);
                         }
-                    }
 
-                    foreach (var invalidTx in invalidTxs)
-                    {
-                        _blockChain.UnstageTransaction(invalidTx);
-                    }
+                        if (ex is InvalidTxException invalidTxException)
+                        {
+                            Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
+                            invalidTxs.Add(Agent.instance._blockChain.GetTransaction(invalidTxException.TxId));
+                        }
 
-                    foreach (var retryAction in retryActions)
-                    {
-                        MakeTransaction(retryAction, true);
+                        Debug.LogException(ex);
                     }
                 }
+
+                foreach (var invalidTx in invalidTxs)
+                {
+                    Agent.instance._blockChain.UnstageTransaction(invalidTx);
+                }
+
+                foreach (var retryAction in retryActions)
+                {
+                    Agent.instance.MakeTransaction(retryAction, true);
+                }
+            }
+            public void Success(Block<PolymorphicAction<ActionBase>> block)
+            {
+                Debug.Log($"created block index: {block.Index}, difficulty: {block.Difficulty}");
             }
         }
     }
