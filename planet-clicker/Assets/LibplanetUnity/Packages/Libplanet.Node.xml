@@ -57,6 +57,12 @@
             Determines sampling threshold for <see cref="T:Libplanet.Blockchain.BlockLocator"/>s.
             </summary>
         </member>
+        <member name="P:Libplanet.Node.InitConfig.TransportType">
+            <summary>
+            Determines the type of <see cref="T:Libplanet.Net.Transports.ITransport"/> to use.  Set to
+            <see cref="F:Libplanet.Net.SwarmOptions.TransportType.NetMQTransport"/> by default.
+            </summary>
+        </member>
         <member name="P:Libplanet.Node.InitConfig.Host">
             <summary>
             Determines the host.  Set to <c>"localhost"</c> by default.
