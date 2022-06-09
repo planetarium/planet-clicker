@@ -48,7 +48,7 @@ namespace LibplanetUnity.Editor
                 return;
             }
 
-            Agent.CreateSwarmConfig();
+            Utils.CreateSwarmConfig(Paths.SwarmConfigPath);
             EditorUtility.DisplayDialog(title, "New swarm config created.", "Close");
         }
 
@@ -92,7 +92,7 @@ namespace LibplanetUnity.Editor
                 return;
             }
 
-            Agent.CreateGenesisBlock();
+            Utils.CreateGenesisBlock(Paths.GenesisBlockPath);
             EditorUtility.DisplayDialog(title, "New genesis block created.", "Close");
         }
 
@@ -135,7 +135,7 @@ namespace LibplanetUnity.Editor
                 return;
             }
 
-            Agent.CreatePrivateKey();
+            Utils.CreatePrivateKey(Paths.PrivateKeyPath);
             EditorUtility.DisplayDialog(title, "New private key created.", "Close");
         }
 
