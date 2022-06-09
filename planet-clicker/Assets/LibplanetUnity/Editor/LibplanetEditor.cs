@@ -12,23 +12,24 @@ namespace LibplanetUnity.Editor
         [MenuItem("Tools/Libplanet/Delete blockchain")]
         public static void DeleteChain()
         {
-            var dir = new DirectoryInfo(Agent.DefaultStoragePath);
+            const string title = "Delete blockchain";
+            DirectoryInfo dir = new DirectoryInfo(Paths.StorePath);
             if (dir.Exists)
             {
                 if (EditorUtility.DisplayDialog(
-                    "Delete blockchain",
+                    title,
                     $"Blockchain found at {dir}.\n" +
-                    $"Do you want to delete it?",
+                    "Do you want to delete it?",
                     "Ok",
                     "Cancel"))
                 {
                     dir.Delete(recursive: true);
-                    EditorUtility.DisplayDialog("Delete blockchain", "Blockchain deleted.", "Close");
+                    EditorUtility.DisplayDialog(title, "Blockchain deleted.", "Close");
                 }
             }
             else
             {
-                EditorUtility.DisplayDialog("Delete blockchain", "Blockchain not found.", "Close");
+                EditorUtility.DisplayDialog(title, "Blockchain not found.", "Close");
             }
         }
 
@@ -36,10 +37,10 @@ namespace LibplanetUnity.Editor
         public static void CreateSwarmConfig()
         {
             const string title = "Create swarm config";
-            if (File.Exists(Agent.SwarmConfigPath) &&
+            if (File.Exists(Paths.SwarmConfigPath) &&
                 !EditorUtility.DisplayDialog(
                     title,
-                    $"Swarm config found at {Agent.SwarmConfigPath}.\n" +
+                    $"Swarm config found at {Paths.SwarmConfigPath}.\n" +
                     "Do you want to overwrite it?",
                     "Ok",
                     "Cancel"))
@@ -55,17 +56,17 @@ namespace LibplanetUnity.Editor
         public static void DeleteSwarmConfig()
         {
             const string title = "Delete swarm config";
-            if (File.Exists(Agent.SwarmConfigPath))
+            if (File.Exists(Paths.SwarmConfigPath))
             {
                 if (EditorUtility.DisplayDialog(
                     title,
-                    $"Swarm config found at {Agent.SwarmConfigPath}.\n" +
+                    $"Swarm config found at {Paths.SwarmConfigPath}.\n" +
                     "Do you want to delete it?",
                     "Ok",
                     "Cancel"))
                 {
 
-                    File.Delete(Agent.SwarmConfigPath);
+                    File.Delete(Paths.SwarmConfigPath);
                     EditorUtility.DisplayDialog(title, "Swarm config deleted.", "Close");
                 }
             }
@@ -79,10 +80,10 @@ namespace LibplanetUnity.Editor
         public static void CreateGenesisBlock()
         {
             const string title = "Create genesis block";
-            if (File.Exists(Agent.GenesisBlockPath) &&
+            if (File.Exists(Paths.GenesisBlockPath) &&
                 !EditorUtility.DisplayDialog(
                     title,
-                    $"Genesis block found at {Agent.GenesisBlockPath}.\n" +
+                    $"Genesis block found at {Paths.GenesisBlockPath}.\n" +
                     "New genesis block will not be compatible with existing chain.\n" +
                     "Do you want to overwrite it?",
                     "Ok",
@@ -99,17 +100,17 @@ namespace LibplanetUnity.Editor
         public static void DeleteGenesisBlock()
         {
             const string title = "Delete genesis block";
-            if (File.Exists(Agent.GenesisBlockPath))
+            if (File.Exists(Paths.GenesisBlockPath))
             {
                 if (EditorUtility.DisplayDialog(
                     title,
-                    $"Genesis block found at {Agent.GenesisBlockPath}.\n" +
+                    $"Genesis block found at {Paths.GenesisBlockPath}.\n" +
                     "Do you want to delete it?",
                     "Ok",
                     "Cancel"))
                 {
 
-                    File.Delete(Agent.GenesisBlockPath);
+                    File.Delete(Paths.GenesisBlockPath);
                     EditorUtility.DisplayDialog(title, "Genesis block deleted.", "Close");
                 }
             }
@@ -123,10 +124,10 @@ namespace LibplanetUnity.Editor
         public static void CreatePrivateKey()
         {
             const string title = "Create private key";
-            if (File.Exists(Agent.DefaultPrivateKeyPath) &&
+            if (File.Exists(Paths.PrivateKeyPath) &&
                 !EditorUtility.DisplayDialog(
                     title,
-                    $"Private key found at {Agent.DefaultPrivateKeyPath}.\n" +
+                    $"Private key found at {Paths.PrivateKeyPath}.\n" +
                     "Do you want to overwrite it?",
                     "Ok",
                     "Cancel"))
@@ -142,15 +143,15 @@ namespace LibplanetUnity.Editor
         public static void DeletePrivateKey()
         {
             const string title = "Delete private key";
-            if (File.Exists(Agent.DefaultPrivateKeyPath))
+            if (File.Exists(Paths.PrivateKeyPath))
             {
                 if (EditorUtility.DisplayDialog(
                     title,
-                    $"Are you sure you want to delete private key found at {Agent.DefaultPrivateKeyPath}?",
+                    $"Are you sure you want to delete private key found at {Paths.PrivateKeyPath}?",
                     "Ok",
                     "Cancel"))
                 {
-                    File.Delete(Agent.DefaultPrivateKeyPath);
+                    File.Delete(Paths.PrivateKeyPath);
                     EditorUtility.DisplayDialog(title, "Private key deleted.", "Close");
                 }
             }
@@ -159,23 +160,14 @@ namespace LibplanetUnity.Editor
                 EditorUtility.DisplayDialog(title, "Private key not found.", "Close");
             }
         }
-
-        private static void DeleteAll(string path)
-        {
-            var dir = new DirectoryInfo(path);
-            if (dir.Exists)
-            {
-                dir.Delete(recursive: true);
-            }
-        }
     }
 
     public class GenerateBoundPeerStringWindow : EditorWindow
     {
         string privateKeyString = "";
         string host = "";
-        int port;
-        string boundPeerString;
+        int port = 0;
+        string boundPeerString = "";
 
         [MenuItem("Tools/Libplanet/Generate bound peer string")]
         static void Init()

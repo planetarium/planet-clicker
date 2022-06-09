@@ -30,22 +30,8 @@ namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private const string StoreDir = "planetarium";
-
         private static readonly string CommandLineOptionsJsonPath =
             Path.Combine(Application.streamingAssetsPath, "command_line_options.json");
-
-        public static readonly string GenesisBlockPath =
-            Path.Combine(Application.streamingAssetsPath, "genesis");
-
-        public static readonly string SwarmConfigPath =
-            Path.Combine(Application.streamingAssetsPath, "swarm_config.json");
-
-        public static readonly string DefaultPrivateKeyPath =
-            Path.Combine(Application.persistentDataPath, "private_key");
-
-        public static readonly string DefaultStoragePath =
-            Path.Combine(Application.persistentDataPath, StoreDir);
 
         private static BaseMiner<PolymorphicAction<ActionBase>> _miner;
 
@@ -75,23 +61,23 @@ namespace LibplanetUnity
         public static void CreateSwarmConfig()
         {
             SwarmConfig swarmConfig = new SwarmConfig();
-            File.Delete(SwarmConfigPath);
-            File.WriteAllText(SwarmConfigPath, swarmConfig.ToJson());
+            File.Delete(Paths.SwarmConfigPath);
+            File.WriteAllText(Paths.SwarmConfigPath, swarmConfig.ToJson());
         }
 
         public static void CreateGenesisBlock()
         {
             Block<PolymorphicAction<ActionBase>> genesisBlock =
                 NodeUtils<PolymorphicAction<ActionBase>>.CreateGenesisBlock();
-            File.Delete(GenesisBlockPath);
-            NodeUtils<PolymorphicAction<ActionBase>>.SaveGenesisBlock(GenesisBlockPath, genesisBlock);
+            File.Delete(Paths.GenesisBlockPath);
+            NodeUtils<PolymorphicAction<ActionBase>>.SaveGenesisBlock(Paths.GenesisBlockPath, genesisBlock);
         }
 
         public static void CreatePrivateKey()
         {
             PrivateKey privateKey = new PrivateKey();
-            File.Delete(DefaultPrivateKeyPath);
-            NodeUtils<PolymorphicAction<ActionBase>>.SavePrivateKey(DefaultPrivateKeyPath, privateKey);
+            File.Delete(Paths.PrivateKeyPath);
+            NodeUtils<PolymorphicAction<ActionBase>>.SavePrivateKey(Paths.PrivateKeyPath, privateKey);
         }
 
         public IValue GetState(Address address)
@@ -108,7 +94,7 @@ namespace LibplanetUnity
         private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var options = GetOptions(CommandLineOptionsJsonPath);
-            var storagePath = options.StoragePath ?? DefaultStoragePath;
+            var storagePath = Paths.StorePath;
             var appProtocolVersion = options.AppProtocolVersion is null
                 ? default
                 : AppProtocolVersion.FromToken(options.AppProtocolVersion);
@@ -189,32 +175,32 @@ namespace LibplanetUnity
 
         private static SwarmConfig GetSwarmConfig()
         {
-            if (!File.Exists(SwarmConfigPath))
+            if (!File.Exists(Paths.SwarmConfigPath))
             {
                 CreateSwarmConfig();
             }
 
-            return SwarmConfig.FromJson(File.ReadAllText(SwarmConfigPath));
+            return SwarmConfig.FromJson(File.ReadAllText(Paths.SwarmConfigPath));
         }
 
         private static Block<PolymorphicAction<ActionBase>> GetGenesisBlock()
         {
-            if (!File.Exists(GenesisBlockPath))
+            if (!File.Exists(Paths.GenesisBlockPath))
             {
                 CreateGenesisBlock();
             }
 
-            return NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(GenesisBlockPath);
+            return NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(Paths.GenesisBlockPath);
         }
 
         private static PrivateKey GetPrivateKey()
         {
-            if (!File.Exists(DefaultPrivateKeyPath))
+            if (!File.Exists(Paths.PrivateKeyPath))
             {
                 CreatePrivateKey();
             }
 
-            return NodeUtils<PolymorphicAction<ActionBase>>.LoadPrivateKey(DefaultPrivateKeyPath);
+            return NodeUtils<PolymorphicAction<ActionBase>>.LoadPrivateKey(Paths.PrivateKeyPath);
         }
 
         #region Mono
