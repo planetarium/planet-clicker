@@ -10,7 +10,6 @@ using Libplanet.Store;
 using Libplanet.Tx;
 using Libplanet.Unity.Miner;
 using LibplanetUnity.Action;
-using LibplanetUnity.Helper;
 using NetMQ;
 using Serilog;
 using System;
@@ -30,9 +29,6 @@ namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private static readonly string CommandLineOptionsJsonPath =
-            Path.Combine(Application.streamingAssetsPath, "command_line_options.json");
-
         private static BaseMiner<PolymorphicAction<ActionBase>> _miner;
 
         private static IEnumerator _swarmRunner;
@@ -93,21 +89,16 @@ namespace LibplanetUnity
 
         private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            var options = GetOptions(CommandLineOptionsJsonPath);
             var storagePath = Paths.StorePath;
-            var appProtocolVersion = options.AppProtocolVersion is null
-                ? default
-                : AppProtocolVersion.FromToken(options.AppProtocolVersion);
-            var trustedAppProtocolVersionSigners = options.TrustedAppProtocolVersionSigners
-                .Select(s => new PublicKey(ByteUtil.ParseHex(s)));
 
-            if (options.Logging)
-            {
-                Log.Logger = new LoggerConfiguration()
-                    .MinimumLevel.Debug()
-                    .WriteTo.Console()
-                    .CreateLogger();
-            }
+            // TODO: Provide a way to configure APV.
+            AppProtocolVersion appProtocolVersion = default;
+            IEnumerable<PublicKey> trustedAppProtocolVersionSigners = new List<PublicKey>();
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .CreateLogger();
 
             Init(
                 storagePath,
@@ -152,20 +143,6 @@ namespace LibplanetUnity
             Address = PrivateKey.PublicKey.ToAddress();
 
             _cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        private static Options GetOptions(string jsonPath)
-        {
-            if (File.Exists(jsonPath))
-            {
-                return JsonUtility.FromJson<Options>(
-                    File.ReadAllText(jsonPath)
-                );
-            }
-            else
-            {
-                return CommnadLineParser.GetCommandLineOptions() ?? new Options();
-            }
         }
 
         public void RunOnMainThread(System.Action action)
