@@ -59,7 +59,7 @@ namespace _Script
                             // Renders only when the count has updated.
                             if (nextStates.GetState(ctx.Signer) is Bencodex.Types.Integer nextCount)
                             {
-                                Agent.instance.RunOnMainThread(() =>
+                                Agent.Instance.RunOnMainThread(() =>
                                 {
                                     OnCountUpdated.Invoke(nextCount);
                                 });
@@ -69,7 +69,7 @@ namespace _Script
                             if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rawRank)
                             {
                                 var rankingState = new RankingState(rawRank);
-                                Agent.instance.RunOnMainThread(() =>
+                                Agent.Instance.RunOnMainThread(() =>
                                 {
                                     OnRankUpdated.Invoke(rankingState);
                                 });
@@ -78,7 +78,7 @@ namespace _Script
                     }
                 }
             );
-            var agent = Agent.instance;
+            var agent = Agent.Instance;
             var hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"My Address: {hex}";
 
@@ -94,7 +94,7 @@ namespace _Script
                 StartCoroutine(UpdateRankingBoard(rs));
             });
 
-            var initialCount = agent.GetState(Agent.instance.Address);
+            var initialCount = agent.GetState(Agent.Instance.Address);
             var initialRanking = agent.GetState(RankingState.Address);
             if (initialCount is Bencodex.Types.Integer count)
             {
@@ -138,7 +138,7 @@ namespace _Script
                 actions.AddRange(_attacks.Select(pair => new SubCount(pair.Key, pair.Value)));
                 if (actions.Any())
                 {
-                    Agent.instance.MakeTransaction(actions);
+                    Agent.Instance.MakeTransaction(actions);
                 }
                 _attacks = new Dictionary<Address, int>();
 
@@ -176,7 +176,7 @@ namespace _Script
                 var row = go.GetComponent<RankingRow>();
                 var rank = i + 1;
                 row.Set(rank, rankingInfo);
-                if (rankingInfo.Address == Agent.instance.Address)
+                if (rankingInfo.Address == Agent.Instance.Address)
                 {
                     rankingText.text = $"My Ranking: {rank}";
                 }

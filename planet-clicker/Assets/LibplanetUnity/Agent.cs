@@ -46,11 +46,9 @@ namespace LibplanetUnity
 
         public Address Address { get; private set; }
 
-        public IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> Renderers { get; private set; }
-
         public static void Initialize(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            instance.InitAgent(renderers);
+            Instance.InitAgent(renderers);
         }
 
         public IValue GetState(Address address)
@@ -285,9 +283,9 @@ namespace LibplanetUnity
                     {
                         if (ex is InvalidTxNonceException invalidTxNonceException)
                         {
-                            var invalidNonceTx = Agent.instance._blockChain.GetTransaction(invalidTxNonceException.TxId);
+                            var invalidNonceTx = Agent.Instance._blockChain.GetTransaction(invalidTxNonceException.TxId);
 
-                            if (invalidNonceTx.Signer == Agent.instance.PrivateKey.PublicKey.ToAddress())
+                            if (invalidNonceTx.Signer == Agent.Instance.PrivateKey.PublicKey.ToAddress())
                             {
                                 Debug.Log($"Tx[{invalidTxNonceException.TxId}] nonce is invalid. Retry it.");
                                 retryActions.Add(invalidNonceTx.Actions);
@@ -297,7 +295,7 @@ namespace LibplanetUnity
                         if (ex is InvalidTxException invalidTxException)
                         {
                             Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                            invalidTxs.Add(Agent.instance._blockChain.GetTransaction(invalidTxException.TxId));
+                            invalidTxs.Add(Agent.Instance._blockChain.GetTransaction(invalidTxException.TxId));
                         }
 
                         Debug.LogException(ex);
@@ -306,12 +304,12 @@ namespace LibplanetUnity
 
                 foreach (var invalidTx in invalidTxs)
                 {
-                    Agent.instance._blockChain.UnstageTransaction(invalidTx);
+                    Agent.Instance._blockChain.UnstageTransaction(invalidTx);
                 }
 
                 foreach (var retryAction in retryActions)
                 {
-                    Agent.instance.MakeTransaction(retryAction, true);
+                    Agent.Instance.MakeTransaction(retryAction, true);
                 }
             }
             public void Success(Block<PolymorphicAction<ActionBase>> block)
