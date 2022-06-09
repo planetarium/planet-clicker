@@ -33,7 +33,7 @@ namespace LibplanetUnity
         private static readonly string CommandLineOptionsJsonPath =
             Path.Combine(Application.streamingAssetsPath, "command_line_options.json");
 
-        private static IEnumerator _miner;
+        private static BaseMiner<PolymorphicAction<ActionBase>> _miner;
 
         private static IEnumerator _swarmRunner;
 
