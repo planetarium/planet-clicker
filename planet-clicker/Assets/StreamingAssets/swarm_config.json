@@ -1,0 +1,36 @@
+{
+  "InitConfig": {
+    "MaxTimeout": 120,
+    "MinTimeout": 1,
+    "RoutingTableNumBuckets": 160,
+    "RoutingTableBucketSize": 16,
+    "BlockLocatorIndexSampleThreshold": 10,
+    "TransportType": 1,
+    "Host": "localhost",
+    "Port": null,
+    "IceServers": []
+  },
+  "BootstrapConfig": {
+    "SeedPeers": [],
+    "SearchDepth": 1,
+    "DialTimeout": 5
+  },
+  "PreloadConfig": {
+    "Render": false,
+    "DeltaThreshold": 10,
+    "DialTimeout": 3
+  },
+  "SyncConfig": {
+    "TipLifespan": 60,
+    "DialTimeout": 5,
+    "BlockBroadcastInterval": 15,
+    "TxBroadcastInterval": 5,
+    "StaticPeers": [],
+    "StaticPeersMaintainPeriod": 0,
+    "RoutingTableRefreshPeriod": 10,
+    "RoutingTableBoundPeerLifespan": 60,
+    "MaximumPollNumPeers": 2147483647,
+    "MinimumBroadcastNumPeers": 10,
+    "BlockDemandLifespan": 60
+  }
+}

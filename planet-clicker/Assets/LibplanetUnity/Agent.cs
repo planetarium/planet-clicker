@@ -17,7 +17,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,28 +51,6 @@ namespace LibplanetUnity
         public static void Initialize(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             instance.InitAgent(renderers);
-        }
-
-        public static void CreateSwarmConfig()
-        {
-            SwarmConfig swarmConfig = new SwarmConfig();
-            File.Delete(Paths.SwarmConfigPath);
-            File.WriteAllText(Paths.SwarmConfigPath, swarmConfig.ToJson());
-        }
-
-        public static void CreateGenesisBlock()
-        {
-            Block<PolymorphicAction<ActionBase>> genesisBlock =
-                NodeUtils<PolymorphicAction<ActionBase>>.CreateGenesisBlock();
-            File.Delete(Paths.GenesisBlockPath);
-            NodeUtils<PolymorphicAction<ActionBase>>.SaveGenesisBlock(Paths.GenesisBlockPath, genesisBlock);
-        }
-
-        public static void CreatePrivateKey()
-        {
-            PrivateKey privateKey = new PrivateKey();
-            File.Delete(Paths.PrivateKeyPath);
-            NodeUtils<PolymorphicAction<ActionBase>>.SavePrivateKey(Paths.PrivateKeyPath, privateKey);
         }
 
         public IValue GetState(Address address)
@@ -121,9 +98,13 @@ namespace LibplanetUnity
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            SwarmConfig swarmConfig = GetSwarmConfig();
-            Block<PolymorphicAction<ActionBase>> genesis = GetGenesisBlock();
-            (IStore store, IStateStore stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
+            SwarmConfig swarmConfig = InitHelper.GetSwarmConfig(Paths.SwarmConfigPath);
+            Block<PolymorphicAction<ActionBase>> genesis = InitHelper.GetGenesisBlock(Paths.GenesisBlockPath);
+            (IStore store, IStateStore stateStore) = InitHelper.GetStore(Paths.StorePath);
+            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
+            PrivateKey = InitHelper.GetPrivateKey(Paths.PrivateKeyPath);
+            Address = PrivateKey.PublicKey.ToAddress();
+
             _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
                 new PrivateKey(),
                 new NetworkConfig<PolymorphicAction<ActionBase>>(
@@ -134,13 +115,8 @@ namespace LibplanetUnity
                 store,
                 stateStore,
                 renderers);
-            _nodeConfig.SwarmConfig.InitConfig.Host = "localhost";
             _swarm = _nodeConfig.GetSwarm();
             _blockChain = _swarm.BlockChain;
-
-            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
-            PrivateKey = GetPrivateKey();
-            Address = PrivateKey.PublicKey.ToAddress();
 
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -150,38 +126,7 @@ namespace LibplanetUnity
             _actions.Enqueue(action);
         }
 
-        private static SwarmConfig GetSwarmConfig()
-        {
-            if (!File.Exists(Paths.SwarmConfigPath))
-            {
-                CreateSwarmConfig();
-            }
-
-            return SwarmConfig.FromJson(File.ReadAllText(Paths.SwarmConfigPath));
-        }
-
-        private static Block<PolymorphicAction<ActionBase>> GetGenesisBlock()
-        {
-            if (!File.Exists(Paths.GenesisBlockPath))
-            {
-                CreateGenesisBlock();
-            }
-
-            return NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(Paths.GenesisBlockPath);
-        }
-
-        private static PrivateKey GetPrivateKey()
-        {
-            if (!File.Exists(Paths.PrivateKeyPath))
-            {
-                CreatePrivateKey();
-            }
-
-            return NodeUtils<PolymorphicAction<ActionBase>>.LoadPrivateKey(Paths.PrivateKeyPath);
-        }
-
         #region Mono
-
         protected override void OnDestroy()
         {
             NetMQConfig.Cleanup(false);
@@ -189,7 +134,6 @@ namespace LibplanetUnity
             base.OnDestroy();
             _swarm?.Dispose();
         }
-
         #endregion
 
         private void StartSystemCoroutines()
