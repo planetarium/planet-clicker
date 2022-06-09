@@ -2,7 +2,6 @@ using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
 using Libplanet.Blockchain;
-using Libplanet.Blockchain.Policies;
 using Libplanet.Blockchain.Renderers;
 using Libplanet.Blocks;
 using Libplanet.Crypto;
@@ -20,34 +19,32 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Bencodex;
-using Libplanet.Store.Trie;
+using Libplanet.Node;
 using UnityEngine;
+using UnityEditor;
 
 namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private static readonly TimeSpan BlockInterval = TimeSpan.FromSeconds(10);
+        private const string StoreDir = "planetarium";
 
-        private const int SwarmDialTimeout = 5000;
+        private static readonly string CommandLineOptionsJsonPath =
+            Path.Combine(Application.streamingAssetsPath, "command_line_options.json");
 
-        private const string PlayerPrefsKeyOfAgentPrivateKey = "private_key_agent";
+        public static readonly string GenesisBlockPath =
+            Path.Combine(Application.streamingAssetsPath, "genesis");
 
-        private const string AgentStoreDirName = "planetarium";
+        public static readonly string SwarmConfigPath =
+            Path.Combine(Application.streamingAssetsPath, "swarm_config.json");
 
-        private static readonly string CommandLineOptionsJsonPath = Path.Combine(Application.streamingAssetsPath, "clo.json");
-
-        public static readonly string GenesisBlockPath = Path.Combine(Application.streamingAssetsPath, "genesis");
+        public static readonly string DefaultPrivateKeyPath =
+            Path.Combine(Application.persistentDataPath, "private_key");
 
         public static readonly string DefaultStoragePath =
-            Path.Combine(Application.persistentDataPath, AgentStoreDirName);
-
-        public static readonly HashAlgorithmType HashAlgorithm = HashAlgorithmType.Of<SHA256>();
+            Path.Combine(Application.persistentDataPath, StoreDir);
 
         private static IEnumerator _miner;
 
@@ -57,15 +54,11 @@ namespace LibplanetUnity
 
         private PrivateKey PrivateKey { get; set; }
 
-        private BlockChain<PolymorphicAction<ActionBase>> _blocks;
+        private NodeConfig<PolymorphicAction<ActionBase>> _nodeConfig;
 
         private Swarm<PolymorphicAction<ActionBase>> _swarm;
 
-        private DefaultStore _store;
-
-        private TrieStateStore _stateStore;
-
-        private ImmutableList<Peer> _seedPeers;
+        private BlockChain<PolymorphicAction<ActionBase>> _blockChain;
 
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -78,18 +71,31 @@ namespace LibplanetUnity
             instance.InitAgent(renderers);
         }
 
-        public static void CreateGenesisBlock(IEnumerable<PolymorphicAction<ActionBase>> actions = null)
+        public static void CreateSwarmConfig()
         {
-            Block<PolymorphicAction<ActionBase>> genesis =
-                BlockChain<PolymorphicAction<ActionBase>>.MakeGenesisBlock(HashAlgorithm, actions);
-            var codec = new Codec();
-            using FileStream stream = File.OpenWrite(GenesisBlockPath);
-            codec.Encode(genesis.MarshalBlock(), stream);
+            SwarmConfig swarmConfig = new SwarmConfig();
+            File.Delete(SwarmConfigPath);
+            File.WriteAllText(SwarmConfigPath, swarmConfig.ToJson());
+        }
+
+        public static void CreateGenesisBlock()
+        {
+            Block<PolymorphicAction<ActionBase>> genesisBlock =
+                NodeUtils<PolymorphicAction<ActionBase>>.CreateGenesisBlock();
+            File.Delete(GenesisBlockPath);
+            NodeUtils<PolymorphicAction<ActionBase>>.SaveGenesisBlock(GenesisBlockPath, genesisBlock);
+        }
+
+        public static void CreatePrivateKey()
+        {
+            PrivateKey privateKey = new PrivateKey();
+            File.Delete(DefaultPrivateKeyPath);
+            NodeUtils<PolymorphicAction<ActionBase>>.SavePrivateKey(DefaultPrivateKeyPath, privateKey);
         }
 
         public IValue GetState(Address address)
         {
-            return _blocks.GetState(address);
+            return _blockChain.GetState(address);
         }
 
         public void MakeTransaction(IEnumerable<ActionBase> gameActions)
@@ -101,11 +107,6 @@ namespace LibplanetUnity
         private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var options = GetOptions(CommandLineOptionsJsonPath);
-            var privateKey = GetPrivateKey(options);
-            var peers = options.Peers.Select(LoadPeer).ToImmutableList();
-            var iceServers = options.IceServers.Select(LoadIceServer).ToImmutableList();
-            var host = options.Host;
-            int? port = options.Port;
             var storagePath = options.StoragePath ?? DefaultStoragePath;
             var appProtocolVersion = options.AppProtocolVersion is null
                 ? default
@@ -122,16 +123,10 @@ namespace LibplanetUnity
             }
 
             Init(
-                privateKey,
                 storagePath,
-                peers,
-                iceServers,
-                host,
-                port,
                 appProtocolVersion,
                 trustedAppProtocolVersionSigners,
-                renderers
-                );
+                renderers);
 
             _miner = options.NoMiner ? null : CoMiner();
 
@@ -140,60 +135,32 @@ namespace LibplanetUnity
         }
 
         private void Init(
-            PrivateKey privateKey,
-            string path,
-            IEnumerable<Peer> peers,
-            IEnumerable<IceServer> iceServers,
-            string host,
-            int? port,
+            string storagePath,
             AppProtocolVersion appProtocolVersion,
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            var policy = new BlockPolicy<PolymorphicAction<ActionBase>>(
-                null,
-                BlockInterval,
-                2048,
-                2048);
-            var stagePolicy = new VolatileStagePolicy<PolymorphicAction<ActionBase>>();
-            PrivateKey = privateKey;
-            Address = privateKey.PublicKey.ToAddress();
-            // TODO: Use RocksDBStore instead:
-            _store = new DefaultStore(Path.Combine(path, "chain"), flush: false);
-            _stateStore = new TrieStateStore(new DefaultKeyValueStore(Path.Combine(path, "states")));
-            var codec = new Codec();
-            Block<PolymorphicAction<ActionBase>> genesis;
-            using (FileStream blockStream = File.OpenRead(GenesisBlockPath))
-            {
-                IValue serializedBlock = codec.Decode(blockStream);
-                genesis = BlockMarshaler.UnmarshalBlock<PolymorphicAction<ActionBase>>(
-                    _ => HashAlgorithm,
-                    (Bencodex.Types.Dictionary)serializedBlock
-                );
-            }
-            _blocks = new BlockChain<PolymorphicAction<ActionBase>>(
-                policy,
-                stagePolicy,
-                _store,
-                _stateStore,
-                genesis,
-                renderers
-            );
+            SwarmConfig swarmConfig = GetSwarmConfig();
+            Block<PolymorphicAction<ActionBase>> genesis = GetGenesisBlock();
+            (IStore store, IStateStore stateStore) = NodeUtils<PolymorphicAction<ActionBase>>.LoadStore(storagePath);
+            _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
+                new PrivateKey(),
+                new NetworkConfig<PolymorphicAction<ActionBase>>(
+                    NodeUtils<PolymorphicAction<ActionBase>>.DefaultBlockPolicy,
+                    NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy,
+                    genesis),
+                swarmConfig,
+                store,
+                stateStore,
+                renderers);
+            _nodeConfig.SwarmConfig.InitConfig.Host = "localhost";
+            _swarm = _nodeConfig.GetSwarm();
+            _blockChain = _swarm.BlockChain;
 
-            if (!(host is null) || iceServers.Any())
-            {
-                _swarm = new Swarm<PolymorphicAction<ActionBase>>(
-                    _blocks,
-                    privateKey,
-                    appProtocolVersion: appProtocolVersion,
-                    host: host,
-                    listenPort: port,
-                    iceServers: iceServers,
-                    trustedAppProtocolVersionSigners: trustedAppProtocolVersionSigners);
+            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
+            PrivateKey = GetPrivateKey();
+            Address = PrivateKey.PublicKey.ToAddress();
 
-                _seedPeers = peers.Where(peer => peer.PublicKey != privateKey.PublicKey).ToImmutableList();
-                _seedPeers.Select(peer => peer.Address).ToImmutableHashSet();
-            }
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -216,40 +183,34 @@ namespace LibplanetUnity
             _actions.Enqueue(action);
         }
 
-        private static PrivateKey GetPrivateKey(Options options)
+        private static SwarmConfig GetSwarmConfig()
         {
-            PrivateKey privateKey;
-            var privateKeyHex = options.PrivateKey ?? PlayerPrefs.GetString(PlayerPrefsKeyOfAgentPrivateKey, "");
-
-            if (string.IsNullOrEmpty(privateKeyHex))
+            if (!File.Exists(SwarmConfigPath))
             {
-                privateKey = new PrivateKey();
-                PlayerPrefs.SetString(PlayerPrefsKeyOfAgentPrivateKey, ByteUtil.Hex(privateKey.ByteArray));
-            }
-            else
-            {
-                privateKey = new PrivateKey(ByteUtil.ParseHex(privateKeyHex));
+                CreateSwarmConfig();
             }
 
-            return privateKey;
+            return SwarmConfig.FromJson(File.ReadAllText(SwarmConfigPath));
         }
 
-        private static BoundPeer LoadPeer(string peerInfo)
+        private static Block<PolymorphicAction<ActionBase>> GetGenesisBlock()
         {
-            string[] tokens = peerInfo.Split(',');
-            var pubKey = new PublicKey(ByteUtil.ParseHex(tokens[0]));
-            string host = tokens[1];
-            var port = int.Parse(tokens[2]);
+            if (!File.Exists(GenesisBlockPath))
+            {
+                CreateGenesisBlock();
+            }
 
-            return new BoundPeer(pubKey, new DnsEndPoint(host, port));
+            return NodeUtils<PolymorphicAction<ActionBase>>.LoadGenesisBlock(GenesisBlockPath);
         }
 
-        private static IceServer LoadIceServer(string iceServerInfo)
+        private static PrivateKey GetPrivateKey()
         {
-            var uri = new Uri(iceServerInfo);
-            string[] userInfo = uri.UserInfo.Split(':');
+            if (!File.Exists(DefaultPrivateKeyPath))
+            {
+                CreatePrivateKey();
+            }
 
-            return new IceServer(new[] { uri }, userInfo[0], userInfo[1]);
+            return NodeUtils<PolymorphicAction<ActionBase>>.LoadPrivateKey(DefaultPrivateKeyPath);
         }
 
         #region Mono
@@ -259,7 +220,7 @@ namespace LibplanetUnity
             NetMQConfig.Cleanup(false);
 
             base.OnDestroy();
-            _store.Dispose();
+            _swarm?.Dispose();
         }
 
         #endregion
@@ -288,11 +249,9 @@ namespace LibplanetUnity
             {
                 try
                 {
+                    // FIXME: Swarm<T> should handle the filtering internally.
                     await _swarm.BootstrapAsync(
-                        _seedPeers,
-                        TimeSpan.FromMilliseconds(5000),
-                        cancellationToken: _cancellationTokenSource.Token
-                    );
+                        cancellationToken: _cancellationTokenSource.Token);
                 }
                 catch (Exception e)
                 {
@@ -305,17 +264,15 @@ namespace LibplanetUnity
             Debug.Log("PreloadingStarted event was invoked");
 
             DateTimeOffset started = DateTimeOffset.UtcNow;
-            long existingBlocks = _blocks?.Tip?.Index ?? 0;
-            Debug.Log("Preloading starts");
+            long existingBlocks = _blockChain?.Tip?.Index ?? 0;
+            Debug.Log("Starting preload...");
 
             var swarmPreloadTask = Task.Run(async () =>
             {
                 await _swarm.PreloadAsync(
-                    TimeSpan.FromMilliseconds(SwarmDialTimeout),
-                    null,
-                    false,
-                    cancellationToken: _cancellationTokenSource.Token
-                );
+                    progress: null,
+                    render: false,
+                    cancellationToken: _cancellationTokenSource.Token);
             });
 
             yield return new WaitUntil(() => swarmPreloadTask.IsCompleted);
@@ -324,15 +281,15 @@ namespace LibplanetUnity
             if (swarmPreloadTask.Exception is Exception exc)
             {
                 Debug.LogErrorFormat(
-                    "Preloading terminated with an exception: {0}",
+                    "Preload terminated with an exception: {0}",
                     exc
                 );
                 throw exc;
             }
 
-            var index = _blocks?.Tip?.Index ?? 0;
+            var index = _blockChain?.Tip?.Index ?? 0;
             Debug.LogFormat(
-                "Preloading finished; elapsed time: {0}; blocks: {1}",
+                "Preload finished; elapsed time: {0}; blocks: {1}",
                 ended - started,
                 index - existingBlocks
             );
@@ -341,7 +298,7 @@ namespace LibplanetUnity
             {
                 try
                 {
-                    await _swarm.StartAsync();
+                    await _swarm.StartAsync(cancellationToken: _cancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -400,7 +357,7 @@ namespace LibplanetUnity
             var polymorphicActions = actions.ToArray();
             Debug.LogFormat("Make Transaction with Actions: `{0}`",
                 string.Join(",", polymorphicActions.Select(i => i.InnerAction)));
-            return _blocks.MakeTransaction(PrivateKey, polymorphicActions);
+            return _blockChain.MakeTransaction(PrivateKey, polymorphicActions);
         }
 
         private IEnumerator CoMiner()
@@ -411,7 +368,7 @@ namespace LibplanetUnity
 
                 var task = Task.Run(async () =>
                 {
-                    var block = await _blocks.MineBlock(PrivateKey);
+                    var block = await _blockChain.MineBlock(PrivateKey);
 
                     if (_swarm?.Running ?? false)
                     {
@@ -438,7 +395,7 @@ namespace LibplanetUnity
                         {
                             if (ex is InvalidTxNonceException invalidTxNonceException)
                             {
-                                var invalidNonceTx = _store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxNonceException.TxId);
+                                var invalidNonceTx = _blockChain.GetTransaction(invalidTxNonceException.TxId);
 
                                 if (invalidNonceTx.Signer == Address)
                                 {
@@ -450,7 +407,7 @@ namespace LibplanetUnity
                             if (ex is InvalidTxException invalidTxException)
                             {
                                 Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                                invalidTxs.Add(_store.GetTransaction<PolymorphicAction<ActionBase>>(invalidTxException.TxId));
+                                invalidTxs.Add(_blockChain.GetTransaction(invalidTxException.TxId));
                             }
 
                             Debug.LogException(ex);
@@ -459,7 +416,7 @@ namespace LibplanetUnity
 
                     foreach (var invalidTx in invalidTxs)
                     {
-                        _blocks.UnstageTransaction(invalidTx);
+                        _blockChain.UnstageTransaction(invalidTx);
                     }
 
                     foreach (var retryAction in retryActions)
