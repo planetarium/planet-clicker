@@ -33,7 +33,6 @@ namespace _Script.Action
 
         public override IAccountStateDelta Execute(IActionContext context)
         {
-            Debug.Log("Executing add count");
             var states = context.PreviousStates;
             var rankingAddress = RankingState.Address;
             Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
