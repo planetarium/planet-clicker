@@ -9,7 +9,7 @@ using Libplanet.Net;
 using Libplanet.Store;
 using Libplanet.Tx;
 using Libplanet.Unity.Miner;
-using LibplanetUnity.Action;
+using Libplanet.Unity;
 using NetMQ;
 using Serilog;
 using System;
@@ -95,10 +95,12 @@ namespace LibplanetUnity
             AppProtocolVersion appProtocolVersion = default;
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners = new List<PublicKey>();
 
+            /*
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
+            */
 
             Init(
                 storagePath,
