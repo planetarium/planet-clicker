@@ -2,7 +2,7 @@ using _Script.State;
 using Bencodex.Types;
 using Libplanet.Action;
 using LibplanetUnity;
-using LibplanetUnity.Action;
+using Libplanet.Unity;
 using UnityEngine;
 
 namespace _Script.Action
@@ -11,6 +11,7 @@ namespace _Script.Action
     public class AddCount : ActionBase
     {
         private long _count;
+        private static readonly Bencodex.Types.Boolean MarkChanged = true;
 
         public AddCount()
         {
@@ -30,22 +31,25 @@ namespace _Script.Action
             _count = (long)((Integer)serialized["count"]).Value;
         }
 
-        public override IAccountStateDelta Execute(IActionContext ctx)
+        public override IAccountStateDelta Execute(IActionContext context)
         {
-            var states = ctx.PreviousStates;
+            Debug.Log("Executing add count");
+            var states = context.PreviousStates;
             var rankingAddress = RankingState.Address;
-            states.TryGetState(ctx.Signer, out Bencodex.Types.Integer currentCount);
+            Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
+                ? bint
+                : 0;
             var nextCount = currentCount + _count;
 
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            var rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict)
+            RankingState rankingState = states.GetState(rankingAddress) is Bencodex.Types.Dictionary bdict
                 ? new RankingState(bdict)
                 : new RankingState();
 
-            rankingState.Update(ctx.Signer, nextCount);
+            rankingState.Update(context.Signer, nextCount);
             states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(ctx.Signer, (Bencodex.Types.Integer)nextCount);
+            return states.SetState(context.Signer, (Bencodex.Types.Integer)nextCount);
         }
     }
 }

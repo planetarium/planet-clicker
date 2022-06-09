@@ -6,7 +6,7 @@ using _Script.Action;
 using _Script.Data;
 using _Script.State;
 using LibplanetUnity;
-using LibplanetUnity.Action;
+using Libplanet.Unity;
 using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;

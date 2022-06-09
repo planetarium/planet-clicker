@@ -4,6 +4,21 @@
         <name>Libplanet.Unity</name>
     </assembly>
     <members>
+        <member name="T:Libplanet.Unity.ActionBase">
+            <summary>
+            A base class for <see cref="T:Libplanet.Action.IAction"/>s.  Inherit this class when implementing
+            concrete game actions.
+            </summary>
+        </member>
+        <member name="P:Libplanet.Unity.ActionBase.PlainValue">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Unity.ActionBase.LoadPlainValue(Bencodex.Types.IValue)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Libplanet.Unity.ActionBase.Execute(Libplanet.Action.IActionContext)">
+            <inheritdoc/>
+        </member>
         <member name="T:Libplanet.Unity.Miner.BaseMiner`1">
             <summary>
             <c>BaseMiner</c> class provides basic mining coroutine.

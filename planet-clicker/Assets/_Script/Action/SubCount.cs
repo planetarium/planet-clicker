@@ -4,7 +4,7 @@ using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
 using LibplanetUnity;
-using LibplanetUnity.Action;
+using Libplanet.Unity;
 using UnityEngine;
 
 namespace _Script.Action
@@ -14,6 +14,7 @@ namespace _Script.Action
     {
         private Address _address;
         private long _count;
+        private static readonly Bencodex.Types.Boolean MarkChanged = true;
 
         public SubCount()
         {
@@ -37,24 +38,25 @@ namespace _Script.Action
             _address = new Address(((Bencodex.Types.Binary)serialized["address"]));
         }
 
-        public override IAccountStateDelta Execute(IActionContext ctx)
+        public override IAccountStateDelta Execute(IActionContext context)
         {
-            var states = ctx.PreviousStates;
+            var states = context.PreviousStates;
             var rankingAddress = RankingState.Address;
 
-            if (ctx.Rehearsal)
+            if (context.Rehearsal)
             {
                 states = states.SetState(rankingAddress, MarkChanged);
                 return states.SetState(_address, MarkChanged);
             }
 
-            states.TryGetState(_address, out Bencodex.Types.Integer currentCount);
+            Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
+                ? bint
+                : 0;
             var nextCount = Math.Max(currentCount - _count, 0);
 
             Debug.Log($"sub_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState;
-            rankingState = states.TryGetState(rankingAddress, out Bencodex.Types.Dictionary bdict)
+            RankingState rankingState = states.GetState(rankingAddress) is Bencodex.Types.Dictionary bdict
                 ? new RankingState(bdict)
                 : new RankingState();
 
