@@ -95,12 +95,10 @@ namespace LibplanetUnity
             AppProtocolVersion appProtocolVersion = default;
             IEnumerable<PublicKey> trustedAppProtocolVersionSigners = new List<PublicKey>();
 
-            /*
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
-            */
 
             Init(
                 storagePath,
