@@ -95,7 +95,6 @@ namespace LibplanetUnity
             _swarm = _nodeConfig.GetSwarm();
             _blockChain = _swarm.BlockChain;
 
-
             _swarmRunner = new SwarmRunner(_swarm, PrivateKey);
             _miner = new Miner(
                 _swarm,
