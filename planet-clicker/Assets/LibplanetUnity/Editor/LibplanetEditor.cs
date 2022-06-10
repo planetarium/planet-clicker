@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using Libplanet;
 using Libplanet.Crypto;
+using Libplanet.Unity;
 
 namespace LibplanetUnity.Editor
 {

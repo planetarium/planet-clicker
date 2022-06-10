@@ -5,6 +5,7 @@ using Libplanet.Blockchain;
 using Libplanet.Blockchain.Renderers;
 using Libplanet.Blocks;
 using Libplanet.Crypto;
+using Libplanet.Node;
 using Libplanet.Net;
 using Libplanet.Store;
 using Libplanet.Tx;
@@ -17,7 +18,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Libplanet.Node;
 using UnityEngine;
 using UnityEditor;
 
