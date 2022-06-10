@@ -121,5 +121,56 @@
             </summary>
             <returns>Runned Task.</returns>
         </member>
+        <member name="T:Libplanet.Unity.Paths">
+            <summary>
+            Various file paths for storing persistent data.
+            </summary>
+        </member>
+        <member name="F:Libplanet.Unity.Paths.GenesisBlockPath">
+            <summary>
+            Path to storing a genesis <see cref="T:Libplanet.Blocks.Block`1"/>.
+            </summary>
+        </member>
+        <member name="F:Libplanet.Unity.Paths.SwarmConfigPath">
+            <summary>
+            Path to storing a <see cref="T:Libplanet.Node.SwarmConfig"/>.
+            </summary>
+        </member>
+        <member name="F:Libplanet.Unity.Paths.StorePath">
+            <summary>
+            Path to storing chain data.
+            </summary>
+        </member>
+        <member name="F:Libplanet.Unity.Paths.PrivateKeyPath">
+            <summary>
+            Path to storing a <see cref="T:Libplanet.Crypto.PrivateKey"/>.
+            </summary>
+        </member>
+        <member name="T:LibplanetUnity.Utils">
+            <summary>
+            Various helper methods for creating persistent data.
+            </summary>
+        </member>
+        <member name="M:LibplanetUnity.Utils.CreateSwarmConfig(System.String)">
+            <summary>
+            Creates a new <see cref="T:Libplanet.Node.SwarmConfig"/> and writes to <paramref name="path"/>.
+            If one already exists at <paramref name="path"/>, overwrites it.
+            </summary>
+            <param name="path">File path to save a <see cref="T:Libplanet.Node.SwarmConfig"/>.</param>
+        </member>
+        <member name="M:LibplanetUnity.Utils.CreateGenesisBlock(System.String)">
+            <summary>
+            Creates a new genesis <see cref="T:Libplanet.Blocks.Block`1"/> and writes to <paramref name="path"/>.
+            If one already exists at <paramref name="path"/>, overwrites it.
+            </summary>
+            <param name="path">The path to save a genesis <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
+        </member>
+        <member name="M:LibplanetUnity.Utils.CreatePrivateKey(System.String)">
+            <summary>
+            Creates a new <see cref="T:Libplanet.Crypto.PrivateKey"/> and writes to <paramref name="path"/>.
+            If one already exists at <paramref name="path"/>, overwrites it.
+            </summary>
+            <param name="path">The path to save a <see cref="T:Libplanet.Crypto.PrivateKey"/>.</param>
+        </member>
     </members>
 </doc>
