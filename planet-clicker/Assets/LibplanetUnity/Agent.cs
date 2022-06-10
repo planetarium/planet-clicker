@@ -12,13 +12,10 @@ using Libplanet.Unity.Miner;
 using Libplanet.Unity;
 using NetMQ;
 using Serilog;
-using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Libplanet.Node;
 using UnityEngine;
@@ -28,9 +25,9 @@ namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private static BaseMiner<PolymorphicAction<ActionBase>> _miner;
+        private BaseMiner<PolymorphicAction<ActionBase>> _miner;
 
-        private static IEnumerator _swarmRunner;
+        private SwarmRunner _swarmRunner;
 
         private readonly ConcurrentQueue<System.Action> _actions = new ConcurrentQueue<System.Action>();
 
@@ -42,15 +39,13 @@ namespace LibplanetUnity
 
         private BlockChain<PolymorphicAction<ActionBase>> _blockChain;
 
-        private CancellationTokenSource _cancellationTokenSource;
-
         public Address Address { get; private set; }
 
-        public IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> Renderers { get; private set; }
-
-        public static void Initialize(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
+        public static void Initialize(
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
+            BaseMiner<PolymorphicAction<ActionBase>> miner = null)
         {
-            instance.InitAgent(renderers);
+            Instance.InitAgent(renderers, miner);
         }
 
         public IValue GetState(Address address)
@@ -64,49 +59,36 @@ namespace LibplanetUnity
             Task.Run(() => MakeTransaction(actions, true));
         }
 
-        private void InitAgent(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
+        private void InitAgent(
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
+            BaseMiner<PolymorphicAction<ActionBase>> miner)
         {
             var storagePath = Paths.StorePath;
-
-            // TODO: Provide a way to configure APV.
-            AppProtocolVersion appProtocolVersion = default;
-            IEnumerable<PublicKey> trustedAppProtocolVersionSigners = new List<PublicKey>();
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
 
-            Init(
-                storagePath,
-                appProtocolVersion,
-                trustedAppProtocolVersionSigners,
-                renderers);
+            Init(storagePath, renderers, miner);
 
-            _miner = new SoloMiner<PolymorphicAction<ActionBase>>(
-                _blockChain,
-                PrivateKey,
-                new MineHandler());
-
-            StartSystemCoroutines();
-            StartNullableCoroutine(_miner.CoStart());
+            StartCoroutines();
         }
 
         private void Init(
             string storagePath,
-            AppProtocolVersion appProtocolVersion,
-            IEnumerable<PublicKey> trustedAppProtocolVersionSigners,
-            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
+            BaseMiner<PolymorphicAction<ActionBase>> miner)
         {
             SwarmConfig swarmConfig = InitHelper.GetSwarmConfig(Paths.SwarmConfigPath);
             Block<PolymorphicAction<ActionBase>> genesis = InitHelper.GetGenesisBlock(Paths.GenesisBlockPath);
             (IStore store, IStateStore stateStore) = InitHelper.GetStore(Paths.StorePath);
-            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
+
             PrivateKey = InitHelper.GetPrivateKey(Paths.PrivateKeyPath);
             Address = PrivateKey.PublicKey.ToAddress();
 
             _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
-                new PrivateKey(),
+                PrivateKey,
                 new NetworkConfig<PolymorphicAction<ActionBase>>(
                     NodeUtils<PolymorphicAction<ActionBase>>.DefaultBlockPolicy,
                     NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy,
@@ -118,7 +100,18 @@ namespace LibplanetUnity
             _swarm = _nodeConfig.GetSwarm();
             _blockChain = _swarm.BlockChain;
 
-            _cancellationTokenSource = new CancellationTokenSource();
+
+            _swarmRunner = new SwarmRunner(_swarm, PrivateKey);
+            if (miner is null)
+            {
+                _miner = new SoloMiner<PolymorphicAction<ActionBase>>(
+                    _blockChain,
+                    PrivateKey,
+                    new DefaultMineHandler(_blockChain, PrivateKey));
+            } else 
+            {
+                _miner = miner;
+            }
         }
 
         public void RunOnMainThread(System.Action action)
@@ -136,107 +129,11 @@ namespace LibplanetUnity
         }
         #endregion
 
-        private void StartSystemCoroutines()
+        private void StartCoroutines()
         {
-            _swarmRunner = CoSwarmRunner();
-
-            StartNullableCoroutine(_swarmRunner);
+            StartCoroutine(_swarmRunner.CoSwarmRunner());
             StartCoroutine(CoProcessActions());
-        }
-
-        private Coroutine StartNullableCoroutine(IEnumerator routine)
-        {
-            return ReferenceEquals(routine, null) ? null : StartCoroutine(routine);
-        }
-
-        private IEnumerator CoSwarmRunner()
-        {
-            if (_swarm is null)
-            {
-                yield break;
-            }
-
-            var bootstrapTask = Task.Run(async () =>
-            {
-                try
-                {
-                    // FIXME: Swarm<T> should handle the filtering internally.
-                    await _swarm.BootstrapAsync(
-                        cancellationToken: _cancellationTokenSource.Token);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogFormat("Exception occurred during bootstrap {0}", e);
-                }
-            });
-
-            yield return new WaitUntil(() => bootstrapTask.IsCompleted);
-
-            Debug.Log("PreloadingStarted event was invoked");
-
-            DateTimeOffset started = DateTimeOffset.UtcNow;
-            long existingBlocks = _blockChain?.Tip?.Index ?? 0;
-            Debug.Log("Starting preload...");
-
-            var swarmPreloadTask = Task.Run(async () =>
-            {
-                await _swarm.PreloadAsync(
-                    progress: null,
-                    render: false,
-                    cancellationToken: _cancellationTokenSource.Token);
-            });
-
-            yield return new WaitUntil(() => swarmPreloadTask.IsCompleted);
-            DateTimeOffset ended = DateTimeOffset.UtcNow;
-
-            if (swarmPreloadTask.Exception is Exception exc)
-            {
-                Debug.LogErrorFormat(
-                    "Preload terminated with an exception: {0}",
-                    exc
-                );
-                throw exc;
-            }
-
-            var index = _blockChain?.Tip?.Index ?? 0;
-            Debug.LogFormat(
-                "Preload finished; elapsed time: {0}; blocks: {1}",
-                ended - started,
-                index - existingBlocks
-            );
-
-            var swarmStartTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await _swarm.StartAsync(cancellationToken: _cancellationTokenSource.Token);
-                }
-                catch (TaskCanceledException)
-                {
-                }
-                catch (Exception e)
-                {
-                    Debug.LogErrorFormat(
-                        "Swarm terminated with an exception: {0}",
-                        e
-                    );
-                    throw;
-                }
-            });
-
-            Task.Run(async () =>
-            {
-                await _swarm.WaitForRunningAsync();
-
-                Debug.LogFormat(
-                    "The address of this node: {0},{1},{2}",
-                    ByteUtil.Hex(PrivateKey.PublicKey.Format(true)),
-                    _swarm.EndPoint.Host,
-                    _swarm.EndPoint.Port
-                );
-            });
-
-            yield return new WaitUntil(() => swarmStartTask.IsCompleted);
+            StartCoroutine(_miner.CoStart());
         }
 
         private IEnumerator CoProcessActions()
@@ -269,55 +166,6 @@ namespace LibplanetUnity
             Debug.LogFormat("Make Transaction with Actions: `{0}`",
                 string.Join(",", polymorphicActions.Select(i => i.InnerAction)));
             return _blockChain.MakeTransaction(PrivateKey, polymorphicActions);
-        }
-
-        public class MineHandler : IMineListener<PolymorphicAction<ActionBase>>
-        {
-            public void Failure(Task mineTask)
-            {
-                var txs = new HashSet<Transaction<PolymorphicAction<ActionBase>>>();
-                var invalidTxs = txs;
-                var retryActions = new HashSet<IImmutableList<PolymorphicAction<ActionBase>>>();
-
-                if (mineTask.IsFaulted)
-                {
-                    foreach (var ex in mineTask.Exception.InnerExceptions)
-                    {
-                        if (ex is InvalidTxNonceException invalidTxNonceException)
-                        {
-                            var invalidNonceTx = Agent.instance._blockChain.GetTransaction(invalidTxNonceException.TxId);
-
-                            if (invalidNonceTx.Signer == Agent.instance.PrivateKey.PublicKey.ToAddress())
-                            {
-                                Debug.Log($"Tx[{invalidTxNonceException.TxId}] nonce is invalid. Retry it.");
-                                retryActions.Add(invalidNonceTx.Actions);
-                            }
-                        }
-
-                        if (ex is InvalidTxException invalidTxException)
-                        {
-                            Debug.Log($"Tx[{invalidTxException.TxId}] is invalid. mark to unstage.");
-                            invalidTxs.Add(Agent.instance._blockChain.GetTransaction(invalidTxException.TxId));
-                        }
-
-                        Debug.LogException(ex);
-                    }
-                }
-
-                foreach (var invalidTx in invalidTxs)
-                {
-                    Agent.instance._blockChain.UnstageTransaction(invalidTx);
-                }
-
-                foreach (var retryAction in retryActions)
-                {
-                    Agent.instance.MakeTransaction(retryAction, true);
-                }
-            }
-            public void Success(Block<PolymorphicAction<ActionBase>> block)
-            {
-                Debug.Log($"created block index: {block.Index}, difficulty: {block.Difficulty}");
-            }
         }
     }
 }
