@@ -44,13 +44,9 @@ namespace LibplanetUnity
 
         public Address Address { get; private set; }
 
-        public static void Initialize(IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
-        {
-            Instance.InitAgent(renderers, null);
-        }
         public static void Initialize(
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
-            BaseMiner<PolymorphicAction<ActionBase>> miner)
+            BaseMiner<PolymorphicAction<ActionBase>> miner = null)
         {
             Instance.InitAgent(renderers, miner);
         }
@@ -94,7 +90,7 @@ namespace LibplanetUnity
             PrivateKey = InitHelper.GetPrivateKey(Paths.PrivateKeyPath);
 
             _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
-                new PrivateKey(),
+                PrivateKey,
                 new NetworkConfig<PolymorphicAction<ActionBase>>(
                     NodeUtils<PolymorphicAction<ActionBase>>.DefaultBlockPolicy,
                     NodeUtils<PolymorphicAction<ActionBase>>.DefaultStagePolicy,
