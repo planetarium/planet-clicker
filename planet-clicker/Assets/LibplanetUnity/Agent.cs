@@ -9,7 +9,6 @@ using Libplanet.Node;
 using Libplanet.Net;
 using Libplanet.Store;
 using Libplanet.Tx;
-using Libplanet.Unity.Miner;
 using Libplanet.Unity;
 using NetMQ;
 using Serilog;
@@ -25,7 +24,7 @@ namespace LibplanetUnity
 {
     public class Agent : MonoSingleton<Agent>
     {
-        private BaseMiner<PolymorphicAction<ActionBase>> _miner;
+        private Miner _miner;
 
         private SwarmRunner _swarmRunner;
 
@@ -42,10 +41,9 @@ namespace LibplanetUnity
         public Address Address { get; private set; }
 
         public static void Initialize(
-            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
-            BaseMiner<PolymorphicAction<ActionBase>> miner = null)
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            Instance.InitAgent(renderers, miner);
+            Instance.InitAgent(renderers);
         }
 
         public IValue GetState(Address address)
@@ -59,8 +57,7 @@ namespace LibplanetUnity
         }
 
         private void InitAgent(
-            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
-            BaseMiner<PolymorphicAction<ActionBase>> miner)
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             var storagePath = Paths.StorePath;
 
@@ -69,15 +66,14 @@ namespace LibplanetUnity
                 .WriteTo.Console()
                 .CreateLogger();
 
-            Init(storagePath, renderers, miner);
+            Init(storagePath, renderers);
 
             StartCoroutines();
         }
 
         private void Init(
             string storagePath,
-            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers,
-            BaseMiner<PolymorphicAction<ActionBase>> miner)
+            IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
             SwarmConfig swarmConfig = InitHelper.GetSwarmConfig(Paths.SwarmConfigPath);
             Block<PolymorphicAction<ActionBase>> genesis = InitHelper.GetGenesisBlock(Paths.GenesisBlockPath);
@@ -99,18 +95,10 @@ namespace LibplanetUnity
             _swarm = _nodeConfig.GetSwarm();
             _blockChain = _swarm.BlockChain;
 
-
             _swarmRunner = new SwarmRunner(_swarm, PrivateKey);
-            if (miner is null)
-            {
-                _miner = new SoloMiner<PolymorphicAction<ActionBase>>(
-                    _blockChain,
-                    PrivateKey,
-                    new DefaultMineHandler(_blockChain, PrivateKey));
-            } else
-            {
-                _miner = miner;
-            }
+            _miner = new Miner(
+                _swarm,
+                PrivateKey);
         }
 
         public void RunOnMainThread(System.Action action)
