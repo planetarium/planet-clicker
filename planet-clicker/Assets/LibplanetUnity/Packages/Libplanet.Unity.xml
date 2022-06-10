@@ -19,107 +19,66 @@
         <member name="M:Libplanet.Unity.ActionBase.Execute(Libplanet.Action.IActionContext)">
             <inheritdoc/>
         </member>
-        <member name="T:Libplanet.Unity.Miner.BaseMiner`1">
+        <member name="T:Libplanet.Unity.Miner">
             <summary>
-            <c>BaseMiner</c> class provides basic mining coroutine.
-            <see cref="T:Libplanet.Blockchain.BlockChain`1"/>'s <c>MineBlock</c> must be implemented
-            and success/failure can be monitored through <c>OnMineListener</c>.
-            </summary>
-            <typeparam name="T"><see cref="T:Libplanet.Blockchain.BlockChain`1"/> Action Type.</typeparam>
-        </member>
-        <member name="M:Libplanet.Unity.Miner.BaseMiner`1.#ctor(Libplanet.Blockchain.BlockChain{`0},Libplanet.Crypto.PrivateKey,Libplanet.Unity.Miner.IMineListener{`0})">
-            <summary>
-            Initialize a <see cref="T:Libplanet.Unity.Miner.BaseMiner`1"/> instance.
-            </summary>
-            <param name="blockChain"><see cref="T:Libplanet.Blockchain.BlockChain`1"/> to be used for mining.</param>
-            <param name="privateKey"><see cref="P:Libplanet.Unity.Miner.BaseMiner`1.PrivateKey"/> to be used for mining.</param>
-            <param name="onMineListener"><c>OnMineListener</c> success/failure handler.</param>
-        </member>
-        <member name="P:Libplanet.Unity.Miner.BaseMiner`1.BlockChain">
-            <summary>
-            <see cref="T:Libplanet.Blockchain.BlockChain`1"/> to be used in Mine.
+            <see cref="T:Libplanet.Unity.Miner"/> class provides basic mining coroutine.
             </summary>
         </member>
-        <member name="P:Libplanet.Unity.Miner.BaseMiner`1.PrivateKey">
+        <member name="F:Libplanet.Unity.Miner._swarm">
             <summary>
-            <see cref="P:Libplanet.Unity.Miner.BaseMiner`1.PrivateKey"/> to be used in Mine.
+            The <see cref="T:Libplanet.Net.Swarm`1"/> to use for mining.
             </summary>
         </member>
-        <member name="P:Libplanet.Unity.Miner.BaseMiner`1.OnMineListener">
+        <member name="F:Libplanet.Unity.Miner._privateKey">
             <summary>
-            <see cref="T:Libplanet.Unity.Miner.IMineListener`1"/> to be used in CoStart.
+            The <see cref="T:Libplanet.Crypto.PrivateKey"/> to sign mined <see cref="T:Libplanet.Blocks.Block`1"/>s.
             </summary>
         </member>
-        <member name="M:Libplanet.Unity.Miner.BaseMiner`1.CoStart">
+        <member name="M:Libplanet.Unity.Miner.#ctor(Libplanet.Net.Swarm{Libplanet.Action.PolymorphicAction{Libplanet.Unity.ActionBase}},Libplanet.Crypto.PrivateKey)">
             <summary>
-            Process mining and wait.
+            Initialize a <see cref="T:Libplanet.Unity.Miner"/> instance.
+            </summary>
+            <param name="swarm">The <see cref="T:Libplanet.Net.Swarm`1"/> to use for mining.</param>
+            <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to sign
+            mined <see cref="T:Libplanet.Blocks.Block`1"/>s.</param>
+        </member>
+        <member name="M:Libplanet.Unity.Miner.CoStart">
+            <summary>
+            Processes mining and wait.
             </summary>
             <returns>Mining Coroutine.</returns>
         </member>
-        <member name="M:Libplanet.Unity.Miner.BaseMiner`1.Mine">
+        <member name="M:Libplanet.Unity.Miner.Mine">
             <summary>
-            Use <see cref="P:Libplanet.Unity.Miner.BaseMiner`1.BlockChain"/>'s <c>MineBlock</c> to implement <c>Mine</c>.
+            Uses <see cref="T:Libplanet.Blockchain.BlockChain`1"/> to implement <see cref="M:Libplanet.Unity.Miner.Mine"/>.
             </summary>
-            <returns>Runned mine Task.</returns>
+            <returns>An awaitable task with a <see cref="T:Libplanet.Blocks.Block`1"/> that is mined.</returns>
         </member>
-        <member name="T:Libplanet.Unity.Miner.IMineListener`1">
+        <member name="T:Libplanet.Unity.MonoSingleton`1">
             <summary>
-            IMineListener is to check whether 'mine' of <see cref="T:Libplanet.Unity.Miner.BaseMiner`1"/> is successful.
+            MonoSingleton.
             </summary>
-            <typeparam name="T"><see cref="T:Libplanet.Unity.Miner.BaseMiner`1"/>'s chain Action Type.</typeparam>
+            <typeparam name="T">The type.</typeparam>
         </member>
-        <member name="M:Libplanet.Unity.Miner.IMineListener`1.Success(Libplanet.Blocks.Block{`0})">
+        <member name="P:Libplanet.Unity.MonoSingleton`1.Instance">
             <summary>
-            If <c>Mine</c> is success, this method is called.
+            MonoSingleton.
             </summary>
-            <param name="block">Mined <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
         </member>
-        <member name="M:Libplanet.Unity.Miner.IMineListener`1.Failure(System.Threading.Tasks.Task)">
+        <member name="M:Libplanet.Unity.MonoSingleton`1.Awake">
             <summary>
-            If <c>Mine</c> is failure, this method is called.
+            Unity Engine Mono Awake.
             </summary>
-            <param name="mineTask">Completed Mine Task.</param>
         </member>
-        <member name="T:Libplanet.Unity.Miner.SoloMiner`1">
+        <member name="M:Libplanet.Unity.MonoSingleton`1.OnDestroy">
             <summary>
-            It is used for mining without <see cref="T:Libplanet.Net.Swarm`1"/>.
+            Unity Engine Mono OnDestroy.
             </summary>
-            <typeparam name="T"><see cref="T:Libplanet.Blockchain.BlockChain`1"/> Action Type.</typeparam>
         </member>
-        <member name="M:Libplanet.Unity.Miner.SoloMiner`1.#ctor(Libplanet.Blockchain.BlockChain{`0},Libplanet.Crypto.PrivateKey,Libplanet.Unity.Miner.IMineListener{`0})">
+        <member name="M:Libplanet.Unity.MonoSingleton`1.OnApplicationQuit">
             <summary>
-            Initialize a <see cref="T:Libplanet.Unity.Miner.SoloMiner`1"/> instance.
+            Unity Engine Mono OnApplicationQuit.
             </summary>
-            <param name="blockChain">The <see cref="T:Libplanet.Blockchain.BlockChain`1"/> to use.</param>
-            <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to use.</param>
-            <param name="onMineListener">The <see cref="T:Libplanet.Unity.Miner.IMineListener`1"/> to use.</param>
-        </member>
-        <member name="M:Libplanet.Unity.Miner.SoloMiner`1.Mine">
-            <summary>
-            Implementation for Solo Mining.
-            </summary>
-            <returns>Runned Task.</returns>
-        </member>
-        <member name="T:Libplanet.Unity.Miner.SwarmMiner`1">
-            <summary>
-            It is used for mining with <see cref="T:Libplanet.Net.Swarm`1"/>.
-            </summary>
-            <typeparam name="T"><see cref="T:Libplanet.Unity.Miner.BaseMiner`1"/>'s chain Action Type.</typeparam>
-        </member>
-        <member name="M:Libplanet.Unity.Miner.SwarmMiner`1.#ctor(Libplanet.Blockchain.BlockChain{`0},Libplanet.Crypto.PrivateKey,Libplanet.Unity.Miner.IMineListener{`0},Libplanet.Net.Swarm{`0})">
-            <summary>
-            Initialize a <see cref="T:Libplanet.Unity.Miner.SwarmMiner`1"/> instance.
-            </summary>
-            <param name="blockChain">The <see cref="T:Libplanet.Blockchain.BlockChain`1"/> to use.</param>
-            <param name="privateKey">The <see cref="T:Libplanet.Crypto.PrivateKey"/> to use.</param>
-            <param name="onMineListener">The <see cref="T:Libplanet.Unity.Miner.IMineListener`1"/> to use.</param>
-            <param name="swarm">The <see cref="T:Libplanet.Net.Swarm`1"/> to use.</param>
-        </member>
-        <member name="M:Libplanet.Unity.Miner.SwarmMiner`1.Mine">
-            <summary>
-            Implementation for Mining with <see cref="T:Libplanet.Net.Swarm`1"/>.
-            </summary>
-            <returns>Runned Task.</returns>
         </member>
         <member name="T:Libplanet.Unity.Paths">
             <summary>
@@ -146,26 +105,44 @@
             Path to storing a <see cref="T:Libplanet.Crypto.PrivateKey"/>.
             </summary>
         </member>
-        <member name="T:LibplanetUnity.Utils">
+        <member name="T:Libplanet.Unity.SwarmRunner">
+            <summary>
+            T.
+            </summary>
+        </member>
+        <member name="M:Libplanet.Unity.SwarmRunner.#ctor(Libplanet.Net.Swarm{Libplanet.Action.PolymorphicAction{Libplanet.Unity.ActionBase}},Libplanet.Crypto.PrivateKey)">
+            <summary>
+            T.
+            </summary>
+            <param name="swarm">T1.</param>
+            <param name="privateKey">T2.</param>
+        </member>
+        <member name="M:Libplanet.Unity.SwarmRunner.CoSwarmRunner">
+            <summary>
+            T.
+            </summary>
+            <returns>T1.</returns>
+        </member>
+        <member name="T:Libplanet.Unity.Utils">
             <summary>
             Various helper methods for creating persistent data.
             </summary>
         </member>
-        <member name="M:LibplanetUnity.Utils.CreateSwarmConfig(System.String)">
+        <member name="M:Libplanet.Unity.Utils.CreateSwarmConfig(System.String)">
             <summary>
             Creates a new <see cref="T:Libplanet.Node.SwarmConfig"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">File path to save a <see cref="T:Libplanet.Node.SwarmConfig"/>.</param>
         </member>
-        <member name="M:LibplanetUnity.Utils.CreateGenesisBlock(System.String)">
+        <member name="M:Libplanet.Unity.Utils.CreateGenesisBlock(System.String)">
             <summary>
             Creates a new genesis <see cref="T:Libplanet.Blocks.Block`1"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">The path to save a genesis <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
         </member>
-        <member name="M:LibplanetUnity.Utils.CreatePrivateKey(System.String)">
+        <member name="M:Libplanet.Unity.Utils.CreatePrivateKey(System.String)">
             <summary>
             Creates a new <see cref="T:Libplanet.Crypto.PrivateKey"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
