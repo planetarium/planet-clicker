@@ -12,13 +12,10 @@ using Libplanet.Unity.Miner;
 using Libplanet.Unity;
 using NetMQ;
 using Serilog;
-using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Libplanet.Node;
 using UnityEngine;
@@ -86,8 +83,9 @@ namespace LibplanetUnity
             SwarmConfig swarmConfig = InitHelper.GetSwarmConfig(Paths.SwarmConfigPath);
             Block<PolymorphicAction<ActionBase>> genesis = InitHelper.GetGenesisBlock(Paths.GenesisBlockPath);
             (IStore store, IStateStore stateStore) = InitHelper.GetStore(Paths.StorePath);
-            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
+
             PrivateKey = InitHelper.GetPrivateKey(Paths.PrivateKeyPath);
+            Address = PrivateKey.PublicKey.ToAddress();
 
             _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
                 PrivateKey,
@@ -99,12 +97,9 @@ namespace LibplanetUnity
                 store,
                 stateStore,
                 renderers);
-            _nodeConfig.SwarmConfig.InitConfig.Host = "localhost";
             _swarm = _nodeConfig.GetSwarm();
             _blockChain = _swarm.BlockChain;
 
-            // NOTE: Agent private key doesn't necessarily have to match swarm private key.
-            Address = PrivateKey.PublicKey.ToAddress();
 
             _swarmRunner = new SwarmRunner(_swarm, PrivateKey);
             if (miner is null)
@@ -138,12 +133,7 @@ namespace LibplanetUnity
         {
             StartCoroutine(_swarmRunner.CoSwarmRunner());
             StartCoroutine(CoProcessActions());
-            StartNullableCoroutine(_miner.CoStart());
-        }
-
-        private Coroutine StartNullableCoroutine(IEnumerator routine)
-        {
-            return ReferenceEquals(routine, null) ? null : StartCoroutine(routine);
+            StartCoroutine(_miner.CoStart());
         }
 
         private IEnumerator CoProcessActions()

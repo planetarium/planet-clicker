@@ -3,7 +3,7 @@ using Libplanet.Action;
 using Libplanet.Blockchain;
 using Libplanet.Crypto;
 using Libplanet.Net;
-using LibplanetUnity.Action;
+using Libplanet.Unity;
 using System;
 using System.Collections;
 using System.Threading;

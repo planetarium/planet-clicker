@@ -5,7 +5,7 @@ using Libplanet.Blocks;
 using Libplanet.Crypto;
 using Libplanet.Tx;
 using Libplanet.Unity.Miner;
-using LibplanetUnity.Action;
+using Libplanet.Unity;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
