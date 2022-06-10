@@ -53,10 +53,9 @@ namespace LibplanetUnity
             return _blockChain.GetState(address);
         }
 
-        public void MakeTransaction(IEnumerable<ActionBase> gameActions)
+        public void MakeTransaction(IEnumerable<PolymorphicAction<ActionBase>> gameActions)
         {
-            var actions = gameActions.Select(gameAction => (PolymorphicAction<ActionBase>)gameAction).ToList();
-            Task.Run(() => MakeTransaction(actions, true));
+            Task.Run(() => MakeTransaction(gameActions, true));
         }
 
         private void InitAgent(
@@ -108,7 +107,7 @@ namespace LibplanetUnity
                     _blockChain,
                     PrivateKey,
                     new DefaultMineHandler(_blockChain, PrivateKey));
-            } else 
+            } else
             {
                 _miner = miner;
             }

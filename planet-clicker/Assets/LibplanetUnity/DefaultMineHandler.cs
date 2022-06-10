@@ -63,7 +63,7 @@ namespace LibplanetUnity
 
             foreach (var retryAction in retryActions)
             {
-                Agent.Instance.MakeTransaction((IImmutableList<ActionBase>) retryAction);
+                Agent.Instance.MakeTransaction((IImmutableList<PolymorphicAction<ActionBase>>) retryAction);
             }
         }
         public void Success(Block<PolymorphicAction<ActionBase>> block)

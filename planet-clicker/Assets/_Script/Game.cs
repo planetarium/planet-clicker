@@ -128,14 +128,18 @@ namespace _Script
             else
             {
                 _time = TxProcessInterval;
-                var actions = new List<ActionBase>();
+                List<PolymorphicAction<ActionBase>> actions = new List<PolymorphicAction<ActionBase>>();
                 if (click.count > 0)
                 {
                     var action = new AddCount(click.count);
                     actions.Add(action);
                 }
 
-                actions.AddRange(_attacks.Select(pair => new SubCount(pair.Key, pair.Value)));
+                foreach ((Address address, int count) in _attacks)
+                {
+                    actions.Add(new SubCount(address, count));
+                }
+
                 if (actions.Any())
                 {
                     Agent.Instance.MakeTransaction(actions);
