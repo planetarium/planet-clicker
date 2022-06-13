@@ -147,6 +147,11 @@
             Path to storing a <see cref="T:Libplanet.Crypto.PrivateKey"/>.
             </summary>
         </member>
+        <member name="F:Libplanet.Unity.Paths.TempPrivateKeysPath">
+            <summary>
+            Path to storing temporary <see cref="T:Libplanet.Crypto.PrivateKey"/>s with memos.
+            </summary>
+        </member>
         <member name="T:Libplanet.Unity.SwarmRunner">
             <summary>
             <see cref="T:Libplanet.Unity.SwarmRunner"/> class provides <see cref="T:Libplanet.Net.Swarm`1"/> start coroutine.
