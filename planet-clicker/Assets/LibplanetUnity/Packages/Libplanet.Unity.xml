@@ -54,32 +54,6 @@
             </summary>
             <returns>An awaitable task with a <see cref="T:Libplanet.Blocks.Block`1"/> that is mined.</returns>
         </member>
-        <member name="T:Libplanet.Unity.MonoSingleton`1">
-            <summary>
-            MonoSingleton.
-            </summary>
-            <typeparam name="T">The type.</typeparam>
-        </member>
-        <member name="P:Libplanet.Unity.MonoSingleton`1.Instance">
-            <summary>
-            MonoSingleton.
-            </summary>
-        </member>
-        <member name="M:Libplanet.Unity.MonoSingleton`1.Awake">
-            <summary>
-            Unity Engine Mono Awake.
-            </summary>
-        </member>
-        <member name="M:Libplanet.Unity.MonoSingleton`1.OnDestroy">
-            <summary>
-            Unity Engine Mono OnDestroy.
-            </summary>
-        </member>
-        <member name="M:Libplanet.Unity.MonoSingleton`1.OnApplicationQuit">
-            <summary>
-            Unity Engine Mono OnApplicationQuit.
-            </summary>
-        </member>
         <member name="T:Libplanet.Unity.Paths">
             <summary>
             Various file paths for storing persistent data.
@@ -105,49 +79,72 @@
             Path to storing a <see cref="T:Libplanet.Crypto.PrivateKey"/>.
             </summary>
         </member>
-        <member name="T:Libplanet.Unity.SwarmRunner">
+        <member name="T:LibplanetUnity.Utils">
             <summary>
-            T.
+            A static class with various helper methods for handling persistent data.
             </summary>
         </member>
-        <member name="M:Libplanet.Unity.SwarmRunner.#ctor(Libplanet.Net.Swarm{Libplanet.Action.PolymorphicAction{Libplanet.Unity.ActionBase}},Libplanet.Crypto.PrivateKey)">
-            <summary>
-            T.
-            </summary>
-            <param name="swarm">T1.</param>
-            <param name="privateKey">T2.</param>
-        </member>
-        <member name="M:Libplanet.Unity.SwarmRunner.CoSwarmRunner">
-            <summary>
-            T.
-            </summary>
-            <returns>T1.</returns>
-        </member>
-        <member name="T:Libplanet.Unity.Utils">
-            <summary>
-            Various helper methods for creating persistent data.
-            </summary>
-        </member>
-        <member name="M:Libplanet.Unity.Utils.CreateSwarmConfig(System.String)">
+        <member name="M:LibplanetUnity.Utils.CreateSwarmConfig(System.String)">
             <summary>
             Creates a new <see cref="T:Libplanet.Node.SwarmConfig"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">File path to save a <see cref="T:Libplanet.Node.SwarmConfig"/>.</param>
         </member>
-        <member name="M:Libplanet.Unity.Utils.CreateGenesisBlock(System.String)">
+        <member name="M:LibplanetUnity.Utils.CreateGenesisBlock(System.String)">
             <summary>
             Creates a new genesis <see cref="T:Libplanet.Blocks.Block`1"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">The path to save a genesis <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
         </member>
-        <member name="M:Libplanet.Unity.Utils.CreatePrivateKey(System.String)">
+        <member name="M:LibplanetUnity.Utils.CreatePrivateKey(System.String)">
             <summary>
             Creates a new <see cref="T:Libplanet.Crypto.PrivateKey"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">The path to save a <see cref="T:Libplanet.Crypto.PrivateKey"/>.</param>
+        </member>
+        <member name="M:LibplanetUnity.Utils.LoadSwarmConfig(System.String)">
+            <summary>
+            Loads a <see cref="T:Libplanet.Node.SwarmConfig"/> from <paramref name="path"/>.
+            </summary>
+            <param name="path">Path to a file containing a <see cref="T:Libplanet.Node.SwarmConfig"/>.</param>
+            <returns>A <see cref="T:Libplanet.Node.SwarmConfig"/> loaded from <paramref name="path"/>.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">If no file was found at
+            <paramref name="path"/>.</exception>
+        </member>
+        <member name="M:LibplanetUnity.Utils.LoadGenesisBlock(System.String)">
+            <summary>
+            Loads a genesis <see cref="T:Libplanet.Blocks.Block`1"/> from <paramref name="path"/>.
+            </summary>
+            <param name="path">Path to a file containing a genesis <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
+            <returns>A genesis <see cref="T:Libplanet.Blocks.Block`1"/> loaded from <paramref name="path"/>.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">If no file was found at
+            <paramref name="path"/>.</exception>
+        </member>
+        <member name="M:LibplanetUnity.Utils.LoadPrivateKey(System.String)">
+            <summary>
+            Loads a <see cref="T:Libplanet.Crypto.PrivateKey"/> from <paramref name="path"/>.
+            </summary>
+            <param name="path">Path to a file containing a <see cref="T:Libplanet.Crypto.PrivateKey"/>.</param>
+            <returns>A <see cref="T:Libplanet.Crypto.PrivateKey"/> loaded from <paramref name="path"/>.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">If no file was found at
+            <paramref name="path"/>.</exception>
+        </member>
+        <member name="M:LibplanetUnity.Utils.LoadStore(System.String)">
+            <summary>
+            Loads a pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/> from
+            <paramref name="path"/>.
+            </summary>
+            <param name="path">The location of a directory containing <see cref="T:Libplanet.Store.IStore"/>
+            and <see cref="T:Libplanet.Store.IStateStore"/>.</param>
+            <returns>A pair of loaded <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/> instances
+            from <paramref name="path"/>.</returns>
+            <remarks>
+            Unlike other methods for loading, if stores are not found at <paramref name="path"/>,
+            they are created silently.
+            </remarks>
         </member>
     </members>
 </doc>

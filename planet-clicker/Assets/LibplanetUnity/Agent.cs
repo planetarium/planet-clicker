@@ -15,6 +15,7 @@ using Serilog;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -75,11 +76,15 @@ namespace LibplanetUnity
             string storagePath,
             IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> renderers)
         {
-            SwarmConfig swarmConfig = InitHelper.GetSwarmConfig(Paths.SwarmConfigPath);
-            Block<PolymorphicAction<ActionBase>> genesis = InitHelper.GetGenesisBlock(Paths.GenesisBlockPath);
-            (IStore store, IStateStore stateStore) = InitHelper.GetStore(Paths.StorePath);
+            SwarmConfig swarmConfig = Utils.LoadSwarmConfig(Paths.SwarmConfigPath);
+            Block<PolymorphicAction<ActionBase>> genesis = Utils.LoadGenesisBlock(Paths.GenesisBlockPath);
+            (IStore store, IStateStore stateStore) = Utils.LoadStore(Paths.StorePath);
+            if (!File.Exists(Paths.PrivateKeyPath))
+            {
+                Utils.CreatePrivateKey(Paths.PrivateKeyPath);
+            }
 
-            PrivateKey = InitHelper.GetPrivateKey(Paths.PrivateKeyPath);
+            PrivateKey = Utils.LoadPrivateKey(Paths.PrivateKeyPath);
             Address = PrivateKey.PublicKey.ToAddress();
 
             _nodeConfig = new NodeConfig<PolymorphicAction<ActionBase>>(
