@@ -96,8 +96,6 @@
             </summary>
             <returns>An awaitable task with a <see cref="T:Libplanet.Blocks.Block`1"/> that is mined.</returns>
         </member>
-<<<<<<< Updated upstream
-=======
         <member name="T:Libplanet.Unity.MonoSingleton`1">
             <summary>
             A singleton implementation with <see cref="T:UnityEngine.MonoBehaviour"/> as its base class.
@@ -124,7 +122,6 @@
             Update _applicationIsQuitting status.
             </summary>
         </member>
->>>>>>> Stashed changes
         <member name="T:Libplanet.Unity.Paths">
             <summary>
             Various file paths for storing persistent data.
@@ -150,14 +147,6 @@
             Path to storing a <see cref="T:Libplanet.Crypto.PrivateKey"/>.
             </summary>
         </member>
-<<<<<<< Updated upstream
-        <member name="T:LibplanetUnity.Utils">
-            <summary>
-            A static class with various helper methods for handling persistent data.
-            </summary>
-        </member>
-        <member name="M:LibplanetUnity.Utils.CreateSwarmConfig(System.String)">
-=======
         <member name="T:Libplanet.Unity.SwarmRunner">
             <summary>
             <see cref="T:Libplanet.Unity.SwarmRunner"/> class provides <see cref="T:Libplanet.Net.Swarm`1"/> start coroutine.
@@ -182,32 +171,27 @@
             </summary>
         </member>
         <member name="M:Libplanet.Unity.Utils.CreateSwarmConfig(System.String)">
->>>>>>> Stashed changes
             <summary>
             Creates a new <see cref="T:Libplanet.Node.SwarmConfig"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">File path to save a <see cref="T:Libplanet.Node.SwarmConfig"/>.</param>
         </member>
-        <member name="M:LibplanetUnity.Utils.CreateGenesisBlock(System.String)">
+        <member name="M:Libplanet.Unity.Utils.CreateGenesisBlock(System.String)">
             <summary>
             Creates a new genesis <see cref="T:Libplanet.Blocks.Block`1"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">The path to save a genesis <see cref="T:Libplanet.Blocks.Block`1"/>.</param>
         </member>
-        <member name="M:LibplanetUnity.Utils.CreatePrivateKey(System.String)">
+        <member name="M:Libplanet.Unity.Utils.CreatePrivateKey(System.String)">
             <summary>
             Creates a new <see cref="T:Libplanet.Crypto.PrivateKey"/> and writes to <paramref name="path"/>.
             If one already exists at <paramref name="path"/>, overwrites it.
             </summary>
             <param name="path">The path to save a <see cref="T:Libplanet.Crypto.PrivateKey"/>.</param>
         </member>
-<<<<<<< Updated upstream
-        <member name="M:LibplanetUnity.Utils.LoadSwarmConfig(System.String)">
-=======
         <member name="M:Libplanet.Unity.Utils.LoadSwarmConfig(System.String)">
->>>>>>> Stashed changes
             <summary>
             Loads a <see cref="T:Libplanet.Node.SwarmConfig"/> from <paramref name="path"/>.
             </summary>
@@ -216,11 +200,7 @@
             <exception cref="T:System.IO.FileNotFoundException">If no file was found at
             <paramref name="path"/>.</exception>
         </member>
-<<<<<<< Updated upstream
-        <member name="M:LibplanetUnity.Utils.LoadGenesisBlock(System.String)">
-=======
         <member name="M:Libplanet.Unity.Utils.LoadGenesisBlock(System.String)">
->>>>>>> Stashed changes
             <summary>
             Loads a genesis <see cref="T:Libplanet.Blocks.Block`1"/> from <paramref name="path"/>.
             </summary>
@@ -229,11 +209,7 @@
             <exception cref="T:System.IO.FileNotFoundException">If no file was found at
             <paramref name="path"/>.</exception>
         </member>
-<<<<<<< Updated upstream
-        <member name="M:LibplanetUnity.Utils.LoadPrivateKey(System.String)">
-=======
         <member name="M:Libplanet.Unity.Utils.LoadPrivateKey(System.String)">
->>>>>>> Stashed changes
             <summary>
             Loads a <see cref="T:Libplanet.Crypto.PrivateKey"/> from <paramref name="path"/>.
             </summary>
@@ -242,11 +218,7 @@
             <exception cref="T:System.IO.FileNotFoundException">If no file was found at
             <paramref name="path"/>.</exception>
         </member>
-<<<<<<< Updated upstream
-        <member name="M:LibplanetUnity.Utils.LoadStore(System.String)">
-=======
         <member name="M:Libplanet.Unity.Utils.LoadStore(System.String)">
->>>>>>> Stashed changes
             <summary>
             Loads a pair of <see cref="T:Libplanet.Store.IStore"/> and <see cref="T:Libplanet.Store.IStateStore"/> from
             <paramref name="path"/>.
