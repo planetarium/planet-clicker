@@ -3,7 +3,6 @@ using _Script.State;
 using Bencodex.Types;
 using Libplanet;
 using Libplanet.Action;
-using LibplanetUnity;
 using Libplanet.Unity;
 using UnityEngine;
 
