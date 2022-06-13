@@ -5,7 +5,6 @@ using System.Linq;
 using _Script.Action;
 using _Script.Data;
 using _Script.State;
-using LibplanetUnity;
 using Libplanet.Unity;
 using Libplanet;
 using UnityEngine;
@@ -128,7 +127,7 @@ namespace _Script
             else
             {
                 _time = TxProcessInterval;
-                List<PolymorphicAction<ActionBase>> actions = new List<PolymorphicAction<ActionBase>>();
+                List<ActionBase> actions = new List<ActionBase>();
                 if (click.count > 0)
                 {
                     var action = new AddCount(click.count);
