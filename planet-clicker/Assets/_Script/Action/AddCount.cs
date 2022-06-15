@@ -1,16 +1,18 @@
-using _Script.State;
 using Bencodex.Types;
 using Libplanet.Action;
 using Libplanet.Unity;
+using _Script.State;
+using _Script.Data;
 using UnityEngine;
 
 namespace _Script.Action
 {
+    // Action Type 명 지정
     [ActionType("add_count")]
     public class AddCount : ActionBase
     {
-        private long _count;
-        private static readonly Bencodex.Types.Boolean MarkChanged = true;
+        // 내부적으로 count 값을 관리하기 위한 변수
+        private CountData _count;
 
         public AddCount()
         {
@@ -18,36 +20,38 @@ namespace _Script.Action
 
         public AddCount(long count)
         {
-            _count = count;
+            _count = new CountData(count);
         }
 
-        public override IValue PlainValue =>
-            Bencodex.Types.Dictionary.Empty.SetItem("count", _count);
+        // 직렬화 진행
+        public override IValue PlainValue => _count.Encode();
 
+        // 역직렬화 진행
         public override void LoadPlainValue(IValue plainValue)
         {
-            var serialized = (Bencodex.Types.Dictionary)plainValue;
-            _count = (long)((Integer)serialized["count"]).Value;
+            _count = new CountData((Bencodex.Types.Dictionary)plainValue);
         }
 
+        // 액션 실행에 대한 정의
         public override IAccountStateDelta Execute(IActionContext context)
         {
+            // 이전 상태를 가져옵니다.
             var states = context.PreviousStates;
-            var rankingAddress = RankingState.Address;
-            Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
-                ? bint
-                : 0;
-            var nextCount = currentCount + _count;
 
-            Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
+            // 이전 상태의 count 값을 가져옵니다.
+            CountState prevState;
+            prevState = states.GetState(context.Signer) is Bencodex.Types.Dictionary bdict
+                ? new CountState(new CountData(bdict))
+                : new CountState(new CountData(0));
 
-            RankingState rankingState = states.GetState(rankingAddress) is Bencodex.Types.Dictionary bdict
-                ? new RankingState(bdict)
-                : new RankingState();
+            // +n된 count로 설정하기 위해서 더해줍니다. 
+            prevState.SumCount(_count.count);
 
-            rankingState.Update(context.Signer, nextCount);
-            states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(context.Signer, (Bencodex.Types.Integer)nextCount);
+            Debug.Log($"add_count: CurrentCount: {prevState.Count}");
+
+            // state를 업데이트합니다.
+            return states.SetState(context.Signer, prevState.Serialize());
         }
     }
 }
+
