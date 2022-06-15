@@ -3,8 +3,14 @@ using UnityEditor;
 
 namespace Libplanet.Unity.Editor
 {
+    /// <summary>
+    /// Unity editor menu item for managing blockchain data.
+    /// </summary>
     public static class BlockChainMenu
     {
+        /// <summary>
+        /// Open the blockchain directory location.
+        /// </summary>
         [MenuItem("Tools/Libplanet/Blockchain/Open blockchain directory location")]
         public static void OpenBlockchainLocation()
         {
@@ -14,10 +20,12 @@ namespace Libplanet.Unity.Editor
             DirectoryInfo directory = new DirectoryInfo(path);
             if (!directory.Exists)
             {
+                string dialogContent =
+                    $"Blockchain directory not found at {path}.\n" +
+                    "Please create a blockchain first by running a node.";
                 EditorUtility.DisplayDialog(
                     title,
-                    $"Blockchain directory not found at {path}. " +
-                    "Please create a blockchain first by running a node.",
+                    dialogContent,
                     "Close");
             }
             else
@@ -26,18 +34,24 @@ namespace Libplanet.Unity.Editor
             }
         }
 
+        /// <summary>
+        /// Remove the blockchain directory.
+        /// </summary>
         [MenuItem("Tools/Libplanet/Blockchain/Delete blockchain")]
         public static void DeleteBlockChain()
         {
             const string title = "Delete blockchain";
             DirectoryInfo directory = new DirectoryInfo(Paths.StorePath);
+
             if (directory.Exists)
             {
-                if (EditorUtility.DisplayDialog(
-                    title,
+                string dialogContent =
                     $"Blockchain found at {directory}.\n" +
                     "Local blockchain data will be removed.\n" +
-                    "Do you want to delete it?",
+                    "Do you want to delete it?";
+                if (EditorUtility.DisplayDialog(
+                    title,
+                    dialogContent,
                     "Ok",
                     "Cancel"))
                 {
