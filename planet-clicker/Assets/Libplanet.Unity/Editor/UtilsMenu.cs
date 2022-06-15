@@ -1,19 +1,25 @@
-﻿using System;
+using System;
+using Libplanet.Crypto;
 using UnityEditor;
 using UnityEngine;
-using Libplanet.Crypto;
 
 namespace Libplanet.Unity.Editor
 {
+    /// <summary>
+    /// Unity editor menu item for generating bound peer strings.
+    /// </summary>
     public class GenerateBoundPeerStringWindow : EditorWindow
     {
-        string privateKeyString = "";
-        string host = "";
-        int port = 0;
-        string boundPeerString = "";
+        private string _privateKeyString = string.Empty;
+        private string _host = string.Empty;
+        private int _port = 0;
+        private string _boundPeerString = string.Empty;
 
+        /// <summary>
+        /// Initialize editor window.
+        /// </summary>
         [MenuItem("Tools/Libplanet/Utils/Generate bound peer string")]
-        static void Init()
+        public static void Init()
         {
             const string title = "Generate bound peer string";
 
@@ -25,40 +31,43 @@ namespace Libplanet.Unity.Editor
             window.Show();
         }
 
-        void OnGUI()
+        /// <summary>
+        /// Redraw on GUI event.
+        /// </summary>
+        public void OnGUI()
         {
             EditorGUILayout.LabelField("Bound peer information", EditorStyles.boldLabel);
-            privateKeyString = EditorGUILayout.TextField("Private key string", privateKeyString);
-            host = EditorGUILayout.TextField("Host", host);
-            port = EditorGUILayout.IntField("Port", port);
+            _privateKeyString = EditorGUILayout.TextField("Private key string", _privateKeyString);
+            _host = EditorGUILayout.TextField("Host", _host);
+            _port = EditorGUILayout.IntField("Port", _port);
 
             // Zero port is excluded.
-            if (port < 1 || port > 65535)
+            if (_port < 1 || _port > 65535)
             {
-                boundPeerString = "Invalid port number";
+                _boundPeerString = "Invalid port number";
             }
-            else if (host.Length < 1)
+            else if (_host.Length < 1)
             {
-                boundPeerString = "Invalid host";
+                _boundPeerString = "Invalid host";
             }
             else
             {
                 try
                 {
-                    PrivateKey privateKey = new PrivateKey(ByteUtil.ParseHex(privateKeyString));
+                    PrivateKey privateKey = new PrivateKey(ByteUtil.ParseHex(_privateKeyString));
                     string publicKeyString = ByteUtil.Hex(privateKey.PublicKey.Format(true));
-                    boundPeerString = $"{publicKeyString},{host},{port}";
+                    _boundPeerString = $"{publicKeyString},{_host},{_port}";
                 }
                 catch (Exception)
                 {
-                    boundPeerString = "Invalid private key string";
+                    _boundPeerString = "Invalid private key string";
                 }
             }
 
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Generated bound peer string", EditorStyles.boldLabel);
-            EditorGUILayout.SelectableLabel(boundPeerString);
+            EditorGUILayout.SelectableLabel(_boundPeerString);
         }
     }
 }
