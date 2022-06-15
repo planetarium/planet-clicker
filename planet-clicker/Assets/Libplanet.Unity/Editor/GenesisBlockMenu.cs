@@ -5,7 +5,7 @@ namespace Libplanet.Unity.Editor
 {
     public static class GenesisBlockMenu
     {
-        [MenuItem("Tools/Libplanet/Genesis Block/Open file location")]
+        [MenuItem("Tools/Libplanet/Genesis Block/Open genesis block file location")]
         public static void OpenGenesisBlockLocation()
         {
             const string title = "Open genesis block file location";

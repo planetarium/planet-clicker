@@ -6,7 +6,7 @@ namespace Libplanet.Unity.Editor
 {
     public static class SwarmConfigMenu
     {
-        [MenuItem("Tools/Libplanet/Swarm config/Open file location")]
+        [MenuItem("Tools/Libplanet/Swarm config/Open swarm config file location")]
         public static void OpenSwarmConfigLocation()
         {
             const string title = "Open swarm config file location";

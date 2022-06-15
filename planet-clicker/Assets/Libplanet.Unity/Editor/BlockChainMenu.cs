@@ -5,7 +5,7 @@ namespace Libplanet.Unity.Editor
 {
     public static class BlockChainMenu
     {
-        [MenuItem("Tools/Libplanet/Blockchain/Open directory location")]
+        [MenuItem("Tools/Libplanet/Blockchain/Open blockchain directory location")]
         public static void OpenBlockchainLocation()
         {
             const string title = "Open blockchain directory location";
