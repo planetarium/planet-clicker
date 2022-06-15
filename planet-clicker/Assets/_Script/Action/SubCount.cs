@@ -47,20 +47,23 @@ namespace _Script.Action
                 return states.SetState(_plainValue.Address, MarkChanged);
             }
 
-            Bencodex.Types.Integer currentCount = states.GetState(_plainValue.Address) is Bencodex.Types.Integer bint
-                ? bint
-                : 0;
-            var nextCount = Math.Max(currentCount - _plainValue.Count, 0);
+            CountState countState = states.GetState(_plainValue.Address) is Bencodex.Types.Dictionary countStateEncoded
+                ? new CountState(countStateEncoded)
+                : new CountState(0L);
+
+            long currentCount = countState.Count;
+            countState.SubCount(_plainValue.Count);
+            long nextCount = countState.Count;
 
             Debug.Log($"sub_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary bdict
-                ? new RankingState(bdict)
+            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded
+                ? new RankingState(rankingStateEncoded)
                 : new RankingState();
 
-            rankingState.Update(_plainValue.Address, nextCount);
+            rankingState.Update(_plainValue.Address, countState.Count);
             states = states.SetState(RankingState.Address, rankingState.Encode());
-            return states.SetState(_plainValue.Address, (Bencodex.Types.Integer)nextCount);
+            return states.SetState(_plainValue.Address, countState.Encode());
         }
     }
 }

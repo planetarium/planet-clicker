@@ -39,20 +39,22 @@ namespace _Script.Action
         public override IAccountStateDelta Execute(IActionContext context)
         {
             IAccountStateDelta states = context.PreviousStates;
-            Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
-                ? bint
-                : 0;
-            var nextCount = currentCount + _plainValue.Count;
+            CountState countState = states.GetState(context.Signer) is Bencodex.Types.Dictionary countStateEncoded
+                ? new CountState(countStateEncoded)
+                : new CountState(0L);
 
+            long currentCount = countState.Count;
+            countState.AddCount(_plainValue.Count);
+            long nextCount = countState.Count;
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary bdict
-                ? new RankingState(bdict)
+            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded
+                ? new RankingState(rankingStateEncoded)
                 : new RankingState();
 
-            rankingState.Update(context.Signer, nextCount);
+            rankingState.Update(context.Signer, countState.Count);
             states = states.SetState(RankingState.Address, rankingState.Encode());
-            return states.SetState(context.Signer, (Bencodex.Types.Integer)nextCount);
+            return states.SetState(context.Signer, countState.Encode());
         }
     }
 }
