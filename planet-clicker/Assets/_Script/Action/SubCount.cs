@@ -39,12 +39,11 @@ namespace _Script.Action
 
         public override IAccountStateDelta Execute(IActionContext context)
         {
-            var states = context.PreviousStates;
-            var rankingAddress = RankingState.Address;
+            IAccountStateDelta states = context.PreviousStates;
 
             if (context.Rehearsal)
             {
-                states = states.SetState(rankingAddress, MarkChanged);
+                states = states.SetState(RankingState.Address, MarkChanged);
                 return states.SetState(_address, MarkChanged);
             }
 
@@ -55,12 +54,12 @@ namespace _Script.Action
 
             Debug.Log($"sub_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState = states.GetState(rankingAddress) is Bencodex.Types.Dictionary bdict
+            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary bdict
                 ? new RankingState(bdict)
                 : new RankingState();
 
             rankingState.Update(_address, nextCount);
-            states = states.SetState(rankingAddress, rankingState.Serialize());
+            states = states.SetState(RankingState.Address, rankingState.Encode());
             return states.SetState(_address, (Bencodex.Types.Integer)nextCount);
         }
     }
