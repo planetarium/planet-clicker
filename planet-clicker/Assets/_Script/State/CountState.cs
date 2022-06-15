@@ -1,32 +1,35 @@
-using System;
-using _Script.Data;
+using Libplanet.Store;
 using Bencodex.Types;
+using _Script.Data;
 
 namespace _Script.State
 {
-    [Serializable]
-    public class CountState
+    public class CountState : DataModel
     {
-        public CountData Count;
+        public long Count { get; private set; }
 
-        public CountState(CountData count)
-        { 
+        public CountState()
+            : base()
+        {
+            Count = 0;
+        }
+
+        public CountState(long count)
+            : base()
+        {
             Count = count;
         }
 
-        public CountState(Dictionary encoded)
+        public CountState(IValue encoded)
+            : base((Bencodex.Types.Dictionary)encoded)
         {
-            Count = new CountData(encoded);
         }
 
-        public void SumCount(long count)
-        {
-            Count.UpdateCount(Count.count + count);
-        }
+        public new IValue Encode() => base.Encode();
 
-        public IValue Serialize()
+        public CountState Update(CountData data)
         {
-            return Count.Encode();
+            return new CountState(Count + data.count);
         }
     }
 }
