@@ -5,7 +5,6 @@ namespace _Script.Data
 {
     public class CountData : DataModel
     {
-        // NOTE: Explicitly set to lower case for compatibility.
         public long count { get; private set; }
 
         public CountData(long c)
@@ -13,13 +12,8 @@ namespace _Script.Data
             count = c;
         }
 
-        public void UpdateCount(long count)
-        {
-            this.count = count;
-        }
-
-        public CountData(Dictionary encoded)
-            : base(encoded)
+        public CountData(IValue encoded)
+            : base((Bencodex.Types.Dictionary)encoded)
         {
         }
     }

@@ -120,7 +120,7 @@ namespace _Script
         private void UpdateTotalCount(Bencodex.Types.Dictionary bdict)
         {
             CountState state = new CountState(bdict);
-            _totalCount = state.Count.count;
+            _totalCount = state.Count;
             countText.text = $"Total Count: {_totalCount.ToString()}";
         }
     }
