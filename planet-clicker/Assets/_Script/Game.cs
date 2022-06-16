@@ -15,9 +15,17 @@ using Libplanet.Action;
 
 namespace _Script
 {
+    public class CountUpdated : UnityEvent<CountState>
+    {
+    }
+
+    public class RankUpdated : UnityEvent<RankingState>
+    {
+    }
+
     public class Game : MonoBehaviour
     {
-        private const float TxProcessInterval = 3.0f;
+        public const float TxProcessInterval = 3.0f;
 
         public Text timerText;
         public Text countText;
@@ -31,55 +39,43 @@ namespace _Script
         private Table<Level> _levelTable;
         private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
 
-        public class CountUpdated : UnityEvent<CountState>
-        {
-        }
+        private CountUpdated _onCountUpdated;
+        private RankUpdated _onRankUpdated;
+        private IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> _renderers;
 
-        public class RankUpdated : UnityEvent<RankingState>
-        {
-        }
-
-        public static CountUpdated OnCountUpdated = new CountUpdated();
-
-        public static RankUpdated OnRankUpdated = new RankUpdated();
-
-        private void Awake()
+        public void Awake()
         {
             Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
 
-            Agent.Initialize(
-                new[]
+            _onCountUpdated = new CountUpdated();
+            _onRankUpdated = new RankUpdated();
+            _renderers = new List<IRenderer<PolymorphicAction<ActionBase>>>()
+            {
+                new AnonymousActionRenderer<PolymorphicAction<ActionBase>>()
                 {
-                    new AnonymousActionRenderer<PolymorphicAction<ActionBase>>()
+                    ActionRenderer = (action, context, nextStates) =>
                     {
-                        ActionRenderer = (action, context, nextStates) =>
+                        // Renders only when the count has updated.
+                        if (nextStates.GetState(context.Signer) is Bencodex.Types.Dictionary countStateEncoded)
                         {
-                            // Renders only when the count has updated.
-                            if (nextStates.GetState(context.Signer) is Bencodex.Types.Dictionary countStateEncoded)
-                            {
-                                CountState countState = new CountState(countStateEncoded);
-                                Agent.Instance.RunOnMainThread(() =>
-                                {
-                                    OnCountUpdated.Invoke(countState);
-                                });
-                            }
+                            CountState countState = new CountState(countStateEncoded);
+                            Agent.Instance.RunOnMainThread(() => _onCountUpdated.Invoke(countState));
+                        }
 
-                            // Renders only when the ranking has changed.
-                            if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded)
-                            {
-                                RankingState rankingState = new RankingState(rankingStateEncoded);
-                                Agent.Instance.RunOnMainThread(() =>
-                                {
-                                    OnRankUpdated.Invoke(rankingState);
-                                });
-                            }
+                        // Renders only when the ranking has changed.
+                        if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded)
+                        {
+                            RankingState rankingState = new RankingState(rankingStateEncoded);
+                            Agent.Instance.RunOnMainThread(() => _onRankUpdated.Invoke(rankingState));
                         }
                     }
                 }
-            );
-            var agent = Agent.Instance;
-            var hex = agent.Address.ToHex().Substring(0, 4);
+            };
+
+            Agent.Initialize(_renderers);
+            Agent agent = Agent.Instance;
+            string hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"My Address: {hex}";
 
             _time = TxProcessInterval;
@@ -88,34 +84,35 @@ namespace _Script
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
 
-            OnCountUpdated.AddListener(UpdateTotalCount);
-            OnRankUpdated.AddListener(rs =>
-            {
-                StartCoroutine(UpdateRankingBoard(rs));
-            });
+            _onCountUpdated.AddListener(UpdateTotalCount);
+            _onRankUpdated.AddListener(rankingState => StartCoroutine(UpdateRankingBoard(rankingState)));
+        }
 
-            var initialCountState = agent.GetState(Agent.Instance.Address);
-            var initialRankingState = agent.GetState(RankingState.Address);
+        public void Start()
+        {
+            Agent agent = Agent.Instance;
+            Bencodex.Types.IValue initialCountState = agent.GetState(Agent.Instance.Address);
+            Bencodex.Types.IValue initialRankingState = agent.GetState(RankingState.Address);
             if (initialCountState is Bencodex.Types.Dictionary countStateEncoded)
             {
                 CountState countState = new CountState(countStateEncoded);
-                OnCountUpdated.Invoke(countState);
+                _onCountUpdated.Invoke(countState);
             }
 
             if (initialRankingState is Bencodex.Types.Dictionary rankingStateEncoded)
             {
-                OnRankUpdated.Invoke(new RankingState(rankingStateEncoded));
+                _onRankUpdated.Invoke(new RankingState(rankingStateEncoded));
             }
         }
 
         private void SetTimer(float time)
         {
-            timerText.text = $"Remain Time: {Mathf.Ceil(time).ToString(CultureInfo.CurrentCulture)} sec";
+            timerText.text = $"Remain Time: {time:F1} sec";
         }
 
         private void ResetTimer()
         {
-            SetTimer(0);
+            SetTimer(0.0f);
             click.ResetCount();
         }
 
@@ -154,8 +151,8 @@ namespace _Script
         private void UpdateTotalCount(CountState countState)
         {
             _totalCount = countState.Count;
-            var selected = _levelTable.Values.FirstOrDefault(i => i.exp > _totalCount) ?? _levelTable.Values.Last();
-            click.Set(selected.id);
+            Level selected = _levelTable.Values.FirstOrDefault(i => i.Exp > _totalCount) ?? _levelTable.Values.Last();
+            click.Set(selected.Id);
             countText.text = $"Total Count: {_totalCount.ToString()}";
         }
 
@@ -193,7 +190,7 @@ namespace _Script
 
         public void Attack(RankingRow row)
         {
-            var address = row.address;
+            Address address = row.address;
 
             if (_attacks.TryGetValue(address, out _))
             {
