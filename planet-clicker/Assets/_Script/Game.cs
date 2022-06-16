@@ -154,8 +154,8 @@ namespace _Script
         private void UpdateTotalCount(CountState countState)
         {
             _totalCount = countState.Count;
-            var selected = _levelTable.Values.FirstOrDefault(i => i.exp > _totalCount) ?? _levelTable.Values.Last();
-            click.Set(selected.id);
+            Level selected = _levelTable.Values.FirstOrDefault(i => i.Exp > _totalCount) ?? _levelTable.Values.Last();
+            click.Set(selected.Id);
             countText.text = $"Total Count: {_totalCount.ToString()}";
         }
 
