@@ -1,4 +1,5 @@
 using _Script.State;
+using System;
 using Bencodex.Types;
 using Libplanet.Action;
 using Libplanet.Unity;
@@ -9,7 +10,7 @@ namespace _Script.Action
     [ActionType("add_count")]
     public class AddCount : ActionBase
     {
-        private long _count;
+        private AddCountPlainValue _plainValue;
         private static readonly Bencodex.Types.Boolean MarkChanged = true;
 
         public AddCount()
@@ -18,36 +19,42 @@ namespace _Script.Action
 
         public AddCount(long count)
         {
-            _count = count;
+            _plainValue = new AddCountPlainValue(count);
         }
 
-        public override IValue PlainValue =>
-            Bencodex.Types.Dictionary.Empty.SetItem("count", _count);
+        public override IValue PlainValue => _plainValue.Encode();
 
         public override void LoadPlainValue(IValue plainValue)
         {
-            var serialized = (Bencodex.Types.Dictionary)plainValue;
-            _count = (long)((Integer)serialized["count"]).Value;
+            if (plainValue is Bencodex.Types.Dictionary bdict)
+            {
+                _plainValue = new AddCountPlainValue(bdict);
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid plain value type: {plainValue.GetType()}");
+            }
         }
 
         public override IAccountStateDelta Execute(IActionContext context)
         {
-            var states = context.PreviousStates;
-            var rankingAddress = RankingState.Address;
-            Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
-                ? bint
-                : 0;
-            var nextCount = currentCount + _count;
+            IAccountStateDelta states = context.PreviousStates;
+            CountState countState = states.GetState(context.Signer) is Bencodex.Types.Dictionary countStateEncoded
+                ? new CountState(countStateEncoded)
+                : new CountState(0L);
 
+            long currentCount = countState.Count;
+            countState.AddCount(_plainValue.Count);
+            long nextCount = countState.Count;
             Debug.Log($"add_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState = states.GetState(rankingAddress) is Bencodex.Types.Dictionary bdict
-                ? new RankingState(bdict)
+            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded
+                ? new RankingState(rankingStateEncoded)
                 : new RankingState();
 
-            rankingState.Update(context.Signer, nextCount);
-            states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(context.Signer, (Bencodex.Types.Integer)nextCount);
+            rankingState.Update(context.Signer, countState.Count);
+            states = states.SetState(RankingState.Address, rankingState.Encode());
+            return states.SetState(context.Signer, countState.Encode());
         }
     }
 }

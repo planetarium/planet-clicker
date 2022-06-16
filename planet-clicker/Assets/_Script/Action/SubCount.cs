@@ -11,8 +11,7 @@ namespace _Script.Action
     [ActionType("sub_count")]
     public class SubCount : ActionBase
     {
-        private Address _address;
-        private long _count;
+        private SubCountPlainValue _plainValue;
         private static readonly Bencodex.Types.Boolean MarkChanged = true;
 
         public SubCount()
@@ -21,47 +20,50 @@ namespace _Script.Action
 
         public SubCount(Address address, long count)
         {
-            _address = address;
-            _count = count;
+            _plainValue = new SubCountPlainValue(address, count);
         }
 
-        public override IValue PlainValue =>
-            Bencodex.Types.Dictionary.Empty
-            .SetItem("count", _count)
-            .SetItem("address", _address.ToByteArray());
+        public override IValue PlainValue => _plainValue.Encode();
 
         public override void LoadPlainValue(IValue plainValue)
         {
-            var serialized = (Bencodex.Types.Dictionary)plainValue;
-            _count = (long)((Integer)serialized["count"]).Value;
-            _address = new Address(((Bencodex.Types.Binary)serialized["address"]));
+            if (plainValue is Bencodex.Types.Dictionary bdict)
+            {
+                _plainValue = new SubCountPlainValue(bdict);
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid plain value type: {plainValue.GetType()}");
+            }
         }
 
         public override IAccountStateDelta Execute(IActionContext context)
         {
-            var states = context.PreviousStates;
-            var rankingAddress = RankingState.Address;
+            IAccountStateDelta states = context.PreviousStates;
 
             if (context.Rehearsal)
             {
-                states = states.SetState(rankingAddress, MarkChanged);
-                return states.SetState(_address, MarkChanged);
+                states = states.SetState(RankingState.Address, MarkChanged);
+                return states.SetState(_plainValue.Address, MarkChanged);
             }
 
-            Bencodex.Types.Integer currentCount = states.GetState(context.Signer) is Bencodex.Types.Integer bint
-                ? bint
-                : 0;
-            var nextCount = Math.Max(currentCount - _count, 0);
+            CountState countState = states.GetState(_plainValue.Address) is Bencodex.Types.Dictionary countStateEncoded
+                ? new CountState(countStateEncoded)
+                : new CountState(0L);
+
+            long currentCount = countState.Count;
+            countState.SubCount(_plainValue.Count);
+            long nextCount = countState.Count;
 
             Debug.Log($"sub_count: CurrentCount: {currentCount}, NextCount: {nextCount}");
 
-            RankingState rankingState = states.GetState(rankingAddress) is Bencodex.Types.Dictionary bdict
-                ? new RankingState(bdict)
+            RankingState rankingState = states.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded
+                ? new RankingState(rankingStateEncoded)
                 : new RankingState();
 
-            rankingState.Update(_address, nextCount);
-            states = states.SetState(rankingAddress, rankingState.Serialize());
-            return states.SetState(_address, (Bencodex.Types.Integer)nextCount);
+            rankingState.Update(_plainValue.Address, countState.Count);
+            states = states.SetState(RankingState.Address, rankingState.Encode());
+            return states.SetState(_plainValue.Address, countState.Encode());
         }
     }
 }
