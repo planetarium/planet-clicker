@@ -1,8 +1,7 @@
 using System;
-using Bencodex.Types;
 using Libplanet.Store;
 
-namespace _Script.State
+namespace Scripts.States
 {
     public class CountState : DataModel
     {
@@ -18,8 +17,6 @@ namespace _Script.State
             : base(encoded)
         {
         }
-
-        public new IValue Encode() => base.Encode();
 
         public void AddCount(long count)
         {

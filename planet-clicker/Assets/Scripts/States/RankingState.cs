@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Bencodex.Types;
 using Libplanet;
 using Libplanet.Store;
 
-namespace _Script.State
+namespace Scripts.States
 {
     public class RankingInfo
     {
@@ -43,8 +42,8 @@ namespace _Script.State
         // an ImmutableDictionary<K, V>.
         public RankingState(Bencodex.Types.Dictionary encoded)
             : base((Bencodex.Types.Dictionary)Bencodex.Types.Dictionary.Empty.Add(
-                (IKey)new Bencodex.Types.Text(nameof(Map)),
-                (IValue)encoded))
+                (Bencodex.Types.IKey)new Bencodex.Types.Text(nameof(Map)),
+                (Bencodex.Types.IValue)encoded))
         {
         }
 

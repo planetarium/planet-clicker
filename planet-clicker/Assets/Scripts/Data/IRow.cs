@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace _Script.Data
+namespace Scripts.Data
 {
     public interface IRow
     {

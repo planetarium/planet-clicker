@@ -1,12 +1,11 @@
 using System;
-using _Script.State;
-using Bencodex.Types;
+using Scripts.States;
 using Libplanet;
 using Libplanet.Action;
 using Libplanet.Unity;
 using UnityEngine;
 
-namespace _Script.Action
+namespace Scripts.Actions
 {
     [ActionType("sub_count")]
     public class SubCount : ActionBase
@@ -23,9 +22,9 @@ namespace _Script.Action
             _plainValue = new SubCountPlainValue(address, count);
         }
 
-        public override IValue PlainValue => _plainValue.Encode();
+        public override Bencodex.Types.IValue PlainValue => _plainValue.Encode();
 
-        public override void LoadPlainValue(IValue plainValue)
+        public override void LoadPlainValue(Bencodex.Types.IValue plainValue)
         {
             if (plainValue is Bencodex.Types.Dictionary bdict)
             {

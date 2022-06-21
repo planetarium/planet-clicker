@@ -1,11 +1,10 @@
-using _Script.State;
 using System;
-using Bencodex.Types;
 using Libplanet.Action;
 using Libplanet.Unity;
+using Scripts.States;
 using UnityEngine;
 
-namespace _Script.Action
+namespace Scripts.Actions
 {
     [ActionType("add_count")]
     public class AddCount : ActionBase
@@ -22,9 +21,9 @@ namespace _Script.Action
             _plainValue = new AddCountPlainValue(count);
         }
 
-        public override IValue PlainValue => _plainValue.Encode();
+        public override Bencodex.Types.IValue PlainValue => _plainValue.Encode();
 
-        public override void LoadPlainValue(IValue plainValue)
+        public override void LoadPlainValue(Bencodex.Types.IValue plainValue)
         {
             if (plainValue is Bencodex.Types.Dictionary bdict)
             {

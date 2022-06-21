@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using UnityEngine;
 
-namespace _Script.Data
+namespace Scripts.Data
 {
     public class Table<T> : Dictionary<int, T>, ITable<T>
         where T : IRow, new()

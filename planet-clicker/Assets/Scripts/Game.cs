@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using _Script.Action;
-using _Script.Data;
-using _Script.State;
+using Scripts.Actions;
+using Scripts.Data;
+using Scripts.States;
 using Libplanet.Unity;
 using Libplanet;
 using UnityEngine;
@@ -13,7 +13,7 @@ using UnityEngine.Events;
 using Libplanet.Blockchain.Renderers;
 using Libplanet.Action;
 
-namespace _Script
+namespace Scripts
 {
     public class CountUpdated : UnityEvent<CountState>
     {
@@ -34,13 +34,12 @@ namespace _Script
         public Click click;
         public ScrollRect rankingBoard;
         public RankingRow rankingRow;
-        private float _time;
-        private long _totalCount = 0;
+        private float _timer;
         private Table<Level> _levelTable;
         private Dictionary<Address, int> _attacks = new Dictionary<Address, int>();
 
-        private CountUpdated _onCountUpdated;
-        private RankUpdated _onRankUpdated;
+        private CountUpdated _countUpdated;
+        private RankUpdated _rankUpdated;
         private IEnumerable<IRenderer<PolymorphicAction<ActionBase>>> _renderers;
 
         public void Awake()
@@ -48,8 +47,8 @@ namespace _Script
             Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
 
-            _onCountUpdated = new CountUpdated();
-            _onRankUpdated = new RankUpdated();
+            _countUpdated = new CountUpdated();
+            _rankUpdated = new RankUpdated();
             _renderers = new List<IRenderer<PolymorphicAction<ActionBase>>>()
             {
                 new AnonymousActionRenderer<PolymorphicAction<ActionBase>>()
@@ -60,14 +59,14 @@ namespace _Script
                         if (nextStates.GetState(context.Signer) is Bencodex.Types.Dictionary countStateEncoded)
                         {
                             CountState countState = new CountState(countStateEncoded);
-                            Agent.Instance.RunOnMainThread(() => _onCountUpdated.Invoke(countState));
+                            Agent.Instance.RunOnMainThread(() => _countUpdated.Invoke(countState));
                         }
 
                         // Renders only when the ranking has changed.
                         if (nextStates.GetState(RankingState.Address) is Bencodex.Types.Dictionary rankingStateEncoded)
                         {
                             RankingState rankingState = new RankingState(rankingStateEncoded);
-                            Agent.Instance.RunOnMainThread(() => _onRankUpdated.Invoke(rankingState));
+                            Agent.Instance.RunOnMainThread(() => _rankUpdated.Invoke(rankingState));
                         }
                     }
                 }
@@ -78,14 +77,14 @@ namespace _Script
             string hex = agent.Address.ToHex().Substring(0, 4);
             addressText.text = $"My Address: {hex}";
 
-            _time = TxProcessInterval;
-            SetTimer(_time);
+            _timer = TxProcessInterval;
+            SetTimer(_timer);
 
             _levelTable = new Table<Level>();
             _levelTable.Load(Resources.Load<TextAsset>("level").text);
 
-            _onCountUpdated.AddListener(UpdateTotalCount);
-            _onRankUpdated.AddListener(rankingState => StartCoroutine(UpdateRankingBoard(rankingState)));
+            _countUpdated.AddListener(UpdateTotalCount);
+            _rankUpdated.AddListener(rankingState => StartCoroutine(UpdateRankingBoard(rankingState)));
         }
 
         public void Start()
@@ -96,12 +95,12 @@ namespace _Script
             if (initialCountState is Bencodex.Types.Dictionary countStateEncoded)
             {
                 CountState countState = new CountState(countStateEncoded);
-                _onCountUpdated.Invoke(countState);
+                _countUpdated.Invoke(countState);
             }
 
             if (initialRankingState is Bencodex.Types.Dictionary rankingStateEncoded)
             {
-                _onRankUpdated.Invoke(new RankingState(rankingStateEncoded));
+                _rankUpdated.Invoke(new RankingState(rankingStateEncoded));
             }
         }
 
@@ -118,19 +117,18 @@ namespace _Script
 
         private void FixedUpdate()
         {
-            if (_time > 0)
+            if (_timer > 0)
             {
-                _time -= Time.deltaTime;
-                SetTimer(_time);
+                _timer -= Time.deltaTime;
+                SetTimer(_timer);
             }
             else
             {
-                _time = TxProcessInterval;
+                _timer = TxProcessInterval;
                 List<ActionBase> actions = new List<ActionBase>();
                 if (click.count > 0)
                 {
-                    var action = new AddCount(click.count);
-                    actions.Add(action);
+                    actions.Add(new AddCount(click.count));
                 }
 
                 foreach ((Address address, int count) in _attacks)
@@ -150,10 +148,10 @@ namespace _Script
 
         private void UpdateTotalCount(CountState countState)
         {
-            _totalCount = countState.Count;
-            Level selected = _levelTable.Values.FirstOrDefault(i => i.Exp > _totalCount) ?? _levelTable.Values.Last();
+            long count = countState.Count;
+            Level selected = _levelTable.Values.FirstOrDefault(i => i.Exp > count) ?? _levelTable.Values.Last();
             click.Set(selected.Id);
-            countText.text = $"Total Count: {_totalCount.ToString()}";
+            countText.text = $"Total Count: {count}";
         }
 
         private IEnumerator UpdateRankingBoard(RankingState rankingState)
