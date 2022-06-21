@@ -1,4 +1,4 @@
-namespace _Script.Data
+namespace Scripts.Data
 {
     public interface ITable<TRow> where TRow : new()
     {

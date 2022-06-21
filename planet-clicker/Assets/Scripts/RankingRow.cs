@@ -1,9 +1,9 @@
-using _Script.State;
+using Scripts.States;
 using Libplanet;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _Script
+namespace Scripts
 {
     public class RankingRow : MonoBehaviour
     {

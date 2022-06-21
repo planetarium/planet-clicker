@@ -1,6 +1,6 @@
 using Libplanet.Store;
 
-namespace _Script.Action
+namespace Scripts.Actions
 {
     /// <summary>
     /// <see cref="DataModel"/> for encoding <see cref="AddCount"/> action.
@@ -10,6 +10,7 @@ namespace _Script.Action
         public long Count { get; private set; }
 
         public AddCountPlainValue(long count)
+            : base()
         {
             Count = count;
         }

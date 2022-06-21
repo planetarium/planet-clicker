@@ -1,7 +1,7 @@
 using Libplanet;
 using Libplanet.Store;
 
-namespace _Script.Action
+namespace Scripts.Actions
 {
     /// <summary>
     /// <see cref="DataModel"/> for encoding <see cref="SubCount"/> action.

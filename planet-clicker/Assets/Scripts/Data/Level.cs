@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace _Script.Data
+namespace Scripts.Data
 {
     public class Level : IRow
     {
